@@ -262,7 +262,7 @@ void PrintStrs( const char filename[], const String strs[], size_t size )
   assert(f != NULL);
 
   for (size_t i = 0; i < size; i++)
-    for (int j = 0; j < strs[i].len; j++)
+    for (size_t j = 0; j < strs[i].len; j++)
       fputc(strs[i].str[j], f);
 
   fclose(f);
