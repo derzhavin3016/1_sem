@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 
 #define IfEndStr(A) (A != '\0' && A != '\n')
 
@@ -24,9 +25,9 @@ void QuickSort( String *str, int first, int last, int (*Comp)( const String *s1,
 
 void Swap( String *a, String *b );
 
-int StrCount( const char buf[], char end_value );
+int StrCount( const char buf[], size_t buf_size, char end_value );
 
-String *CreateStringsPtrs( const char buf[], size_t *str_cnt, char end_value );
+String *CreateStringsPtrs( const char buf[], size_t buf_size, size_t *str_cnt, char end_value );
 
 void PrintStrs( const char filename[], const String strs[], size_t size );
 
@@ -40,7 +41,7 @@ __inline size_t Min( size_t a, size_t b );
 
 void PrintStr( const char filename[], const char str[] );
 
-void Separate( const char file_name[], int size );
+void StrSeparate( const char file_name[], int size );
 
 enum
 {

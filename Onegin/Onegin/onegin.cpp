@@ -105,13 +105,12 @@ void LACS_Process_Error( int error_code )
  * \return Pointer to array of String structures.
  * \warning Dynamic memory, it is necessary to use free() function.
  */
-String *CreateStringsPtrs( const char buf[], size_t *str_cnt, char end_value )
+String *CreateStringsPtrs( const char buf[], size_t buf_size, size_t *str_cnt, char end_value )
 {
   assert(buf != NULL);
   assert(str_cnt != NULL);
 
-  int num_of_strs = StrCount(buf, end_value), len_cnt = 0,
-    is_new_str = 1, str_amount = 0;
+  int num_of_strs = StrCount(buf, buf_size, end_value), len_cnt = 0, str_amount = 0;
   const char *str = buf;
   char prev = 0;
   String *txt = (String *)calloc(num_of_strs, sizeof(txt[0]));
@@ -120,12 +119,12 @@ String *CreateStringsPtrs( const char buf[], size_t *str_cnt, char end_value )
   prev = '\n';
   while (*str != '\0')
   {
-    if (*str == '\r')
+    /*if (*str == '\r')
     {
       len_cnt++;
       str++;
       continue;
-    }
+    }*/
     if (prev == '\n' && *str != '\n')
     {
       txt[str_amount].str = str;
@@ -140,6 +139,7 @@ String *CreateStringsPtrs( const char buf[], size_t *str_cnt, char end_value )
     prev = *str;
     str++;
   }
+  
 
   *str_cnt = str_amount;
   return txt;
@@ -151,7 +151,7 @@ String *CreateStringsPtrs( const char buf[], size_t *str_cnt, char end_value )
  * \param [in]    end_value Character of the end of the strings.
  * \return Number of strings.
  */
-int StrCount( const char buf[], char end_value )
+int StrCount( const char buf[], size_t buf_size, char end_value )
 {
   assert(buf != NULL);
 
@@ -166,6 +166,14 @@ int StrCount( const char buf[], char end_value )
   }
   if (*(str - 1) != end_value)
     str_count++;
+/*
+  char *s = (char *)memchr(buf, end_value, buf_size); 
+  while (s != NULL)
+  {
+    str_count++;
+    s = (char *)memchr(s + 1, end_value, buf_size - s + buf - 1);
+  }*/
+   
 
   return str_count;
 } /* End of 'StrCount' function */
@@ -205,14 +213,14 @@ void QuickSort( String *str, int first, int last, int (*Comp)( const String *s1,
   if (first >= last)
     return;
 
-  const String *mid = &str[(first + last) / 2];
+  const String mid = str[(first + last) / 2];
   int begin = first, end = last;
 
   while (begin <= end)
   {
-    while (Comp(str + begin, mid) < 0)
+    while (Comp(str + begin, &mid) < 0)
       begin++;
-    while (Comp(str + end, mid) > 0 )
+    while (Comp(str + end, &mid) > 0 )
       end--;
     if (begin <= end)
     {
@@ -249,7 +257,7 @@ int StrCompareBegin( const String *s1, const String *s2 )
       str1++;
     while (!isalpha(*str2) && IfEndStr(*str2))
       str2++;
-    if (*str1 != *str2 || !IfEndStr(*str2) || !IfEndStr(*str1))
+    if (toupper(*str1) != toupper(*str2) || !IfEndStr(*str2) || !IfEndStr(*str1))
       break;
     str1++, str2++;
     if (!IfEndStr(*str2) || !IfEndStr(*str1))
@@ -258,7 +266,7 @@ int StrCompareBegin( const String *s1, const String *s2 )
   /*while (*str1 == *str2 && IfEndStr(*str1))
     str1++, str2++;*/
 
-  return (int)* str1 - (int)* str2;
+  return toupper(*str1) - toupper(*str2);
 } /* End of 'StrCompareBegin' function */
 
 /**
@@ -291,20 +299,18 @@ int StrCompareEnd( const String *s1, const String *s2 )
 
   while (1)
   {
-    while (!isalpha(*str1) && *str1 != *s1->str && IfEndStr(*str1))
+    while (!isalpha(*str1) && str1 != s1->str && IfEndStr(*str1))
       str1--;
-    while (!isalpha(*str2) && *str2 != *s2->str && IfEndStr(*str2))
+    while (!isalpha(*str2) && str2 != s2->str && IfEndStr(*str2))
       str2--;
-    if (*str1 != *str2 || *str1 == *s1->str || *str2 == *s2->str)
+    if (toupper(*str1) != toupper(*str2) || str1 == s1->str || str2 == s2->str)
       break;
     str1--, str2--;
-    if (*str1 == *s1->str || *str2 == *s2->str)
+    if (str1 == s1->str || str2 == s2->str)
       break;
   }
-  /*while (*str1 == *str2 && IfEndStr(*str1))
-    str1++, str2++;*/
 
-  return (int)* str1 - (int)* str2;
+  return toupper(*str1) - toupper(*str2);
 } /* End of 'StrCompareEnd' function */
 
 /**
@@ -321,10 +327,17 @@ void PrintStrs( const char filename[], const String strs[], size_t size )
 
   FILE *f = fopen(filename, "ab");
 
+
   assert(f != NULL);
 
+  String check = {"\r\n", 2};
+
   for (size_t i = 0; i < size; i++)
+  {
+    if (!StrCompareBegin(strs + i, &check))
+      continue;
     fwrite(strs[i].str, sizeof(strs[0].str[0]), strs[i].len, f);
+  }
 
   fclose(f);
 } /* End of 'PrintStrs' function */
@@ -351,11 +364,11 @@ void PrintStr( const char filename[], const char str[] )
 
 /**
  * Separate strings in file fucntion.
- * \param [in]  file_name   Name of a file to separate.
+ * \param [in]  file_name   Name of a file to Separate.
  * \param [in]  size        Height of separation strings.
  * \return None.
  */
-void Separate( const char file_name[], int size )
+void StrSeparate( const char file_name[], int size )
 {
   for (int i = 0; i < size; i++)
     PrintStr(file_name, "###############################################################\n");

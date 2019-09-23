@@ -20,7 +20,7 @@ int main( void )
     return 1;
   }
 
-  String *text = CreateStringsPtrs(buf, &string_size, '\n');
+  String *text = CreateStringsPtrs(buf, file_length, &string_size, '\n');
   assert(text != NULL);
 
   QuickSort(text, 0, string_size - 1, StrCompareBegin);
@@ -28,13 +28,19 @@ int main( void )
   printf("Input filename to save: ");
   IsOk = scanf("%s", file_name);
   assert(IsOk);
+  
+  int sep_wide;
+  printf("Input the width of separation: ");
+  IsOk = scanf("%d", &sep_wide);
+  assert(IsOk);
+
 
   PrintStrs(file_name, text, string_size);
 
   QuickSort(text, 0, string_size - 1, StrCompareEnd);
-  Separate(file_name, 100);
+  StrSeparate(file_name, sep_wide);
   PrintStrs(file_name, text, string_size);
-  Separate(file_name, 100);
+  StrSeparate(file_name, sep_wide);
   PrintStr(file_name, buf);
 
   free(buf);
