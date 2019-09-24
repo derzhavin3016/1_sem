@@ -99,81 +99,70 @@ void LACS_Process_Error( int error_code )
 
 /**
  * Create array with a pointers to strings beginings function.
- * \param [in]    buf[]     Strings.
- * \param [out]   *str_cnt  Pointer to amount of strings.
- * \param [in]    end_value Character of the end of the strings.
+ * \param [in]    buf[]        Strings.
+ * \param [in]    buf_size     Size of buf array.
+ * \param [out]   *str_cnt     Pointer to amount of strings.
+ * \param [in]    end_value    Character of the end of the strings.
  * \return Pointer to array of String structures.
  * \warning Dynamic memory, it is necessary to use free() function.
  */
 String *CreateStringsPtrs( const char buf[], size_t buf_size, size_t *str_cnt, char end_value )
 {
   assert(buf != NULL);
+  assert(buf_size != 0);
   assert(str_cnt != NULL);
 
-  int num_of_strs = StrCount(buf, buf_size, end_value), len_cnt = 0, str_amount = 0;
-  const char *str = buf;
-  char prev = 0;
+  int num_of_strs = StrCount(buf, buf_size, end_value), real_str = 0;
   String *txt = (String *)calloc(num_of_strs, sizeof(txt[0]));
   assert(txt != NULL);
-
-  prev = '\n';
-  while (*str != '\0')
-  {
-    /*if (*str == '\r')
-    {
-      len_cnt++;
-      str++;
-      continue;
-    }*/
-    if (prev == '\n' && *str != '\n')
-    {
-      txt[str_amount].str = str;
-      len_cnt = 0;
-    }
-    len_cnt++;
-    if (*str == '\n' && prev != '\n')
-    {
-      txt[str_amount].len = len_cnt;
-      str_amount++;
-    }
-    prev = *str;
-    str++;
-  }
   
+  char *s = (char *)memchr(buf, end_value, buf_size);
+  const char *prev = buf;
+  char prevch = 0, pre_prevch = 0;
+  if (s != buf)
+    prevch = *(s - 1);
+  if (s != buf + 1)
+    prevch = *(s - 2);
+  while (s != NULL)
+  {
+    txt[real_str].str = prev;
+    txt[real_str++].len = s - prev + 1;
+    if ((prevch == '\n' || prevch == '\r') && pre_prevch == '\n')
+      real_str--;
+    prev = s + 1;
+    s = (char *)memchr(s + 1, end_value, buf_size - (s - buf) - 1);
+    if (s != NULL)
+    {
+      prevch = *(s - 1);
+      pre_prevch = *(s - 2);
+    }
+  }
 
-  *str_cnt = str_amount;
+  *str_cnt = real_str;
   return txt;
 } /* End of 'CreateStringsPtrs' function */
 
 /**
  * Count strings function.
  * \param [in]    buf[]     Strings.
+ * \param [in]    buf_size  Size of buf array.
  * \param [in]    end_value Character of the end of the strings.
  * \return Number of strings.
  */
 int StrCount( const char buf[], size_t buf_size, char end_value )
 {
   assert(buf != NULL);
+  assert(buf_size != 0);
 
   int str_count = 0;
-  const char *str = buf;
-
-  while (*str != '\0')
-  {
-    if (*str == end_value)
-      str_count++;
-    str++;
-  }
-  if (*(str - 1) != end_value)
-    str_count++;
-/*
   char *s = (char *)memchr(buf, end_value, buf_size); 
   while (s != NULL)
   {
     str_count++;
-    s = (char *)memchr(s + 1, end_value, buf_size - s + buf - 1);
-  }*/
-   
+    s = (char *)memchr(s + 1, end_value, buf_size - (s - buf) - 1);
+  }
+  if (buf[buf_size - 1] != end_value)
+    str_count++;
 
   return str_count;
 } /* End of 'StrCount' function */
@@ -330,14 +319,8 @@ void PrintStrs( const char filename[], const String strs[], size_t size )
 
   assert(f != NULL);
 
-  String check = {"\r\n", 2};
-
   for (size_t i = 0; i < size; i++)
-  {
-    if (!StrCompareBegin(strs + i, &check))
-      continue;
     fwrite(strs[i].str, sizeof(strs[0].str[0]), strs[i].len, f);
-  }
 
   fclose(f);
 } /* End of 'PrintStrs' function */
