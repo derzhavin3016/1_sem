@@ -6,7 +6,7 @@ int main( void )
 {
   char file_name[MAX_NAME] = {{0}};
   size_t string_size = 0, file_length = 0;
-  int err_code;
+  int err_code = 0;
 
   int IsOk = Input("# Sort strings from the file program.\n\n"
                    "Input file name to start: ", "%s", file_name);
