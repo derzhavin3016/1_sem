@@ -347,12 +347,36 @@ void PrintStr( const char filename[], const char str[] )
 
 /**
  * Separate strings in file fucntion.
- * \param [in]  file_name   Name of a file to Separate.
- * \param [in]  size        Height of separation strings.
+ * \param [in]  file_name     Name of a file to Separate.
+ * \param [in]  height        Height of separation strings.
+ * \param [in]  width         Width of separation strings.
+ * \param [in]  sep_sym       Separation symbol.
  * \return None.
  */
-void StrSeparate( const char file_name[], int size )
+void StrSeparate( const char file_name[], int height, int width, char sep_sym )
 {
-  for (int i = 0; i < size; i++)
-    PrintStr(file_name, "###############################################################\n");
+  assert(file_name != NULL);
+  assert(height != 0);
+  assert(width != 0);
+
+  char *str = (char *)calloc(width + 2, sizeof(str[0]));
+  assert(str != NULL);
+  str[width] = '\n';
+
+  for (int i = 0; i < width; i++)
+    str[i] = sep_sym;
+
+  for (int i = 0; i < height; i++)
+    PrintStr(file_name, str);
+
+  free(str);
 } /* End of 'Separate' function */
+
+
+void AutoPoet( String *strs, size_t poem_size )
+{
+  /*for (int i = 0; i < poem_size; i++)
+  {
+    
+  }*/
+}

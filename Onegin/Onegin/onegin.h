@@ -41,7 +41,24 @@ __inline size_t Min( size_t a, size_t b );
 
 void PrintStr( const char filename[], const char str[] );
 
-void StrSeparate( const char file_name[], int size );
+void StrSeparate( const char file_name[], int height, int width, char sep_sym );
+
+/**
+ * Input one value template fucntion.
+ * \param [in]  promt     Promt string to print.
+ * \param [in]  scanfstr  String for scanf fucntion (with expected value).
+ * \param [out] value     Pointer to value to input.
+ * \return 1 if all is OK, 0 otherwise.
+ */
+template <typename T>
+int Input( const char promt[], const char scanfstr[], T *value )
+{
+  if (promt == NULL || scanfstr == NULL || value == NULL)
+    return 0;
+
+  printf(promt);
+  return scanf(scanfstr, value);
+}
 
 enum
 {

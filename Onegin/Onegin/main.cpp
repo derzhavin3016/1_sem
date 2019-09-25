@@ -8,9 +8,8 @@ int main( void )
   size_t string_size = 0, file_length = 0;
   int err_code;
 
-  printf("# Sort strings from file program\n\n"
-         "Input filename to start: ");
-  int IsOk = scanf("%s", file_name);
+  int IsOk = Input("# Sort strings from the file program.\n\n"
+                   "Input file name to start: ", "%s", file_name);
   assert(IsOk);
 
   char *buf = LoadAndCreateStrings(file_name, &file_length, &err_code);
@@ -25,22 +24,25 @@ int main( void )
 
   QuickSort(text, 0, string_size - 1, StrCompareBegin);
 
-  printf("Input filename to save: ");
-  IsOk = scanf("%s", file_name);
+  IsOk = Input("Input filename to save: ", "%s", file_name);
   assert(IsOk);
   
-  int sep_wide;
-  printf("Input the width of separation: ");
-  IsOk = scanf("%d", &sep_wide);
+  int sep_width = 0, sep_height = 0;
+  char sep_sym = 0;
+
+  IsOk = Input("Input the height of separation: ", "%d", &sep_height);
   assert(IsOk);
-
-
+  IsOk = Input("Input the width of separation: ", "%d", &sep_width);
+  assert(IsOk);
+  IsOk = Input("Input the separation symbol: ", "\n%c", &sep_sym);
+  assert(IsOk);
+  
   PrintStrs(file_name, text, string_size);
 
   QuickSort(text, 0, string_size - 1, StrCompareEnd);
-  StrSeparate(file_name, sep_wide);
+  StrSeparate(file_name, sep_height, sep_width, sep_sym);
   PrintStrs(file_name, text, string_size);
-  StrSeparate(file_name, sep_wide);
+  StrSeparate(file_name, sep_height, sep_width, sep_sym);
   PrintStr(file_name, buf);
 
   free(buf);
