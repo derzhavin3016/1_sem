@@ -1,4 +1,5 @@
 #ifndef __ONEGIN_H_
+#define __ONEGIN_H_
 
 #include <stdio.h>
 #include <stdlib.h>
