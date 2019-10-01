@@ -446,11 +446,11 @@ void StackProcLoop( Stack<Data> *this_ )
   int prmt = 0;
   const char *types[4] = {"%d", "%f", "%lg", "%c"};
   int chosen_type = 0;
-  int OK = InputNumbers("Choose stack types before start:\n"
+  /*int OK = InputNumbers("Choose stack types before start:\n"
     "1 - int\n2 - float\n3 - double\n4 - char\n", 
     "Input type number: \n", "%d", &chosen_type);
   chosen_type--;
-  chosen_type = Clamp(chosen_type, 0, 3);
+  chosen_type = Clamp(chosen_type, 0, 3);*/
   assert(OK);
   while(1)
   {
