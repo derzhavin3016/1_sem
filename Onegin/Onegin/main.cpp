@@ -2,6 +2,7 @@
 
 const int MAX_NAME = 1000;
 
+
 int main( void )
 {
   char file_name[MAX_NAME] = {{0}};
