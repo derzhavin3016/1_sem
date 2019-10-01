@@ -1,13 +1,26 @@
 #ifndef __stack_h_
+#define __stack_h_
 
-#include <stdio.h>
-#include <iostream>
-#include <assert.h>
+
+#include "input.h"
+#pragma warning (disable: 4996)
 
 #define stack_location __FILE__, __LINE__, __FUNCSIG__
 #define var_name(var) #var
 
-const size_t stack_start_size = 5;
+#define STK_START_PROMT "****************************************\n" \
+                        "****************************************\n" \
+                        "      Working with stack program        \n" \
+                        "***********   MENU   *******************\n" \
+                        "*** 0. Exit                             \n" \
+                        "*** 1. Push value to stack              \n" \
+                        "*** 2. Pop value from stack              \n" \
+                        "*** 3. Stack dump                       \n" \
+                        "****************************************\n"
+
+
+
+const size_t stack_start_size = 6;
 const size_t stack_delta = 2;
 
 typedef unsigned long long canary_t;
@@ -29,7 +42,7 @@ struct Stack
   canary_t owl2;
 };
 
-enum
+enum STK_ERR
 {
   STK_UNDERFLOW =   -1,
   STK_OVERFLOW  =    1,
@@ -39,12 +52,13 @@ enum
   STK_SIZE_ERROR,   //5
   STK_DATA_ERROR,   //6
   STK_MEM_ERROR,    //7
-  STK_NEW_SIZE_ERROR //8
+  STK_NEW_SIZE_ERROR, //8
+  STK_POI_ERROR
 };
 
 /**
  * \brief Stack initialization function (template).
- * \param this_  Pointer to stack structure.
+ * \param [in, out] this_  Pointer to stack structure.
  * \return true if all is ok.
  * \return false otherwise.
  */
@@ -75,8 +89,8 @@ bool StackInit( Stack<Data> *this_ )
 
 /**
  * \brief Push value to stack function (template).
- * \param this_  Pointer to stack structure.
- * \param value Value to push.
+ * \param [in, out] this_ Pointer to stack structure.
+ * \param [in]      value Value to push.
  * \return true if all is ok.
  * \return false otherwise.
  */
@@ -98,8 +112,8 @@ bool StackPush( Stack<Data> *this_, Data value )
 
 /**
  * \brief Pop value from stack function (template).
- * \param this_  Pointer to stack structure.
- * \param err    Pointer to return a value.
+ * \param [in, out] this_  Pointer to stack structure.
+ * \param [out]     err    Pointer to return a value.
  * \return true if all is OK.
  * \return false otherwise.
  */
@@ -114,7 +128,7 @@ bool StackPop( Stack<Data> *this_, Data *value )
     return false;
   }
   if (this_->maxsize > stack_start_size &&
-    this_->size == this_->maxsize - stack_delta)
+    this_->size == this_->maxsize / 2 - stack_delta)
     if (!StackResize(this_, this_->maxsize / 2))
       return false;
 
@@ -127,7 +141,7 @@ bool StackPop( Stack<Data> *this_, Data *value )
 
 /**
  * \brief Stack destructor function (template).
- * \param this_  Pointer to stack structure.
+ * \param [in, out] this_  Pointer to stack structure.
  * \return None.
  */
 template <typename Data>
@@ -137,11 +151,12 @@ void StackClose( Stack<Data> *this_ )
 
   free(this_->data);
   this_->size = 0;
+  this_->hash = StackHashCalc(this_);
 } /* End of 'StackClose' function */
 
 /**
  * \brief Stack verificator function (template).
- * \param this_  Pointer to stack structure.
+ * \param [in, out] this_  Pointer to stack structure.
  * \return true if all is ok.
  * \return false otherwise.
  */
@@ -187,13 +202,19 @@ bool StackOk( Stack<Data> *this_ )
     this_->error = STK_HASH_ERROR;
     return false;
   }
+
+  if (StackCountPoi(this_, this_->size) != this_->maxsize - this_->size)
+  {
+    this_->error = STK_POI_ERROR;
+    return false;
+  }
   return true;
 } /* End of 'StackOk' function */
 
 /**
  * \brief Fill stack by poison values function (template).
- * \param this_  Pointer to stack structure.
- * \param num    Start number to fill.
+ * \param [in, out] this_  Pointer to stack structure.
+ * \param [in]      num    Start number to fill.
  * \return None.
  */
 template <typename Data>
@@ -204,6 +225,24 @@ void StackFillPoi( Stack<Data> *this_, size_t num )
   for (size_t i = num; i < (size_t)this_->maxsize; i++)
     this_->data[i] = stack_poison_value<Data>;
 } /* End of 'StackFillPoi' function */
+
+/**
+ * \brief Count poison values in stack function (template).
+ * \param [in, out]  this_  Pointer to stack structure.
+ * \param [in]       num    Start number to count.
+ * \return Amount of poison values.
+ */
+template <typename Data>
+unsigned StackCountPoi( Stack<Data> *this_, size_t num )
+{
+  assert(this_ != nullptr);
+  unsigned poi_cnt = 0;
+
+  for (size_t i = num; i < (size_t)this_->maxsize; i++)
+    poi_cnt += this_->data[i] == stack_poison_value<Data>;
+
+  return poi_cnt;
+} /* End of 'StackCountPoi' function */
 
 /**
  * Processing errors in stack fucntion (template).
@@ -247,6 +286,9 @@ void Stack_Process_Error( Stack<Data> *this_ )
   case STK_MEM_ERROR:
     StackDump(this_, "No free memory for stack", stack_location);
     break;
+  case STK_POI_ERROR:
+    StackDump(this_, "Poison values have broken", stack_location);
+    break;
   default:
     printf("Unrecognized error code = %d\n", this_->error);
     break;
@@ -255,11 +297,11 @@ void Stack_Process_Error( Stack<Data> *this_ )
 
 /**
  * \brief Stack dump function (template).
- * \param this_  Pointer to stack structure.
- * \param reason Dump reason.
- * \param filename Name of a file where Dump function called.
- * \param line Line where Dump function called.
- * \param funcname Name of a function where Dump function called.
+ * \param [in, out] this_  Pointer to stack structure.
+ * \param [in]  reason Dump reason.
+ * \param [in]  filename Name of a file where Dump function called.
+ * \param [in]  line Line where Dump function called.
+ * \param [in]  funcname Name of a function where Dump function called.
  * \return None.
  */
 template <typename Data>
@@ -300,7 +342,7 @@ void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
 
 /**
  * \brief Hash calculation function (template).
- * \param this_  Pointer to value to calculate hash.
+ * \param [in, out] this_  Pointer to value to calculate hash.
  * \return Calculated hash.
  */
 template <typename Data>
@@ -319,7 +361,7 @@ unsigned HashCalc( const Data *this_ )
 
 /**
  * \brief Stack hash calculation function (template).
- * \param this_  Pointer to stack.
+ * \param [in, out] this_  Pointer to stack.
  * \return Calculated hash.
  * \warning This function also write new hash value to stack structure.
  */
@@ -334,8 +376,8 @@ unsigned StackHashCalc( Stack<Data> *this_ )
 
 /**
  * \brief Stack resize function (template).
- * \param this_  Pointer to stack.
- * \param new_size New size value.
+ * \param [in, out] this_  Pointer to stack.
+ * \param [in]  new_size New size value.
  * \return true if all is ok.
  * \return false otherwise.
  */
@@ -348,8 +390,7 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
     this_->error = STK_NEW_SIZE_ERROR;
     return false;
   }
-
-  Data *new_mem = (Data *)realloc(this_->data, new_size);
+  Data *new_mem = (Data *)realloc(this_->data, new_size * sizeof(this_->data[0]));
   if (new_mem == nullptr)
   {
     this_->error = STK_MEM_ERROR;
@@ -358,29 +399,14 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
 
   this_->data = new_mem;
   this_->maxsize = new_size;
+  StackFillPoi(this_, this_->size);
   return true;
 } /* End of 'StackResize' function */
 
-/**
- * Input one value template fucntion.
- * \param [in]  promt     Promt string to print.
- * \param [in]  scanfstr  String for scanf fucntion (with expected value).
- * \param [out] value     Pointer to value to input.
- * \return 1 if all is OK, 0 otherwise.
- */
-template <typename T>
-int Input( const char promt[], const char scanfstr[], T *value )
-{
-  if (promt == NULL || scanfstr == NULL || value == NULL)
-    return 0;
-
-  printf(promt);
-  return scanf(scanfstr, value);
-} /* End of 'Input' function */
 
 /**
  * \brief Stack assertion function (template).
- * \param this_ Pointer to stack structure.
+ * \param [in, out] this_ Pointer to stack structure.
  * \return true if all id OK.
  * \return false otherwise.
  */
@@ -394,6 +420,80 @@ bool StackAssert( Stack<Data> *this_ )
   }
   return true;
 } /* End of 'StackAssert' function */
+
+/**
+ * \brief Clamping value function (template).
+ * \param [in] value  Value to clamp.
+ * \param [in]  min   Minimal value.
+ * \param [in]  max   Maximum value.
+ * \return Clamping value.
+ */
+template <typename Data>
+Data Clamp( Data value, Data min, Data max )
+{
+  return value > max ? max : value < min ? min : value;
+} /* End of 'Clamp' function */
+
+/**
+ * \brief Work with stack function (template).
+ * \param [in, out] this_ Pointer to stack structure.
+ * \return None.
+ */
+template <typename Data>
+void StackProcLoop( Stack<Data> *this_ )
+{
+  assert(StackAssert(this_));
+  int prmt = 0;
+  const char *types[4] = {"%d", "%f", "%lg", "%c"};
+  int chosen_type = 0;
+  int OK = InputNumbers("Choose stack types before start:\n"
+    "1 - int\n2 - float\n3 - double\n4 - char\n", 
+    "Input type number: \n", "%d", &chosen_type);
+  chosen_type--;
+  chosen_type = Clamp(chosen_type, 0, 3);
+  assert(OK);
+  while(1)
+  {
+    int OK = InputNumbers(STK_START_PROMT, "*** Input number to start:\n",
+      "%d", &prmt);
+    assert(OK);
+    switch (prmt)
+    {
+    case 0:
+      return;
+    case 1:
+      Data push;
+      OK = InputNumbers("PUSH\n", "Input value to push:\n",
+        types[chosen_type], &push);
+      assert(OK);
+      if (!StackPush(this_, push))
+        assert(StackAssert(this_));
+      else
+        printf("Push succeed\n");
+      break;
+    case 2:
+      Data pop;
+      if (!StackPop(this_, &pop))
+        assert(StackAssert(this_));
+      else
+      {
+        printf("Popped value:");
+        printf(types[chosen_type], pop);
+        printf("\n");
+      }
+      break;
+    case 3:
+      StackDump(this_, "Just info", stack_location);
+      break;
+    default:
+      printf("Unrecognized switch\n");
+        break;
+    }
+  }
+}
+
+
+
 #endif /* __stack_h_ */
 
 
