@@ -119,9 +119,9 @@ String *CreateStringsPtrs( const char buf[], size_t buf_size, size_t *str_cnt, c
   char *s = (char *)memchr(buf, end_value, buf_size);
   const char *prev = buf;
   char prevch = 0, pre_prevch = 0;
-  if (s != buf)
+  if (s != buf && s != NULL)
     prevch = *(s - 1);
-  if (s != buf + 1)
+  if (s != buf + 1 && s != NULL)
     prevch = *(s - 2);
   while (s != NULL)
   {
@@ -136,6 +136,12 @@ String *CreateStringsPtrs( const char buf[], size_t buf_size, size_t *str_cnt, c
       prevch = *(s - 1);
       pre_prevch = *(s - 2);
     }
+  }
+  s = (char *)memchr(prev, 0, buf_size - (s - buf) - 1);
+  if (*(s-1) != '\n')
+  {
+    txt[real_str].str = prev;
+    txt[real_str++].len = s - prev + 1;
   }
 
   *str_cnt = real_str;
