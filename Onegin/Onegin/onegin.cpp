@@ -244,7 +244,8 @@ int StrCompareBegin( const String *s1, const String *s2 )
   assert(s1->str != NULL);
   assert(s2->str != NULL);
 
-  const char *str1 = s1->str, *str2 = s2->str;
+  const unsigned char *str1 = (unsigned char *)s1->str, 
+                      *str2 = (unsigned char *)s2->str;
 
   while (1)
   {
@@ -290,18 +291,19 @@ int StrCompareEnd( const String *s1, const String *s2 )
   assert(s1->str != NULL);
   assert(s2->str != NULL);
 
-  const char *str1 = s1->str + s1->len - 1, *str2 = s2->str + s2->len - 1;
+  const unsigned char *str1 = (unsigned char *)s1->str + s1->len - 1,
+                      *str2 = (unsigned char *)s2->str + s2->len - 1;
 
   while (1)
   {
-    while (!isalpha(*str1) && str1 != s1->str && IfEndStr(*str1))
+    while (!isalpha(*str1) && str1 != (unsigned char *)s1->str && IfEndStr(*str1))
       str1--;
-    while (!isalpha(*str2) && str2 != s2->str && IfEndStr(*str2))
+    while (!isalpha(*str2) && str2 != (unsigned char *)s2->str && IfEndStr(*str2))
       str2--;
-    if (toupper(*str1) != toupper(*str2) || str1 == s1->str || str2 == s2->str)
+    if (toupper(*str1) != toupper(*str2) || str1 == (unsigned char *)s1->str || str2 == (unsigned char *)s2->str)
       break;
     str1--, str2--;
-    if (str1 == s1->str || str2 == s2->str)
+    if (str1 == (unsigned char *)s1->str || str2 == (unsigned char *)s2->str)
       break;
   }
 
