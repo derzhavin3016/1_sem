@@ -25,8 +25,10 @@ const size_t stack_delta = 2;
 
 typedef unsigned long long canary_t;
 
-const canary_t owl1_control = 0xDEAD;
-const canary_t owl2_control = 0xBEDA;
+const canary_t owl1_control = 0xDEADBEEF;
+const canary_t owl2_control = 0xBEDAFADE;
+const canary_t owldata1_control = 0xBEDADEAD;
+const canary_t owldata2_control = 0xCCAAFFBB;
 
 template <typename Data>
 const Data stack_poison_value = -6699;
@@ -35,7 +37,8 @@ template <typename Data>
 struct Stack
 {
   canary_t owl1;
-  Data *data;
+  char *data;
+  canary_t *owldata1, *owldata2;
   int size, maxsize;
   int error;
   unsigned hash;
@@ -53,8 +56,35 @@ enum STK_ERR
   STK_DATA_ERROR,   //6
   STK_MEM_ERROR,    //7
   STK_NEW_SIZE_ERROR, //8
-  STK_POI_ERROR
+  STK_POI_ERROR,     //9
+  STK_OWLDATA1_ERROR,   //10
+  STK_OWLDATA2_ERROR,   //11
 };
+
+/**
+ * \brief Allocate memory for stack function(template)
+ * \param this_ Pointer to stack structure.
+ * \return true if all is OK
+ * \return false otherwise.
+ */
+template <typename Data>
+bool StackDataCalloc( Stack<Data> *this_ )
+{
+  this_->data = (char *)calloc(this_->maxsize * sizeof(Data) + 2 * sizeof(canary_t),
+    sizeof(this_->data[0]));
+
+  if (this_->data == nullptr)
+  {
+    this_->error = STK_DATA_ERROR;
+    return false;
+  }
+  StackFillPoi(this_, 0);
+  this_->owldata1 = (canary_t *)(this_->data);
+  this_->owldata2 = (canary_t *)((Data *)(this_->data + sizeof(canary_t)) + this_->maxsize);
+  *(this_->owldata1) = owldata1_control;
+  *(this_->owldata2) = owldata2_control;
+  return true;
+} /* End of 'StackDataCalloc' function */
 
 /**
  * \brief Stack initialization function (template).
@@ -71,13 +101,8 @@ bool StackInit( Stack<Data> *this_ )
   this_->owl1 = owl1_control;
   this_->size = 0;
   this_->maxsize = stack_start_size;
-  if ((this_->data = (Data *)calloc(this_->maxsize, sizeof(this_->data[0])))
-    == nullptr)
-  {
-    this_->error = STK_DATA_ERROR;
+  if (!StackDataCalloc(this_))
     return false;
-  }
-  StackFillPoi(this_, 0);
   this_->error = 0;
   this_->hash = 0;
   this_->owl2 = owl2_control;
@@ -103,7 +128,7 @@ bool StackPush( Stack<Data> *this_, Data value )
     if (!StackResize(this_, this_->maxsize * 2))
       return false;
 
-  this_->data[this_->size++] = value;
+  ((Data *)(this_->data + sizeof(canary_t)))[this_->size++] = value;
   this_->hash = StackHashCalc(this_);
 
   assert(StackAssert(this_));
@@ -132,7 +157,7 @@ bool StackPop( Stack<Data> *this_, Data *value )
     if (!StackResize(this_, this_->maxsize / 2))
       return false;
 
-  *value = this_->data[--this_->size];
+  *value = ((Data *)(this_->data + sizeof(canary_t)))[--this_->size];
   StackFillPoi(this_, this_->size);
   this_->hash = StackHashCalc(this_);
   assert(StackAssert(this_));
@@ -196,6 +221,19 @@ bool StackOk( Stack<Data> *this_ )
     return false;
   }
 
+  assert(this_->owldata1 != nullptr);
+  if (*(this_->owldata1) != owldata1_control)
+  {
+    this_->error = STK_OWLDATA1_ERROR;
+    return false;
+  }
+  assert(this_->owldata2 != nullptr);
+  if (*(this_->owldata2) != owldata2_control)
+  {
+    this_->error = STK_OWLDATA2_ERROR;
+    return false;
+  }
+
   unsigned prev_hash = this_->hash;
   if (StackHashCalc(this_) != prev_hash)
   {
@@ -223,7 +261,7 @@ void StackFillPoi( Stack<Data> *this_, size_t num )
   assert(this_ != nullptr);
 
   for (size_t i = num; i < (size_t)this_->maxsize; i++)
-    this_->data[i] = stack_poison_value<Data>;
+    ((Data *)(this_->data + sizeof(canary_t)))[i] = stack_poison_value<Data>;
 } /* End of 'StackFillPoi' function */
 
 /**
@@ -239,7 +277,7 @@ unsigned StackCountPoi( Stack<Data> *this_, size_t num )
   unsigned poi_cnt = 0;
 
   for (size_t i = num; i < (size_t)this_->maxsize; i++)
-    poi_cnt += this_->data[i] == stack_poison_value<Data>;
+    poi_cnt += ((Data *)(this_->data + sizeof(canary_t)))[i] == stack_poison_value<Data>;
 
   return poi_cnt;
 } /* End of 'StackCountPoi' function */
@@ -289,6 +327,12 @@ void Stack_Process_Error( Stack<Data> *this_ )
   case STK_POI_ERROR:
     StackDump(this_, "Poison values have broken", stack_location);
     break;
+  case STK_OWLDATA1_ERROR:
+    StackDump(this_, "First data owl have broken", stack_location);
+    break;
+  case STK_OWLDATA2_ERROR:
+    StackDump(this_, "Second data owl have broken", stack_location);
+    break;
   default:
     printf("Unrecognized error code = %d\n", this_->error);
     break;
@@ -329,8 +373,8 @@ void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
     for (int i = 0; i < this_->maxsize; i++)
     {
       printf("  %c [%d] = ", i < this_->size ? '*' : ' ', i);
-      std::cout << this_->data[i];
-      if (this_->data[i] == stack_poison_value<Data>)
+      std::cout << ((Data *)(this_->data + sizeof(canary_t)))[i];
+      if (((Data *)(this_->data + sizeof(canary_t)))[i] == stack_poison_value<Data>)
         printf(" (POISON ?)");
       printf("\n");
     }
@@ -343,14 +387,15 @@ void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
 /**
  * \brief Hash calculation function (template).
  * \param [in, out] this_  Pointer to value to calculate hash.
+ * \param [in]      size   Size of array (1 default).
  * \return Calculated hash.
  */
 template <typename Data>
-unsigned HashCalc( const Data *this_ )
+unsigned HashCalc( const Data *this_, size_t size = 1 )
 {
   assert(this_ != nullptr);
   const unsigned char *bytes = (unsigned char *)this_;
-  size_t bytes_len = sizeof(*this_);
+  size_t bytes_len = sizeof(*this_) * size;
   unsigned hash = 0;
 
   for (size_t i = 0; i < bytes_len; i++)
@@ -371,7 +416,7 @@ unsigned StackHashCalc( Stack<Data> *this_ )
   assert(this_ != nullptr);
   
   this_->hash = 0;
-  return this_->hash = HashCalc(this_);
+  return this_->hash = HashCalc(this_) + HashCalc(this_->data, this_->maxsize);
 } /* End of 'StackHashCalc' function */
 
 /**
@@ -390,7 +435,8 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
     this_->error = STK_NEW_SIZE_ERROR;
     return false;
   }
-  Data *new_mem = (Data *)realloc(this_->data, new_size * sizeof(this_->data[0]));
+  char *new_mem = (char *)realloc(this_->data, new_size * sizeof(Data) +
+    2 * sizeof(canary_t));
   if (new_mem == nullptr)
   {
     this_->error = STK_MEM_ERROR;
@@ -400,6 +446,8 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
   this_->data = new_mem;
   this_->maxsize = new_size;
   StackFillPoi(this_, this_->size);
+  this_->owldata2 = ((canary_t *)((Data *)(this_->data + sizeof(canary_t)) + this_->maxsize));
+  *(this_->owldata2)  = owldata2_control;
   return true;
 } /* End of 'StackResize' function */
 
@@ -450,8 +498,8 @@ void StackProcLoop( Stack<Data> *this_ )
     "1 - int\n2 - float\n3 - double\n4 - char\n", 
     "Input type number: \n", "%d", &chosen_type);
   chosen_type--;
-  chosen_type = Clamp(chosen_type, 0, 3);*/
-  assert(OK);
+  chosen_type = Clamp(chosen_type, 0, 3);
+  assert(OK);*/
   while(1)
   {
     int OK = InputNumbers(STK_START_PROMT, "*** Input number to start:\n",
