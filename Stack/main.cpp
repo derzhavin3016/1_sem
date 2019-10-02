@@ -4,8 +4,10 @@
 int main( void )
 {
   Stack<int> stk = {};
-  StackInit(&stk);
-  StackProcLoop(&stk);
+  if (!StackInit(&stk))
+    Stack_Process_Error(&stk);
+  else
+    StackProcLoop(&stk);
   StackClose(&stk);
 
   return 0;
