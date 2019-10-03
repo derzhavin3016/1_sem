@@ -5,7 +5,7 @@
 #include "input.h"
 #pragma warning (disable: 4996)
 
-#define stack_location __FILE__, __LINE__, __FUNCSIG__
+#define STACK_LOCATION __FILE__, __LINE__, __FUNCSIG__
 #define var_name(var) #var
 
 #define STK_START_PROMT "****************************************\n" \
@@ -17,6 +17,14 @@
                         "*** 2. Pop value from stack              \n" \
                         "*** 3. Stack dump                       \n" \
                         "****************************************\n"
+
+#define STACK_COND_CHECK(COND, ERR_CODE) if (COND)                          \
+                                         {                                  \
+                                           this_->error = ERR_CODE;         \
+                                           return false;                    \
+                                         } 
+
+#define STK_ASSERT() assert(StackAssert(this_, STACK_LOCATION))
 
 
 
@@ -71,7 +79,7 @@ template <typename Data>
 bool StackDataCalloc( Stack<Data> *this_ )
 {
   this_->data = (char *)calloc(this_->maxsize * sizeof(Data) + 2 * sizeof(canary_t),
-    sizeof(this_->data[0]));
+                               sizeof(this_->data[0]));
 
   if (this_->data == nullptr)
   {
@@ -102,13 +110,16 @@ bool StackInit( Stack<Data> *this_ )
   this_->size = 0;
   this_->maxsize = stack_start_size;
   if (!StackDataCalloc(this_))
+  {
+    STK_ASSERT();
     return false;
+  }
   this_->error = 0;
   this_->hash = 0;
   this_->owl2 = owl2_control;
-  this_->hash = StackHashCalc(this_);
+  StackHashReCalc(this_);
 
-  assert(StackAssert(this_));
+  STK_ASSERT();
   return true;
 } /* End of 'StackInit' function */
 
@@ -122,16 +133,19 @@ bool StackInit( Stack<Data> *this_ )
 template <typename Data>
 bool StackPush( Stack<Data> *this_, Data value )
 {
-  assert(StackAssert(this_));
+  STK_ASSERT();
 
   if (this_->size >= this_->maxsize)
     if (!StackResize(this_, this_->maxsize * 2))
+    {
+      STK_ASSERT();
       return false;
+    }
 
   ((Data *)(this_->data + sizeof(canary_t)))[this_->size++] = value;
-  this_->hash = StackHashCalc(this_);
+  StackHashReCalc(this_);
 
-  assert(StackAssert(this_));
+  STK_ASSERT();
   return true;
 } /* End of 'StackPush' function */
 
@@ -145,22 +159,26 @@ bool StackPush( Stack<Data> *this_, Data value )
 template <typename Data>
 bool StackPop( Stack<Data> *this_, Data *value )
 {
-  assert(StackAssert(this_));
+  STK_ASSERT();
 
   if (this_->size == 0)
   {
     this_->error = STK_UNDERFLOW;
+    STK_ASSERT();
     return false;
   }
   if (this_->maxsize > stack_start_size &&
     this_->size == this_->maxsize / 2 - stack_delta)
     if (!StackResize(this_, this_->maxsize / 2))
+    {
+      STK_ASSERT();
       return false;
+    }
 
   *value = ((Data *)(this_->data + sizeof(canary_t)))[--this_->size];
   StackFillPoi(this_, this_->size);
-  this_->hash = StackHashCalc(this_);
-  assert(StackAssert(this_));
+  StackHashReCalc(this_);
+  STK_ASSERT();
   return true;
 } /* End of 'StackPop' function */
 
@@ -172,11 +190,10 @@ bool StackPop( Stack<Data> *this_, Data *value )
 template <typename Data>
 void StackClose( Stack<Data> *this_ )
 {
-  assert(StackAssert(this_));
+  STK_ASSERT();
 
   free(this_->data);
   this_->size = 0;
-  this_->hash = StackHashCalc(this_);
 } /* End of 'StackClose' function */
 
 /**
@@ -191,61 +208,27 @@ bool StackOk( Stack<Data> *this_ )
   if (this_ == nullptr)
     return false;
 
-  if (this_->data == nullptr)
-  {
-    this_->error = STK_DATA_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(this_->data == nullptr, STK_DATA_ERROR);
 
-  if (this_->size < 0)
-  {
-    this_->error = STK_UNDERFLOW;
-    return false;
-  }
+  STACK_COND_CHECK(this_->size < 0, STK_UNDERFLOW);
 
-  if (this_->size > this_->maxsize)
-  {
-    this_->error = STK_OVERFLOW;
-    return false;
-  }
+  STACK_COND_CHECK(this_->size > this_->maxsize, STK_OVERFLOW);
 
-  if (this_->owl1 != owl1_control)
-  {
-    this_->error = STK_OWL1_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(this_->owl1 != owl1_control, STK_OWL1_ERROR);
 
-  if (this_->owl2 != owl2_control)
-  {
-    this_->error = STK_OWL2_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(this_->owl2 != owl2_control, STK_OWL2_ERROR);
 
   assert(this_->owldata1 != nullptr);
-  if (*(this_->owldata1) != owldata1_control)
-  {
-    this_->error = STK_OWLDATA1_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(*(this_->owldata1) != owldata1_control, STK_OWLDATA1_ERROR);
+  
   assert(this_->owldata2 != nullptr);
-  if (*(this_->owldata2) != owldata2_control)
-  {
-    this_->error = STK_OWLDATA2_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(*(this_->owldata2) != owldata2_control, STK_OWLDATA2_ERROR);
 
   unsigned prev_hash = this_->hash;
-  if (StackHashCalc(this_) != prev_hash)
-  {
-    this_->error = STK_HASH_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(StackHashReCalc(this_) != prev_hash, STK_HASH_ERROR);
 
-  if (StackCountPoi(this_, this_->size) != this_->maxsize - this_->size)
-  {
-    this_->error = STK_POI_ERROR;
-    return false;
-  }
+  STACK_COND_CHECK(StackCountPoi(this_, this_->size) != this_->maxsize - this_->size, 
+                   STK_POI_ERROR);
   return true;
 } /* End of 'StackOk' function */
 
@@ -288,55 +271,48 @@ unsigned StackCountPoi( Stack<Data> *this_, size_t num )
  * \return None.
  */
 template <typename Data>
-void Stack_Process_Error( Stack<Data> *this_ )
+void Stack_Process_Error( Stack<Data> *this_, const char filename[],
+                          int line, const char funcname[] )
 {
+  #define STACK_DUMP_CASE(ERR_CODE, STR)  case ERR_CODE:                                      \
+                                           StackDump(this_, STR, filename, line, funcname);   \
+                                           break;
+
   if (this_ == nullptr)
   {
-    StackDump(this_, "", stack_location);
+    StackDump(this_, "", STACK_LOCATION);
     return;
   }
   switch (this_->error)
   {
-  case STK_DATA_ERROR:
-    StackDump(this_, "Data was nullptr", stack_location);
-    break;
-  case STK_HASH_ERROR:
-    StackDump(this_, "Different hashes", stack_location);
-    break;
-  case STK_OVERFLOW:
-    StackDump(this_, "Stack overflow", stack_location);
-    break;
-  case STK_OWL1_ERROR:
-    StackDump(this_, "First owl have broken", stack_location);
-    break;
-  case STK_OWL2_ERROR:
-    StackDump(this_, "Second owl have broken", stack_location);
-    break;
-  case STK_SIZE_ERROR:
-    StackDump(this_, "Incorrect size value", stack_location);
-    break;
-  case STK_UNDERFLOW:
-    StackDump(this_, "Stack underflow", stack_location);
-    break;
-  case STK_NEW_SIZE_ERROR:
-    StackDump(this_, "New size too small", stack_location);
-    break;
-  case STK_MEM_ERROR:
-    StackDump(this_, "No free memory for stack", stack_location);
-    break;
-  case STK_POI_ERROR:
-    StackDump(this_, "Poison values have broken", stack_location);
-    break;
-  case STK_OWLDATA1_ERROR:
-    StackDump(this_, "First data owl have broken", stack_location);
-    break;
-  case STK_OWLDATA2_ERROR:
-    StackDump(this_, "Second data owl have broken", stack_location);
-    break;
+  STACK_DUMP_CASE(STK_DATA_ERROR, "Data was nullptr");
+
+  STACK_DUMP_CASE(STK_HASH_ERROR, "Different hashes");
+
+  STACK_DUMP_CASE(STK_OVERFLOW, "Stack overflow");
+
+  STACK_DUMP_CASE(STK_OWL1_ERROR, "First owl have broken");
+
+  STACK_DUMP_CASE(STK_OWL2_ERROR, "Second owl have broken");
+
+  STACK_DUMP_CASE(STK_SIZE_ERROR, "Incorrect size value");
+
+  STACK_DUMP_CASE(STK_UNDERFLOW, "Stack underflow");
+
+  STACK_DUMP_CASE(STK_NEW_SIZE_ERROR, "New size too small");
+
+  STACK_DUMP_CASE(STK_MEM_ERROR, "No free memory for stack");
+
+  STACK_DUMP_CASE(STK_POI_ERROR, "Poison values have broken");
+
+  STACK_DUMP_CASE(STK_OWLDATA1_ERROR, "First data owl have broken");
+
+  STACK_DUMP_CASE(STK_OWLDATA2_ERROR, "Second data owl have broken");
   default:
     printf("Unrecognized error code = %d\n", this_->error);
     break;
   }
+#undef STACK_DUMP_CASE
 } /* End of 'Stack_Process_Error' function */
 
 /**
@@ -350,7 +326,7 @@ void Stack_Process_Error( Stack<Data> *this_ )
  */
 template <typename Data>
 void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
-  int line, const char funcname[] )
+                int line, const char funcname[] )
 {
   if (this_ == nullptr)
   {
@@ -370,6 +346,8 @@ void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
     " - NULLPTR!!!" : "");
   printf("  {\n");
   if (this_->data != nullptr)
+  {
+    printf("  owldata1 = %llX\n", *(this_->owldata1));
     for (int i = 0; i < this_->maxsize; i++)
     {
       printf("  %c [%d] = ", i < this_->size ? '*' : ' ', i);
@@ -378,6 +356,8 @@ void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
         printf(" (POISON ?)");
       printf("\n");
     }
+    printf("  owldata2 = %llX\n", *(this_->owldata2));
+  }
   printf("  }\n");
   printf("  error = %d (%s)\n", this_->error, this_->error ? reason : "ok");
   printf("  owl2 = %llX\n", this_->owl2);
@@ -411,7 +391,7 @@ unsigned HashCalc( const Data *this_, size_t size = 1 )
  * \warning This function also write new hash value to stack structure.
  */
 template <typename Data>
-unsigned StackHashCalc( Stack<Data> *this_ )
+unsigned StackHashReCalc( Stack<Data> *this_ )
 {
   assert(this_ != nullptr);
   
@@ -429,10 +409,11 @@ unsigned StackHashCalc( Stack<Data> *this_ )
 template <typename Data>
 bool StackResize( Stack<Data> *this_, size_t new_size )
 {
-  assert(StackAssert(this_));
+  STK_ASSERT();
   if (new_size < stack_start_size)
   {
     this_->error = STK_NEW_SIZE_ERROR;
+    STK_ASSERT();
     return false;
   }
   char *new_mem = (char *)realloc(this_->data, new_size * sizeof(Data) +
@@ -440,6 +421,7 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
   if (new_mem == nullptr)
   {
     this_->error = STK_MEM_ERROR;
+    STK_ASSERT();
     return false;
   }
 
@@ -448,6 +430,7 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
   StackFillPoi(this_, this_->size);
   this_->owldata2 = ((canary_t *)((Data *)(this_->data + sizeof(canary_t)) + this_->maxsize));
   *(this_->owldata2)  = owldata2_control;
+  STK_ASSERT();
   return true;
 } /* End of 'StackResize' function */
 
@@ -459,11 +442,17 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
  * \return false otherwise.
  */
 template <typename Data>
-bool StackAssert( Stack<Data> *this_ )
+bool StackAssert( Stack<Data> *this_, const char filename[],
+                  int line, const char funcname[])
 {
+  if (this_->error != 0)
+  {
+    Stack_Process_Error(this_, filename, line, funcname);
+    return false;
+  }
   if (!StackOk(this_))
   {
-    Stack_Process_Error(this_);
+    Stack_Process_Error(this_, filename, line, funcname);
     return false;
   }
   return true;
@@ -490,7 +479,7 @@ Data Clamp( Data value, Data min, Data max )
 template <typename Data>
 void StackProcLoop( Stack<Data> *this_ )
 {
-  assert(StackAssert(this_));
+  STK_ASSERT();
   int prmt = 0;
   const char *types[4] = {"%d", "%f", "%lg", "%c"};
   int chosen_type = 0;
@@ -515,14 +504,14 @@ void StackProcLoop( Stack<Data> *this_ )
         types[chosen_type], &push);
       assert(OK);
       if (!StackPush(this_, push))
-        assert(StackAssert(this_));
+        STK_ASSERT();
       else
         printf("Push succeed\n");
       break;
     case 2:
       Data pop;
       if (!StackPop(this_, &pop))
-        assert(StackAssert(this_));
+        STK_ASSERT();
       else
       {
         printf("Popped value:");
@@ -531,11 +520,11 @@ void StackProcLoop( Stack<Data> *this_ )
       }
       break;
     case 3:
-      StackDump(this_, "Just info", stack_location);
+      StackDump(this_, "Just info", STACK_LOCATION);
       break;
     default:
       printf("Unrecognized switch\n");
-        break;
+      break;
     }
   }
 }
