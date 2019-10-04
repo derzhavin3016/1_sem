@@ -26,12 +26,13 @@
 
 #define STK_ASSERT() assert(StackAssert(this_, STACK_LOCATION))
 
-
+#define STK_DATA(i) ((Data *)(this_->data + sizeof(canary_t)))[i]
 
 const size_t stack_start_size = 6;
 const size_t stack_delta = 2;
 
 typedef unsigned long long canary_t;
+typedef unsigned long long hash_t;
 
 const canary_t owl1_control = 0xDEADBEEF;
 const canary_t owl2_control = 0xBEDAFADE;
@@ -49,24 +50,24 @@ struct Stack
   canary_t *owldata1, *owldata2;
   int size, maxsize;
   int error;
-  unsigned hash;
+  hash_t hash;
   canary_t owl2;
 };
 
 enum STK_ERR
 {
-  STK_UNDERFLOW =   -1,
-  STK_OVERFLOW  =    1,
-  STK_OWL1_ERROR,   //2
-  STK_OWL2_ERROR,   //3
-  STK_HASH_ERROR,   //4
-  STK_SIZE_ERROR,   //5
-  STK_DATA_ERROR,   //6
-  STK_MEM_ERROR,    //7
-  STK_NEW_SIZE_ERROR, //8
-  STK_POI_ERROR,     //9
-  STK_OWLDATA1_ERROR,   //10
-  STK_OWLDATA2_ERROR,   //11
+  STK_UNDERFLOW        =    -1,
+  STK_OVERFLOW         =     1,
+  STK_OWL1_ERROR       =     2,
+  STK_OWL2_ERROR       =     3,
+  STK_HASH_ERROR       =     4,
+  STK_SIZE_ERROR       =     5,
+  STK_DATA_ERROR       =     6,
+  STK_MEM_ERROR        =     7,
+  STK_NEW_SIZE_ERROR   =     8,
+  STK_POI_ERROR        =     9,
+  STK_OWLDATA1_ERROR   =    10,
+  STK_OWLDATA2_ERROR   =    11,
 };
 
 /**
@@ -109,14 +110,14 @@ bool StackInit( Stack<Data> *this_ )
   this_->owl1 = owl1_control;
   this_->size = 0;
   this_->maxsize = stack_start_size;
+  this_->error = 0;
+  this_->hash = 0;
+  this_->owl2 = owl2_control;
   if (!StackDataCalloc(this_))
   {
     STK_ASSERT();
     return false;
   }
-  this_->error = 0;
-  this_->hash = 0;
-  this_->owl2 = owl2_control;
   StackHashReCalc(this_);
 
   STK_ASSERT();
@@ -142,7 +143,7 @@ bool StackPush( Stack<Data> *this_, Data value )
       return false;
     }
 
-  ((Data *)(this_->data + sizeof(canary_t)))[this_->size++] = value;
+  STK_DATA(this_->size++) = value;
   StackHashReCalc(this_);
 
   STK_ASSERT();
@@ -175,7 +176,7 @@ bool StackPop( Stack<Data> *this_, Data *value )
       return false;
     }
 
-  *value = ((Data *)(this_->data + sizeof(canary_t)))[--this_->size];
+  *value = STK_DATA(--this_->size);
   StackFillPoi(this_, this_->size);
   StackHashReCalc(this_);
   STK_ASSERT();
@@ -224,12 +225,13 @@ bool StackOk( Stack<Data> *this_ )
   assert(this_->owldata2 != nullptr);
   STACK_COND_CHECK(*(this_->owldata2) != owldata2_control, STK_OWLDATA2_ERROR);
 
-  unsigned prev_hash = this_->hash;
+  hash_t prev_hash = this_->hash;
   STACK_COND_CHECK(StackHashReCalc(this_) != prev_hash, STK_HASH_ERROR);
 
   STACK_COND_CHECK(StackCountPoi(this_, this_->size) != this_->maxsize - this_->size, 
                    STK_POI_ERROR);
   return true;
+
 } /* End of 'StackOk' function */
 
 /**
@@ -244,7 +246,7 @@ void StackFillPoi( Stack<Data> *this_, size_t num )
   assert(this_ != nullptr);
 
   for (size_t i = num; i < (size_t)this_->maxsize; i++)
-    ((Data *)(this_->data + sizeof(canary_t)))[i] = stack_poison_value<Data>;
+    STK_DATA(i) = stack_poison_value<Data>;
 } /* End of 'StackFillPoi' function */
 
 /**
@@ -260,7 +262,7 @@ unsigned StackCountPoi( Stack<Data> *this_, size_t num )
   unsigned poi_cnt = 0;
 
   for (size_t i = num; i < (size_t)this_->maxsize; i++)
-    poi_cnt += ((Data *)(this_->data + sizeof(canary_t)))[i] == stack_poison_value<Data>;
+    poi_cnt += STK_DATA(i) == stack_poison_value<Data>;
 
   return poi_cnt;
 } /* End of 'StackCountPoi' function */
@@ -371,15 +373,15 @@ void StackDump( Stack<Data> *this_, const char reason[], const char filename[],
  * \return Calculated hash.
  */
 template <typename Data>
-unsigned HashCalc( const Data *this_, size_t size = 1 )
+hash_t HashCalc( const Data *this_, size_t size = 1 )
 {
   assert(this_ != nullptr);
   const unsigned char *bytes = (unsigned char *)this_;
   size_t bytes_len = sizeof(*this_) * size;
-  unsigned hash = 0;
+  hash_t hash = 0;
 
   for (size_t i = 0; i < bytes_len; i++)
-    hash += i * (bytes[i] << (i % 4));
+    hash += (i + 1) * (bytes[i] << (i % 4));
 
   return hash;
 } /* End of 'HashCalc' function */
@@ -391,12 +393,15 @@ unsigned HashCalc( const Data *this_, size_t size = 1 )
  * \warning This function also write new hash value to stack structure.
  */
 template <typename Data>
-unsigned StackHashReCalc( Stack<Data> *this_ )
+hash_t StackHashReCalc( Stack<Data> *this_ )
 {
   assert(this_ != nullptr);
   
   this_->hash = 0;
-  return this_->hash = HashCalc(this_) + HashCalc(this_->data, this_->maxsize);
+  this_->hash = HashCalc(this_) + 
+                HashCalc(this_->data, this_->maxsize * sizeof(Data) + 2 * sizeof(canary_t));
+
+  return this_->hash;
 } /* End of 'StackHashCalc' function */
 
 /**
@@ -529,7 +534,19 @@ void StackProcLoop( Stack<Data> *this_ )
   }
 }
 
-
+/**
+ * \brief Swap two values function by pointers (template).
+ * \param [out]   *a  Pointer to first value.
+ * \param [out]   *b  Pointer to second value.
+ * \return None.
+ */
+template <typename Data>
+void Swap( Data* A, Data *B )
+{
+  Data tmp = *A;
+  *A = *B;
+  *B = tmp;
+} /* End of 'Swap' function */
 
 #endif /* __stack_h_ */
 
