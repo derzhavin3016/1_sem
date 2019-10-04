@@ -418,7 +418,7 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
   if (new_size < stack_start_size)
   {
     this_->error = STK_NEW_SIZE_ERROR;
-    STK_ASSERT();
+    //STK_ASSERT();
     return false;
   }
   char *new_mem = (char *)realloc(this_->data, new_size * sizeof(Data) +
@@ -426,7 +426,7 @@ bool StackResize( Stack<Data> *this_, size_t new_size )
   if (new_mem == nullptr)
   {
     this_->error = STK_MEM_ERROR;
-    STK_ASSERT();
+    //STK_ASSERT();
     return false;
   }
 
