@@ -15,77 +15,49 @@ ad6Asm::ad6Asm( void )
 } /* End of Assembler constructor */
 
 /**
- * \brief Program assemble function.
+ * \brief Program Assembly function.
+ * \param [in] file_in   Name of a file to read from.
+ * \param [in] file_out  Name of a file to write to.
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6Asm::Assembly( void )
+bool ad6Asm::Assembly( const char file_in[], const char file_out[] )
 {
-  char file_name[MAX_NAME] = {{0}};
-  int IsOk = Input("# Stack calculator from the file program.\n\n"
-                   "Input file name to start: ", "%s", file_name);
-  COND_CHECK(!IsOk);
-  COND_CHECK(!FillTxtFromFile(file_name));
+  COND_CHECK(!FillTxtFromFile(file_in));
   
   buf_out = (char *)calloc(buf_in_size, sizeof(buf_out[0]));
   COND_CHECK(buf_out == nullptr);
   char *bptr = buf_out + 2 * sizeof(int);
 
-  *(int *)buf_out = signature;
+  *(int *)buf_out = AD6_SIGNATURE;
   *((int *)buf_out + 1) = AD6_VER_NO;
   buf_out_size += 2 * sizeof(int);
   for (size_t PC = 0; PC < prog_size; PC++)
   {
     char promt[MAX_NAME] = {{0}};
-    int pos = 0;
+    int pos = 0;  
     if (sscanf(prog[PC].str, "%s %n", promt, &pos) != 1)
       return false;
-    if (!StrCompareBegin(promt, "end"))
-    {
-      *bptr++ = AD6ASM_END;
-      *bptr++ = '\n';
-      buf_out_size += 2;
-    }
-    else if (!StrCompareBegin(promt, "push"))
-    {
-      int num_push = 0;
-      if (sscanf(prog[PC].str + pos, " %d", &num_push) == 1)
-      {
-        *bptr++ = AD6ASM_PUSH_NUM;
-        *((int *)bptr) = num_push * 1000;
-        bptr = (char *)((int *)bptr + 1);
-        *bptr++ = '\n';
-        buf_out_size += 2 + sizeof(int);
-      }
-      else
-      {
-        printf("Error. No argument for push command in line %d\n", PC + 1);
-        return false;
-      }
-    }
-    else if (!StrCompareBegin(promt, "pop"))
-    {
-      *bptr++ = AD6ASM_POP;
-      *bptr++ = '\n';
-      buf_out_size += 2;
-    }
-    else if (!StrCompareBegin(promt, "add"))
-    {
-      *bptr++ = AD6ASM_ADD;
-      *bptr++ = '\n';
-      buf_out_size += 2;
-    }
+    if (0);
+#define DEF_CMD(name, num, len, code, syntax) \
+    else if (StrCompareBegin(promt, #name) == 0)    \
+    {                                         \
+      *bptr++ = num;                          \
+      buf_out_size++;                         \
+      syntax                                  \
+    } 
+    
+#include "../commands.h"
+
     else
     {
       printf("Unrecognized command: '%s'\n", promt);
       return false;
     }
   }
+  COND_CHECK(!PutBufToFile(file_out, buf_out, buf_out_size));
 
-  IsOk = Input("Input file name to save code: ", "%s", file_name);
-  COND_CHECK(!IsOk);
-  COND_CHECK(!PutTxtToFile(file_name));
-
+#undef DEF_CMD
   return true;
 } /* End of 'Assembly' function */
 
@@ -99,25 +71,6 @@ ad6Asm::~ad6Asm( void )
   free(buf_in);
   free(buf_out);
 } /* End of Assembler destructor */
-
-/**
- * \brief Assembler put compiled program to file function.
- * \param file_name  Name of a file to write.
- * \return true if all is ok.
- * \return false otherwise.
- */
-bool ad6Asm::PutTxtToFile( const char file_name[] )
-{
-  FILE *out = fopen(file_name, "wb");
-
-  COND_CHECK(out == nullptr);
-
-
-  fwrite(buf_out, sizeof(char), buf_out_size, out);
-
-  fclose(out);
-  return true;
-} /* End of 'PutTxtToFile' function */
 
 /**
  * \brief Assembler get text of program from file function.

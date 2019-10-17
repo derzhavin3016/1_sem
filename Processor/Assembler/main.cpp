@@ -1,9 +1,10 @@
 #include "asm.h"
 
-int main( void )
+int main( int argc, char *argv[] )
 {
   ad6Asm asmblr;
-  if (!asmblr.Assembly())
+  StrConcat(argv[2], ".adasm");
+  if (!asmblr.Assembly(argv[1], argv[2]))
     printf("ERROR\n");
 
   return 0;
