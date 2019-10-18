@@ -41,13 +41,13 @@ bool ad6Disasm::Disassembly( const char file_in[], const char file_out[] )
   while (bptr_in - buf_in != buf_in_size)  
   {
     char *prev = nullptr;
-#define DEF_CMD(name, num, len, code, syntax)   \
+#define DEF_CMD(name, num, len, code_pr, syntax_asm, makecode)   \
     case num:                                   \
       sprintf(bptr_o, #name " ");               \
       prev = bptr_o;                            \
       bptr_o += strlen(#name) + 1;              \
       bptr_in++;                                \
-      code;                                     \
+      code_pr;                                  \
       *bptr_o++ = '\n';                         \
       buf_out_size += bptr_o - prev;            \
       break;
