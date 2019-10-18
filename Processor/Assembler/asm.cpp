@@ -39,12 +39,12 @@ bool ad6Asm::Assembly( const char file_in[], const char file_out[] )
     if (sscanf(prog[PC].str, "%s %n", promt, &pos) != 1)
       return false;
     if (0);
-#define DEF_CMD(name, num, len, code, syntax) \
+#define DEF_CMD(name, num, len, code_pr, syntax_asm, makecode) \
     else if (StrCompareBegin(promt, #name) == 0)    \
     {                                         \
       *bptr++ = num;                          \
       buf_out_size++;                         \
-      syntax                                  \
+      syntax_asm                                  \
     } 
     
 #include "../commands.h"
