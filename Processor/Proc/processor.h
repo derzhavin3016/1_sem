@@ -3,25 +3,31 @@
 
 #include "../proc.h"
 
-class ad6Proc
+namespace ad6
 {
-public:
-  Stack<int> stk;
+  const size_t REGS_SIZE = 4;
+  const int MAX_JUMPS = 100;
+  const int FUNC_REC = 100;
+}
+
+class ad6::Proc
+{
+private:
   char *code;
   size_t code_size;
+  int regs[REGS_SIZE];
 public:
 
   // Default constructor
-  ad6Proc( void );
+  Proc( void );
 
   bool Execute( const char file_in[] );
 
+  bool InputCoeffs( double a, double b, double c );
+
   // Destructor
-  ~ad6Proc( void );
-
-private:
-
-  bool FillBuf( const char file_in[] );
+  ~Proc( void );
 };
+
 
 #endif /* __PROCESSOR_H_ */

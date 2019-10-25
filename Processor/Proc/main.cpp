@@ -1,11 +1,17 @@
 #include "processor.h"
 
-int main( void )
+int main( int arcgc, char *argv[] )
 {
-  ad6Proc prc;
+  ad6::Proc prc;
 
-  if (!prc.Execute("b.adasm"))
-    printf("ERROR");
-  prc.stk.Dump("check", STACK_LOCATION);
+  try
+  {
+    if (!prc.Execute("b.adasm"))
+      printf("ERROR");
+  }
+  catch (...)
+  {
+    printf("Stack Error\n");
+  }
   return 0;
 }

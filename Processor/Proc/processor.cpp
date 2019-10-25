@@ -3,11 +3,11 @@
 /**
  * \brief Processor class default constructor.
  */
-ad6Proc::ad6Proc( void )
+ad6::Proc::Proc( void ) : code(nullptr), code_size(0)
 {
-  code = nullptr;
-  code_size = 0;
-} /* End of 'ad6Proc' function */
+  for (size_t i = 0; i < REGS_SIZE; i++)
+    regs[i] = 0;
+} /* End of 'Proc' function */
 
 /**
  * \brief Processor class default constructor.
@@ -15,30 +15,33 @@ ad6Proc::ad6Proc( void )
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6Proc::Execute( const char file_in[] )
+bool ad6::Proc::Execute( const char file_in[] )
 {
   assert(file_in != nullptr);
 
-  if (!FillBuf(file_in))
-    return false;
+  CHECK_FILL_BUF;
 
   char *code_ptr = (char *)((int *)code + 2);
-  if (*((int *)code) != AD6_SIGNATURE)
+  if (*((int *)code) != SIGNATURE)
   {
     printf("Incorrect signature: %d\n", *((int *)code));
     return false;
   }
-  while (code_ptr - code != code_size)  
-  {
-#define DEF_CMD(name, num, len, code_pr, syntax_asm_asm, makecode)   \
+
+  Stack<int> stk, func_stk;
+
+  #define DEF_CMD(name, num, len, code_pr, syntax_asm_asm, makecode)   \
     case num:                                   \
       code_ptr++;                               \
       makecode;                                 \
       break;                                    \
 
+  int jmp_counter = 0;
+  while (code_ptr - code != code_size)  
+  {
     switch(*code_ptr)
     {
-#include "..\commands.h"
+    #include "..\commands.h"
     default:
       printf("Incorrect number of command: %c\n", *code_ptr);
       return false;
@@ -50,32 +53,27 @@ bool ad6Proc::Execute( const char file_in[] )
   return true;
 } /* End of 'Execute' function */
 
-
-/**
- * \brief Fill buffer with bynary code from file function.
- * \param [in] file_in  Name of a file with binary code.
- * \return true if all is OK.
- * \return false otherwise.
- */
-bool ad6Proc::FillBuf( const char file_in[] )
-{
-  assert(file_in != nullptr);
-
-  int err = 0;
-  code = LoadAndCreateStrings(file_in, &code_size, &err);
-  if (code == nullptr)
-  {
-    LACS_Process_Error(err);
-    return false;
-  }
-
-  return true;
-} /* End of 'FillBuf' function */
-
 /**
  * \brief Processor class default destructor.
  */
-ad6Proc::~ad6Proc( void )
+ad6::Proc::~Proc( void )
 {
+  if (code != nullptr)
+    free(code);
+} /* End of '~Proc' function */
 
-} /* End of '~ad6Proc' function */
+/**
+ * \brief Input coeffc to registers function.
+ * \param prc pointer to processor class.
+ * \param a, b, c, coefficients.
+ * \return true if all is OK.
+ * \return false otherwise.
+ */
+bool ad6::Proc::InputCoeffs( double a, double b, double c )
+{
+  regs[0] = a * ACCURACY;
+  regs[1] = b * ACCURACY;
+  regs[2] = c * ACCURACY;
+
+  return true;
+} /* End of 'InputCoeffs' function */
