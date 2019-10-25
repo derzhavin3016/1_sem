@@ -8,7 +8,7 @@
 
 #pragma warning (disable: 4244)
 
-const int ACCURACY = 1;
+const int ACCURACY = 1000;
 
 #define COND_CHECK(COND)    if (!(COND))        \
                               return false

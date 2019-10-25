@@ -110,7 +110,7 @@ DEF_CMD(SUB, 4, 1, {}, {},
 DEF_CMD(MUL, 5, 1, {}, {},
   {
     GET_FST_SEC_VALUES;
-    STK_PUSH((int)((double)(first * second) / ACCURACY));
+    STK_PUSH((int)((double)(first * second * 1.0) / ACCURACY));
   })
 
 DEF_CMD(DIV, 6, 1, {}, {},
@@ -121,13 +121,13 @@ DEF_CMD(DIV, 6, 1, {}, {},
       printf("ERROR!!! Dividing by zero.\n");
       return false;
     }
-    STK_PUSH((int)((double)ACCURACY * first / second));
+    STK_PUSH((int)((double)ACCURACY * first * 1.0 / second));
   })
 
 DEF_CMD(OUT, 7, 1, {}, {},
   {
     GET_VALUE;
-    printf("out : %lg\n", (double)value / ACCURACY);
+    printf("out : %lg\n", (double)value * 1.0 / ACCURACY);
   })
 
 DEF_CMD(SQRT, 8, 1, {}, {},
@@ -141,19 +141,19 @@ DEF_CMD(SQRT, 8, 1, {}, {},
       printf("ERROR!!! Square root from neg value.\n");
       return false;
     }
-    STK_PUSH(sqrt((int)((double)value / ACCURACY) * ACCURACY));
+    STK_PUSH((int)(sqrt(((double)value * 1.0 / ACCURACY)) * ACCURACY));
   })
 
 DEF_CMD(SIN, 9, 1, {}, {},
   {
     GET_VALUE;
-    STK_PUSH(sin((int)((double)value / ACCURACY) * ACCURACY));
+    STK_PUSH(sin((int)((double)value * 1.0 / ACCURACY) * ACCURACY));
   })
 
 DEF_CMD(COS, 10, 1, {}, {},
   {
     GET_VALUE;
-    STK_PUSH(cos((int)((double)value / ACCURACY) * ACCURACY));
+    STK_PUSH(cos((int)((double)value * 1.0 / ACCURACY) * ACCURACY));
   })
 
 #define JMP_DISASM  sprintf(bptr_o, "%d", CODE_INT);   \
