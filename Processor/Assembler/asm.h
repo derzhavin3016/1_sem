@@ -3,29 +3,38 @@
 
 #include "../proc.h"
 
-#define COND_CHECK(COND)    if (COND)        \
-                              return false
+const int MAX_MARKS = 1024;
+
+struct Mark
+{
+  const char *mrk;
+  int line;
+};
 
 
-const int MAX_NAME = 100;
-
-class ad6Asm
+class ad6::Asm
 {
 private:
   String *prog;
-  char *buf_in, *buf_out;
-  size_t prog_size, buf_in_size, buf_out_size;
+  Mark marks[MAX_MARKS];
+  char *code, *buf_out;
+  bool IsAsm;
+  size_t prog_size, code_size, buf_out_size, marks_size;
 public:
   
-  ad6Asm( void );
+  Asm( void );
   
   bool Assembly( const char file_in[], const char file_out[] );
 
-  ~ad6Asm( void );
+  ~Asm( void );
+
 private:
 
-  bool FillTxtFromFile( const char file_name[] );
+  bool TxtGet( const char file_in[] );
+
+  bool AsmParcer( const char file_in[] );
+
+  int FindMark( const char str[] );
 };
 
 #endif /* __ASM_H_ */
-
