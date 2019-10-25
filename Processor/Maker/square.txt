@@ -1,0 +1,91 @@
+push 1
+pop ax
+push 5
+pop bx
+push 6
+pop cx
+push 0
+push ax
+je linear   
+push 4
+push ax
+mul
+push cx
+mul
+push bx
+push bx
+mul
+sub
+pop dx
+push 0
+push dx
+jb neg_disc
+push 0
+push dx
+je zero_disc
+push 2
+out
+push 2
+push dx
+sqrt
+div
+pop dx
+push 2
+push ax
+mul
+push -1
+push bx
+mul
+div
+pop cx
+push dx
+push cx
+add
+out
+push dx
+push cx
+sub 
+out
+jmp fin
+zero_disc:
+push 1
+out
+push 2
+push ax
+mul
+push -1
+push bx
+mul
+div 
+out
+jmp fin
+neg_disc:
+push 0
+out
+jmp fin
+linear:
+push bx
+push 0
+je check_c
+push bx
+push cx
+push -1
+mul
+div
+push 1
+out
+out
+jmp fin    
+check_c:
+push cx
+push 0
+je zero
+push 0
+out
+jmp fin
+zero:
+push 4
+out
+jmp fin
+fin:
+end
