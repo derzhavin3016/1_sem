@@ -4,13 +4,12 @@
  * \brief Disassembler class constructor.
  * \return None.
  */
-ad6Disasm::ad6Disasm( void )
+ad6::Disasm::Disasm( void ) : code(nullptr),
+                              buf_out(nullptr),
+                              code_size(0),
+                              buf_out_size(0)
 {
-  buf_in = nullptr;
-  buf_out = nullptr;
-  buf_in_size = 0;
-  buf_out_size = 0;
-} /* End of 'ad6Disasm' function */
+} /* End of 'Disasm' function */
 
 /**
  * \brief Program disassemble function.
@@ -19,7 +18,7 @@ ad6Disasm::ad6Disasm( void )
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6Disasm::Disassembly( const char file_in[], const char file_out[] )
+bool ad6::Disasm::Disassembly( const char file_in[], const char file_out[] )
 {
   assert(file_in != nullptr);
   assert(file_out != nullptr);
@@ -27,36 +26,41 @@ bool ad6Disasm::Disassembly( const char file_in[], const char file_out[] )
   if (!FillPrgFromFile(file_in))
     return false;
   
-  buf_out = (char *)calloc(buf_in_size * 100, sizeof(buf_out[0]));
+  buf_out = (char *)calloc(code_size * 100, sizeof(buf_out[0]));
   if (buf_out == nullptr)
-    return false;
-
-  char *bptr_o = buf_out;
-  char *bptr_in = (char *)((int *)buf_in + 2);
-  if (*((int *)buf_in) != AD6_SIGNATURE)
   {
-    printf("Incorrect signature: %d\n", *((int *)buf_in));
+    printf("Error with buffer memory allocation\n");
     return false;
   }
-  while (bptr_in - buf_in != buf_in_size)  
+
+  char *bptr_o = buf_out;
+  char *code_ptr = (char *)((int *)code + 2);
+  if (*((int *)code) != SIGNATURE)
   {
-    char *prev = nullptr;
-#define DEF_CMD(name, num, len, code_pr, syntax_asm, makecode)   \
+    printf("Incorrect signature: %d\n", *((int *)code));
+    return false;
+  }
+
+  char *prev = nullptr;
+
+  #define DEF_CMD(name, num, len, code_pr, syntax_asm, makecode)   \
     case num:                                   \
       sprintf(bptr_o, #name " ");               \
       prev = bptr_o;                            \
       bptr_o += strlen(#name) + 1;              \
-      bptr_in++;                                \
+      code_ptr++;                                \
       code_pr;                                  \
       *bptr_o++ = '\n';                         \
       buf_out_size += bptr_o - prev;            \
       break;
 
-    switch(*bptr_in)
+  while (code_ptr - code != code_size)  
+  {
+    switch(*code_ptr)
     {
 #include "..\commands.h"
     default:
-      printf("Incorrect number of command: %c\n", *bptr_in);
+      printf("Incorrect number of command: %c\n", *code_ptr);
       return false;
     }
   }
@@ -74,12 +78,14 @@ bool ad6Disasm::Disassembly( const char file_in[], const char file_out[] )
  * \return true if all is ok.
  * \return false otherwise.
  */
-bool ad6Disasm::FillPrgFromFile( const char file_name[] )
+bool ad6::Disasm::FillPrgFromFile( const char file_name[] )
 {
+  assert(file_name != nullptr);
+
   int err_code = 0;
   
-  buf_in = LoadAndCreateStrings(file_name, &buf_in_size, &err_code);
-  if (buf_in == nullptr)
+  code = LoadAndCreateStrings(file_name, &code_size, &err_code);
+  if (code == nullptr)
   {
     LACS_Process_Error(err_code);
     return false;
@@ -92,8 +98,10 @@ bool ad6Disasm::FillPrgFromFile( const char file_name[] )
  * \brief Disassembler class destructor.
  * \return None.
  */
-ad6Disasm::~ad6Disasm( void )
+ad6::Disasm::~Disasm( void )
 {
-  free(buf_out);
-  free(buf_in);
-} /* End of '~ad6Disasm' function */
+  if (buf_out != nullptr)
+    free(buf_out);
+  if (code != nullptr)
+    free(code);
+} /* End of '~Disasm' function */

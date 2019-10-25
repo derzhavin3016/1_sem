@@ -3,24 +3,19 @@
 
 #include "../proc.h"
 
-#define COND_CHECK(COND)    if (COND)        \
-                              return false
 
-
-const int MAX_NAME = 100;
-
-class ad6Disasm
+class ad6::Disasm
 {
 private:
-  char *buf_in, *buf_out;
-  size_t buf_in_size, buf_out_size;
+  char *code, *buf_out;
+  size_t code_size, buf_out_size;
 public:
 
-  ad6Disasm( void );
+  Disasm( void );
   
   bool Disassembly( const char file_in[], const char file_out[] );
 
-  ~ad6Disasm( void );
+  ~Disasm( void );
 private:
 
   bool FillPrgFromFile( const char file_name[] );
