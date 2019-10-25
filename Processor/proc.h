@@ -6,17 +6,47 @@
 #include "Strings/strings.h"
 #include "Input/input.h"
 
-static int AD6_VER_NO = 0;
+#pragma warning (disable: 4244)
 
-const int AD6_SIGNATURE = 'A6DA';
+const int ACCURACY = 1;
 
-#define DEF_CMD(name, num, len, code, syntax) \
+#define COND_CHECK(COND)    if (!(COND))        \
+                              return false
+
+#define DEF_CMD(name, num, len, code_pr, syntax_asm, makecode) \
   ASM_CMD_##name = num,
 
-enum AD6ASM_CMD
+#define CHECK_FILL_BUF COND_CHECK((code = FillBuf(file_in, &code_size)) != nullptr)
+
+
+const int MAX_NAME = 100;
+
+namespace ad6
 {
-#include"commands.h"
-};
+  class Disasm;
+
+  class Asm;
+
+  class Proc;
+
+  const int SIGNATURE = 'A6DA';
+
+  static int VER_NO = 0;
+
+  struct File_Header
+  {
+    int sign;
+    int version;
+  };
+ 
+  
+  enum Asm_CMD
+  {
+  #include"commands.h"
+  };
+
+
+}
 
 #undef DEF_CMD
 
