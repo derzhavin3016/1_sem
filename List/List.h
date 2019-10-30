@@ -162,7 +162,7 @@ namespace ad6
      */
     bool Insert_bef( Data value, size_t num )
     {
-      if (elems[free].next == LAST_FREE)
+      if (elems[free_plc].next == LAST_FREE)
       {
         // assert here
         return false;
@@ -173,17 +173,17 @@ namespace ad6
         head = elem_num;
 
       // Assign values in new element
-      elems[free].data = value;
-      elems[free].next = elem_num;
-      elems[free].prev = elems[elem_num].prev;
+      elems[free_plc].data = value;
+      elems[free_plc].next = elem_num;
+      elems[free_plc].prev = elems[elem_num].prev;
 
       // Insert element in list
-      if (elems[free].prev != 0)
-        elems[elems[free].prev].next = free;
-      elems[elem_num].prev = free;
+      if (elems[free_plc].prev != 0)
+        elems[elems[free_plc].prev].next = free_plc;
+      elems[elem_num].prev = free_plc;
 
       // New first free element
-      free = elems[free].next;
+      free_plc = elems[free_plc].next;
       return true;
     } /* End of 'Insert_bef' function */
 
@@ -196,7 +196,7 @@ namespace ad6
      */
     bool Insert_af( Data value, size_t num )
     {
-      if (elems[free].next == LAST_FREE)
+      if (elems[free_plc].next == LAST_FREE)
       {
         // assert here
         return false;
@@ -207,17 +207,17 @@ namespace ad6
         tail = elem_num;
 
       // Assign values in new element
-      elems[free].data = value;
-      elems[free].prev = elem_num;
-      elems[free].next = elems[elem_num].next;
+      elems[free_plc].data = value;
+      elems[free_plc].prev = elem_num;
+      elems[free_plc].next = elems[elem_num].next;
 
       // Insert element in list
-      if (elems[free].next != 0)
-        elems[elems[free].next].prev = free;
-      elems[elem_num].next = free;
+      if (elems[free_plc].next != 0)
+        elems[elems[free_plc].next].prev = free_plc;
+      elems[elem_num].next = free_plc;
 
       // New first free element
-      free = elems[free].next;
+      free_plc = elems[free_plc].next;
       return true;
     } /* End of 'Insert_af' function */
 
