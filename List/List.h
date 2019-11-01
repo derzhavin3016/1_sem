@@ -35,62 +35,17 @@ Data Clamp( Data value, Data min, Data max )
   return value > max ? max : value < min ? min : value;
 } /* End of 'Clamp' function */
 
-// Template list class
+
+// Original namespace
 namespace ad6
 {
-  /**
-   * \brief Find max of two values function(template).
-   * \param [in] a, b values
-   * \return maximum of the values.
-   */
-  template <typename Data>
-  __inline Data Max( Data a, Data b )
-  {
-    return a > b ? a : b;
-  } /* End of 'Max' function */
-
-  enum LST_ERR
-  {
-    LST_UNDERFLOW        =    -1,
-    LST_OVERFLOW         =     1,
-    LST_SIZE_ERROR       =     2,
-    LST_DATA_ERROR       =     3,
-    LST_MEM_ERROR        =     4,
-    LST_NEW_SIZE_ERROR   =     5,
-    LST_POI_ERROR        =     6
-  };
-  
-// Constants
-  const size_t LIST_START_SIZE = 7;
-  const size_t LIST_DELTA = 3;
-  const int LAST_FREE = -2;
-  const int FREE_PREV = -1;
-
-  template <typename Data>
-  const Data LIST_POISON_VALUE = -6699;
-
-  template <typename Data>
-  struct list_elem
-  {
-  public:
-    Data data;
-    int next;
-    int prev;
-
-    // Default constructor
-    list_elem( void ) : data(0),
-                        next(0),
-                        prev(0)
-    {
-    }
-  };
-
+  // Template list class
   template <typename Data>
   class List
   {
   private:
     list_elem<Data> *elems;
-    int free_plc, head, tail;
+    size_t free_plc, head, tail;
     size_t size, maxsize;
     int error;
 
@@ -126,7 +81,7 @@ namespace ad6
     }
 
     /**
-     * \brief gwt actual number of the next element for current one.
+     * \brief get actual number of the next element for current one.
      * \param [in] num   actual number of element.
      * \return actual num of next element
      * \return -1 if num incorrect
@@ -139,6 +94,19 @@ namespace ad6
     } /* End of 'GetNext' function */
 
     /**
+     * \brief get actual number of the previous element for current one.
+     * \param [in] num   actual number of element.
+     * \return actual num of previous element
+     * \return -1 if num incorrect
+     */
+    int GetPrev( size_t num )
+    {
+      LIST_IF_COR_NUM;
+      LIST_IF_FREE;
+      return elems[num].prev;
+    } /* End of 'GetNext' function */
+
+    /**
      * \brief Push value to the end of list function (template).
      * \param [in]  value   Value to push.
      * \return actual number of inserted element if all is ok.
@@ -146,6 +114,7 @@ namespace ad6
      */
     int Push_tail( Data value )
     {
+      LST_ASSERT();
       LIST_FST_PUSH;
       return Insert_af(value, tail);
     } /* End of 'Push_tail' function */
@@ -158,6 +127,7 @@ namespace ad6
      */
     int Push_head( Data value )
     {
+      LST_ASSERT();
       LIST_FST_PUSH;
       return Insert_bef(value, head);
     } /* End of 'Push_head' function */
@@ -171,11 +141,14 @@ namespace ad6
      */
     int Insert_bef( Data value, size_t num )
     {
+      LST_ASSERT();
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
       LIST_IF_LAST_FREE;
       
       LIST_INSERT(next, prev, head);
+
+      LST_ASSERT();
       return new_num;
     } /* End of 'Insert_bef' function */
 
@@ -188,11 +161,15 @@ namespace ad6
      */
     int Insert_af( Data value, size_t num )
     {
+      LST_ASSERT();
+
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
       LIST_IF_LAST_FREE;
 
       LIST_INSERT(prev, next, tail);
+
+      LST_ASSERT();
       return new_num;
     } /* End of 'Insert_af' function */
 
@@ -204,10 +181,17 @@ namespace ad6
      */
     bool Delete( size_t num, Data *value = nullptr )
     {
+      LST_ASSERT();
+
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
       
-      LIST_COND_CHECK(size <= 0, LST_UNDERFLOW);
+      if (size <= 0)
+      {
+        error = LST_UNDERFLOW;
+        LST_ASSERT();
+        return false;
+      }
 
       if (value != nullptr)
         *value = elems[num].data;
@@ -230,13 +214,37 @@ namespace ad6
           elems[elems[num].next].prev = elems[num].prev;
         }
       }
+      else
+        head = tail = 0;
+
       elems[num].next = free_plc;
       elems[num].prev = -1;
       free_plc = num;
 
       size--;
+
+      LST_ASSERT();
       return true;
     } /* End of 'Pop' function */
+
+    /**
+     * \brief Clear list function
+     * \brief This function fetch list to the initial state.
+     * \warning After this function ALL data will be lost!
+     */
+    void Kill( void )
+    {
+      LST_ASSERT();
+      
+      size = 0;
+      head = tail = 0;
+      free_plc = 1;
+
+      ChangeSize(LIST_START_SIZE);
+      FillFree();
+
+      LST_ASSERT();
+    } /* End of 'Kill' function */
 
     /**
      * \brief List destructor function (template).
@@ -268,6 +276,7 @@ namespace ad6
       printf("  free_plc = %d\n", free_plc);
       printf("  head = %d\n  tail = %d\n  size = %d\n  maxsize = %d\n",
                 head,        tail,        size,        maxsize);
+      printf("  error = %d (%s)\n", error, reason);
 
       printf("  Number: ");
         for (size_t i = 0; i < maxsize; i++)
@@ -287,7 +296,7 @@ namespace ad6
         for (size_t i = 0; i < maxsize; i++)
           printf(" %05d |", elems[i].prev);
       printf("\n");
-      printf("}");
+      printf("}\n");
     } /* End of 'Dump' function */
 
   private:
@@ -318,18 +327,29 @@ namespace ad6
      * \brief Fill elems array as a fully free.
      * \brief Next with increasing values, prev with FREE_PREV.
      * \param [in] index     Start index. 1 default
+     * \param [in] IsCheck   Boolean variable, 
+     *  says if function need to check if the element free (false default).
      */
-    void FillFree( size_t index = 1 )
+    void FillFree( size_t index = 1, bool IsCheck = true )
     {
       assert(index > 0 && index < maxsize);
-      for (size_t i = index; i < maxsize; i++)
-      {
-        elems[i].next = i + 1;
-        elems[i].prev = FREE_PREV;
-      }
-      elems[maxsize - 1].next = LAST_FREE;
-    } /* End of ''FillFree' function */
 
+      LST_ASSERT();
+
+      size_t last = 0;
+      for (size_t i = index; i < maxsize; i++)  
+        if (IsCheck || elems[i].prev == FREE_PREV)
+        {
+          elems[i].data = 0;
+          elems[i].next = i + 1;
+          elems[i].prev = FREE_PREV;
+          last = i;
+        }
+
+        elems[last].next = LAST_FREE;
+
+        LST_ASSERT();
+    } /* End of 'FillFree' function */
 
     /**
      * \brief Find element in list by logical number.
@@ -339,6 +359,7 @@ namespace ad6
      */
     size_t Find( size_t num )
     {
+      LST_ASSERT();
       if (num >= size)
         return -1;
       size_t act = 0;
@@ -347,6 +368,7 @@ namespace ad6
       else
         act = GoHead(num);
       
+      LST_ASSERT();
       return act;
     } /* End of 'Find' function */
 
@@ -395,6 +417,17 @@ namespace ad6
      */
     bool ListOk( void )
     {
+      #define LIST_IF_BETWEEN(num)  ((num) > maxsize - 1 || (num) < 0)
+
+      LIST_COND_CHECK(elems == nullptr,                         LST_DATA_ERROR);
+      LIST_COND_CHECK(size < 0,                                 LST_UNDERFLOW);
+      LIST_COND_CHECK(size > maxsize,                           LST_OVERFLOW);
+      LIST_COND_CHECK(elems[0].data != LIST_POISON_VALUE<Data>, LST_POI_ERROR);
+      LIST_COND_CHECK(LIST_IF_BETWEEN(free_plc),                LST_NO_FREE_ERROR);
+      LIST_COND_CHECK(LIST_IF_BETWEEN(head),                    LST_HEAD_ERROR);
+      LIST_COND_CHECK(LIST_IF_BETWEEN(tail),                    LST_TAIL_ERROR);
+
+      #undef LIST_IF_BETWEEN
       return true;
     } /* End of 'ListOk' function */
 
@@ -410,6 +443,17 @@ namespace ad6
                                                break;
       switch (error)
       {
+        LIST_DUMP_CASE(LST_DATA_ERROR,      "Elems was nullptr");
+        LIST_DUMP_CASE(LST_HEAD_ERROR,      "Incorrect head value");
+        LIST_DUMP_CASE(LST_MEM_ERROR,       "No free memory for list");
+        LIST_DUMP_CASE(LST_NEW_SIZE_ERROR,  "New size is too small");
+        LIST_DUMP_CASE(LST_NO_FREE_ERROR,   "No free place in list");
+        LIST_DUMP_CASE(LST_OVERFLOW,        "List overflow");
+        LIST_DUMP_CASE(LST_POI_ERROR,       "Poison values have broken");
+        LIST_DUMP_CASE(LST_SIZE_ERROR,      "Incorrect size value");
+        LIST_DUMP_CASE(LST_TAIL_ERROR,      "Incorrect tail value");
+        LIST_DUMP_CASE(LST_UNDERFLOW,       "List underflow");
+
       default:
         printf("Unrecognized error code = %d\n", error);
         break;
@@ -426,7 +470,34 @@ namespace ad6
      */
     bool Resize( size_t new_size )
     {
-      assert(new_size < 0);
+      size_t prev_size = ChangeSize(new_size);
+
+      bool IsIncr = new_size > maxsize;
+
+      if (IsIncr)
+      {
+        elems[free_plc].next = prev_size;
+        FillFree(prev_size);
+      }
+      else
+        FillFree(1, true);
+
+      LST_ASSERT();
+      return true;
+    } /* End of 'Resize' function */
+
+    /**
+     * \brief Change list size function (only changes size)
+     * \param [in]  New size
+     * \return Previous size
+     */
+    size_t ChangeSize( size_t new_size )
+    {
+      assert(new_size >= 0);
+      LST_ASSERT();
+
+      if (new_size == maxsize)
+        return true;
 
       LIST_COND_CHECK(new_size < LIST_START_SIZE, LST_NEW_SIZE_ERROR);
 
@@ -437,11 +508,9 @@ namespace ad6
       elems = new_mem;
       size_t prev_size = maxsize;
       maxsize = new_size;
-      FillFree(prev_size);
 
-      return true;
-    } /* End of 'Resize' function */
-
+      return prev_size;
+    } /* End of 'ChangeSize' function */
 
     /**
      * \brief List assertion function (template).
@@ -479,6 +548,7 @@ void ListProcLoop( ad6::List<Data> *this_ )
   int chosen_type = 0;
   int _where = 0;
   Data ins = 0;
+  char promt = 0;
   while(1)
   {
     int OK = InputNumbers(LST_START_PROMT, "*** Input number to start:\n",
@@ -531,16 +601,25 @@ void ListProcLoop( ad6::List<Data> *this_ )
         printf("Insert succeed\n");
       break;
     case 5:
-      OK = InputNumbers("DELETE\n", "Input number where to insert:\n",
+      OK = InputNumbers("DELETE\n", "Input number to delete:\n",
         "%d", &_where);
       assert(OK);
       if (!this_->Delete(_where))
         return;
       else
-        printf("Insert succeed\n");
+        printf("Delete succeed\n");
       break;
     case 6:
       this_->Dump("Just info", LIST_LOCATION);
+      break;
+    case 7:
+      printf("Wow, man, not so fast, calm down.\n"
+             "Are you sure?\n"
+             "I will kill all your data.\n");
+      promt = getchar();
+      if (promt == 'Y' || promt == 'y')
+         this_->Kill();
+      printf("OK, this is your choice....\n")
       break;
     default:
       printf("Unrecognized switch\n");

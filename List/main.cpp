@@ -6,8 +6,14 @@ using namespace ad6;
 int main( void )
 {
   List<int> lst;
-  
-  ListProcLoop(&lst);
+  try
+  {
+    ListProcLoop(&lst);
+  }
+  catch (...)
+  {
+    printf("ERROR!!!\n");
+  }
 
   return 0;
 }
