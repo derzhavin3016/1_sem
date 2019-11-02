@@ -17,6 +17,13 @@
 
 #define CODE_INT *((int *)code_ptr)
 
+#define GET_REG(STR, CHECK, CMD)   else if (sscanf(prog[PC].str + pos, STR, &reg_push, &reg_check) == 2 &&                    \
+                                            toupper(reg_check) == CHECK)                                                      \
+                                   {                                                                                          \
+                                     *(bptr - 1) = CMD;                                                                       \
+                                     *bptr++ = toupper(reg_push) - 'A' + 1;                                                   \
+                                     buf_out_size++;                                                                          \
+                                   }
 
 DEF_CMD(PUSH, 1, 2,
   {
@@ -27,17 +34,25 @@ DEF_CMD(PUSH, 1, 2,
   {
     int num_push = 0;
     char reg_push = 0 _ reg_check = 0;
+     
 
-    if (sscanf(prog[PC].str + pos _ " %d" _ & num_push) == 1)
+    if (sscanf(prog[PC].str + pos, " %d", &num_push) == 1)
     {
       *((int *)bptr) = num_push * ACCURACY;
       bptr = (char *)((int *)bptr + 1);
       buf_out_size += DATA_SIZE;
     }
-    else if (sscanf(prog[PC].str + pos _ " %c%c" _ & reg_push _ & reg_check) == 2 &&
+    else if (sscanf(prog[PC].str + pos, " %c%c", &reg_push, &reg_check) == 2 &&
              toupper(reg_check) == 'X')
     {
       *(bptr - 1) = ASM_CMD_PUSH_REG;
+      *bptr++ = toupper(reg_push) - 'A' + 1;
+      buf_out_size++;
+    }
+    else if (sscanf(prog[PC].str + pos, " %c%c", &reg_check, &reg_push) == 2 &&
+             reg_check == '[')
+    {
+      *(bptr - 1) = ASM_CMD_PUSH_RAM;
       *bptr++ = toupper(reg_push) - 'A' + 1;
       buf_out_size++;
     }
@@ -62,7 +77,7 @@ DEF_CMD(PUSH_REG, 11, 2,
   {
       sprintf(bptr_o - 5 _ "    ");
       bptr_o -= 4;
-    PUT_REG;
+      PUT_REG;
   },
   {
   },
@@ -70,6 +85,29 @@ DEF_CMD(PUSH_REG, 11, 2,
     STK_PUSH(regs[*code_ptr - 1]);
     code_ptr++;
   })
+
+#define PUT_RAM {                                                          \
+                  sprintf(bptr_o _ "[%cX]" _ 'A' + *code_ptr - 1);         \
+                  bptr_o += 4;                                             \
+                  code_ptr++;                                              \
+                }
+
+DEF_CMD(PUSH_RAM, 12, 2,
+  {
+      sprintf(bptr_o - 5 _ "    ");
+      bptr_o -= 4;
+      PUT_RAM;
+  },
+  {
+  },
+  {
+    size_t num = regs[*code_ptr - 1];
+    num = Clamp(num, (size_t)0, RAM_SIZE - 1);
+    
+    STK_PUSH(RAM[num]);
+    code_ptr++;
+  })
+
 
 DEF_CMD(ADD, 2, 1, {}, {},
   {
@@ -82,11 +120,18 @@ DEF_CMD(POP, 3, 2,
     PUT_REG;
   },
   {
-    char reg_push = 0 _ reg_check = 0;
-    if (sscanf(prog[PC].str + pos _ " %c%c" _ &reg_push _ &reg_check) == 2 &&
+    char reg_pop = 0 _ reg_check = 0;
+    if ((sscanf(prog[PC].str + pos _ " %c%c" _ &reg_pop _ &reg_check) == 2) &&
              toupper(reg_check) == 'X')
     {
-      *bptr++ = toupper(reg_push) - 'A' + 1;
+      *bptr++ = toupper(reg_pop) - 'A' + 1;
+      buf_out_size++;
+    }
+    else if (sscanf(prog[PC].str + pos _ " %c%c" _ &reg_check _ &reg_pop) == 2 &&
+             reg_check == '[')
+    {
+      *(bptr - 1) = ASM_CMD_POP_RAM;
+      *bptr++ = toupper(reg_pop) - 'A' + 1;
       buf_out_size++;
     }
     else
@@ -100,6 +145,24 @@ DEF_CMD(POP, 3, 2,
       return false;
     code_ptr++;
   })
+
+DEF_CMD(POP_RAM, 31, 2, 
+  {
+    sprintf(bptr_o - 5 _ "    ");
+    bptr_o -= 4;
+    PUT_RAM;
+  },
+  {
+  },
+  {
+    size_t num = regs[*code_ptr - 1];
+    num = Clamp(num, (size_t)0, RAM_SIZE - 1);
+    
+    GET_VALUE;
+    RAM[num] = value;
+    code_ptr++;
+  })
+#undef PUT_RAM
 
 DEF_CMD(SUB, 4, 1, {}, {},
   {
@@ -189,7 +252,7 @@ DEF_CMD(COS, 10, 1, {}, {},
                                             return false;                                  \
                                           }                                                \
                                           GET_FST_SEC_VALUES;                              \
-                                          if (cond)                                        \
+                                           if (cond)                                        \
                                             code_ptr = (char *)(*((int *)code_ptr) + code);\
                                           else                                             \
                                             code_ptr += DATA_SIZE;                         \
@@ -224,7 +287,7 @@ DEF_JMP(JE, 25, first == second)
 
 DEF_JMP(JNE, 26, first != second)
 
-DEF_CMD(CALL, 30, 2,
+DEF_CMD(CALL, 40, 2,
   {
     JMP_DISASM;
   },
@@ -242,12 +305,21 @@ DEF_CMD(CALL, 30, 2,
     code_ptr = code + *((int *)code_ptr);
   })
 
-DEF_CMD(RET, 31, 1, {}, {},
+DEF_CMD(RET, 41, 1, {}, {},
   {
     int value = 0;
     if (!func_stk.Pop(&value))
       return false;
     code_ptr = code + value;
+  })
+
+
+    DEF_CMD(IN, 42, 1, {}, {},
+  {
+    int value = 0;
+
+    scanf("%d", &value);
+    STK_PUSH(value * ACCURACY);
   })
 
 DEF_CMD(END, 0, 1, {}, {},
