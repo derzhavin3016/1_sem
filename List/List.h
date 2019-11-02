@@ -69,13 +69,13 @@ namespace ad6
     } /* End of 'List' function */
 
     // Get actual number of head
-    int GetHead( void )
+    int GetHead( void ) const
     {
       return head;
     }
 
     // Get actual number of tail
-    int GetTail( void )
+    int GetTail( void ) const
     {
       return tail;
     }
@@ -86,7 +86,7 @@ namespace ad6
      * \return actual num of next element
      * \return -1 if num incorrect
      */
-    int GetNext( size_t num )
+    int GetNext( size_t num ) const
     {
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
@@ -99,7 +99,7 @@ namespace ad6
      * \return actual num of previous element
      * \return -1 if num incorrect
      */
-    int GetPrev( size_t num )
+    int GetPrev( size_t num ) const
     {
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
@@ -247,6 +247,46 @@ namespace ad6
     } /* End of 'Kill' function */
 
     /**
+     * \brief Find element in list by logical number.
+     * \param [in] num logical number
+     * \return actual element number.
+     * \return -1 if element was not find.
+     */
+    size_t Find( size_t num ) const
+    {
+      LST_ASSERT();
+      if (num >= size)
+        return -1;
+      size_t act = 0;
+      if (size - num <= num)
+        act = GoTail(num);
+      else
+        act = GoHead(num);
+      
+      LST_ASSERT();
+      return act;
+    } /* End of 'Find' function */
+
+    /**
+     * \brief Search value in list function.
+     * \param [in] value to search. 
+     * \return actual number of value if it was find
+     * \return -1 otherwise.
+     */
+    size_t FindValue( Data value ) const
+    {
+      LST_ASSERT();
+      size_t act = head;
+      while (act != 0)
+      {
+        if (elems[act].data == value)
+          return act;
+        act = elems[act].next;
+      }
+      return -1;
+    } /* End of 'FindValue' function */
+
+    /**
      * \brief List destructor function (template).
      * \param None.
      * \return None.
@@ -352,33 +392,12 @@ namespace ad6
     } /* End of 'FillFree' function */
 
     /**
-     * \brief Find element in list by logical number.
-     * \param [in] num logical number
-     * \return actual element number.
-     * \return -1 if element was not find.
-     */
-    size_t Find( size_t num )
-    {
-      LST_ASSERT();
-      if (num >= size)
-        return -1;
-      size_t act = 0;
-      if (size - num <= num)
-        act = GoTail(num);
-      else
-        act = GoHead(num);
-      
-      LST_ASSERT();
-      return act;
-    } /* End of 'Find' function */
-
-    /**
      * \brief Find element from tail by logical number.
      * \param [in] num logical number
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t GoTail( size_t num )
+    size_t GoTail( size_t num ) const
     {
       if (num >= size)
         return -1;
@@ -398,7 +417,7 @@ namespace ad6
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t GoHead( size_t num )
+    size_t GoHead( size_t num ) const
     {
       if (num >= size)
         return -1;
@@ -415,7 +434,7 @@ namespace ad6
      * \return true if all is ok.
      * \return false otherwise.
      */
-    bool ListOk( void )
+    bool ListOk( void ) const
     {
       #define LIST_IF_BETWEEN(num)  ((num) > maxsize - 1 || (num) < 0)
 
@@ -517,7 +536,7 @@ namespace ad6
      * \return true if all id OK.
      * \return false otherwise.
      */
-    bool Assert( const char filename[], int line, const char funcname[] )
+    bool Assert( const char filename[], int line, const char funcname[] ) const
     {
       if (error != 0)
       {
