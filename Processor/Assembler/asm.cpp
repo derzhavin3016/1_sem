@@ -17,12 +17,12 @@ ad6::Asm::Asm( void ) : prog_size(0),
 } /* End of Assembler constructor */
 
 /**
- * \brief Assembler parcer function.
+ * \brief Assembler parser function.
  * \param [in] file_in   Name of a file to read from.
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::Asm::AsmParcer( const char file_in[] )
+bool ad6::Asm::AsmParser( const char file_in[] )
 {
   assert(file_in != nullptr);
   COND_CHECK(TxtGet(file_in));
@@ -77,7 +77,7 @@ bool ad6::Asm::AsmParcer( const char file_in[] )
 #undef DEF_CMD
   IsAsm = true;
   return true;
-} /* End of 'AsmParcer' function */
+} /* End of 'AsmParser' function */
 
 /**
  * \brief Program Assembly function.
@@ -91,7 +91,7 @@ bool ad6::Asm::Assembly( const char file_in[], const char file_out[] )
   assert(file_in != nullptr);
   assert(file_out != nullptr);
 
-  if (!AsmParcer(file_in))
+  if (!AsmParser(file_in))
     return false;
   if (buf_out != nullptr)
   {
@@ -103,7 +103,12 @@ bool ad6::Asm::Assembly( const char file_in[], const char file_out[] )
     free(prog);
     prog_size = 0;
   }
-  if (!AsmParcer(file_in))
+  if (code != nullptr)
+  {
+    free(code);
+    code_size = 0;
+  }
+  if (!AsmParser(file_in))
     return false;
 
   COND_CHECK(PutBufToFile(file_out, buf_out, buf_out_size));

@@ -32,9 +32,15 @@ private:
 
   bool TxtGet( const char file_in[] );
 
-  bool AsmParcer( const char file_in[] );
+  bool AsmParser( const char file_in[] );
 
   int FindMark( const char str[] );
+
+  template <typename Data>
+  bool GetArgs( char *buf_ptr, Data* values, size_t amount )
+  {
+    
+  }
 };
 
 #endif /* __ASM_H_ */
