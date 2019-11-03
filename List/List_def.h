@@ -22,11 +22,11 @@
   "*** 7. KILL                             \n"   \
   "****************************************\n"   \
 
-#define LIST_COND_CHECK(COND, ERR_CODE) if (COND)                          \
-                                         {                                  \
-                                           error = ERR_CODE;                \
-                                           return false;                    \
-                                         }
+#define LIST_COND_CHECK(COND, ERR_CODE, ret) if (COND)                          \
+                                             {                                  \
+                                              error = ERR_CODE;                \
+                                               return ret;                      \
+                                             }
 
 #ifndef NDEBUG
   #define LST_ASSERT() if (!Assert(LIST_LOCATION)) \
@@ -39,7 +39,7 @@
   assert(elems[num].prev != LAST_FREE)
 
 #define LIST_IF_LAST_FREE if (elems[free_plc].next == LAST_FREE)  \
-                            Resize((maxsize - 1) * 2 + 1);
+                            Resize((maxsize - 1) * 2 + 1);        \
 
 #define LIST_FST_PUSH if (size == 0)                       \
                       {                                    \
@@ -104,7 +104,7 @@ namespace ad6
   };
   
   // Constants
-  const size_t LIST_START_SIZE = 3;
+  const size_t LIST_START_SIZE = 7;
   const size_t LIST_DELTA = 3;
   const int LAST_FREE = -2;
   const int FREE_PREV = -1;

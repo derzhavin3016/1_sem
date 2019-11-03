@@ -192,6 +192,15 @@ namespace ad6
         LST_ASSERT();
         return false;
       }
+      if (maxsize > LIST_START_SIZE &&
+          size == maxsize / 2 - LIST_DELTA)
+        if (!Resize(maxsize / 2))
+        {
+          LST_ASSERT();
+          return false;
+        }
+      
+
 
       if (value != nullptr)
         *value = elems[num].data;
@@ -434,19 +443,21 @@ namespace ad6
      * \return true if all is ok.
      * \return false otherwise.
      */
-    bool ListOk( void ) const
+    bool ListOk( void )
     {
       #define LIST_IF_BETWEEN(num)  ((num) > maxsize - 1 || (num) < 0)
+#define IS_OK_CHECK(cond, err) LIST_COND_CHECK(cond, err, false)
 
-      LIST_COND_CHECK(elems == nullptr,                         LST_DATA_ERROR);
-      LIST_COND_CHECK(size < 0,                                 LST_UNDERFLOW);
-      LIST_COND_CHECK(size > maxsize,                           LST_OVERFLOW);
-      LIST_COND_CHECK(elems[0].data != LIST_POISON_VALUE<Data>, LST_POI_ERROR);
-      LIST_COND_CHECK(LIST_IF_BETWEEN(free_plc),                LST_NO_FREE_ERROR);
-      LIST_COND_CHECK(LIST_IF_BETWEEN(head),                    LST_HEAD_ERROR);
-      LIST_COND_CHECK(LIST_IF_BETWEEN(tail),                    LST_TAIL_ERROR);
+      IS_OK_CHECK(elems == nullptr,                         LST_DATA_ERROR);
+      IS_OK_CHECK(size < 0,                                 LST_UNDERFLOW);
+      IS_OK_CHECK(size > maxsize,                           LST_OVERFLOW);
+      IS_OK_CHECK(elems[0].data != LIST_POISON_VALUE<Data>, LST_POI_ERROR);
+      IS_OK_CHECK(LIST_IF_BETWEEN(free_plc),                LST_NO_FREE_ERROR);
+      IS_OK_CHECK(LIST_IF_BETWEEN(head),                    LST_HEAD_ERROR);
+      IS_OK_CHECK(LIST_IF_BETWEEN(tail),                    LST_TAIL_ERROR);
 
       #undef LIST_IF_BETWEEN
+      #undef IS_OK_CHECK
       return true;
     } /* End of 'ListOk' function */
 
@@ -489,14 +500,22 @@ namespace ad6
      */
     bool Resize( size_t new_size )
     {
-      size_t prev_size = ChangeSize(new_size);
+      LST_ASSERT();
+
+      int prev_size = ChangeSize(new_size);
+
+      if (prev_size == -1)
+      {
+        LST_ASSERT();
+        return false;
+      }
 
       bool IsIncr = new_size > maxsize;
 
       if (IsIncr)
       {
-        elems[free_plc].next = prev_size;
-        FillFree(prev_size);
+        elems[free_plc].next = (size_t)prev_size;
+        FillFree((size_t)prev_size);
       }
       else
         FillFree(1, true);
@@ -510,7 +529,7 @@ namespace ad6
      * \param [in]  New size
      * \return Previous size
      */
-    size_t ChangeSize( size_t new_size )
+    int ChangeSize( size_t new_size )
     {
       assert(new_size >= 0);
       LST_ASSERT();
@@ -518,16 +537,19 @@ namespace ad6
       if (new_size == maxsize)
         return true;
 
-      LIST_COND_CHECK(new_size < LIST_START_SIZE, LST_NEW_SIZE_ERROR);
+      #define RES_COND_CHECK(cond, err)  LIST_COND_CHECK(cond, err, -1)
+
+      RES_COND_CHECK(new_size < LIST_START_SIZE, LST_NEW_SIZE_ERROR);
 
       list_elem<Data> *new_mem = (list_elem<Data> *)realloc(elems, new_size * sizeof(list_elem<Data>));
 
-      LIST_COND_CHECK(new_mem == nullptr, LST_MEM_ERROR);
+      RES_COND_CHECK(new_mem == nullptr, LST_MEM_ERROR);
 
       elems = new_mem;
       size_t prev_size = maxsize;
       maxsize = new_size;
 
+      #undef RES_COND_CHECK
       return prev_size;
     } /* End of 'ChangeSize' function */
 
@@ -536,7 +558,7 @@ namespace ad6
      * \return true if all id OK.
      * \return false otherwise.
      */
-    bool Assert( const char filename[], int line, const char funcname[] ) const
+    bool Assert( const char filename[], int line, const char funcname[] )
     {
       if (error != 0)
       {
@@ -637,8 +659,10 @@ void ListProcLoop( ad6::List<Data> *this_ )
              "I will kill all your data.\n");
       promt = getchar();
       if (promt == 'Y' || promt == 'y')
-         this_->Kill();
-      printf("OK, this is your choice....\n")
+      {
+        this_->Kill();
+        printf("OK, this is your choice....\n");
+      }
       break;
     default:
       printf("Unrecognized switch\n");
