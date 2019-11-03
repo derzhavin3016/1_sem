@@ -173,7 +173,7 @@ DEF_CMD(SUB, 4, 1, {}, {},
 DEF_CMD(MUL, 5, 1, {}, {},
   {
     GET_FST_SEC_VALUES;
-    STK_PUSH((int)((double)(first * second * 1.0) / ACCURACY));
+    STK_PUSH((int)(((double)first / ACCURACY) * second));
   })
 
 DEF_CMD(DIV, 6, 1, {}, {},
@@ -184,7 +184,7 @@ DEF_CMD(DIV, 6, 1, {}, {},
       printf("ERROR!!! Dividing by zero.\n");
       return false;
     }
-    STK_PUSH((int)((double)ACCURACY * first * 1.0 / second));
+    STK_PUSH((int)(ACCURACY * ((double)first / second)));
   })
 
 DEF_CMD(OUT, 7, 1, {}, {},
