@@ -20,6 +20,12 @@
   "*** 5. Delete value                     \n"   \
   "*** 6. Dump                             \n"   \
   "*** 7. KILL                             \n"   \
+  "*** 8. Get head                         \n"   \
+  "*** 9. Get tail                         \n"   \
+  "*** 10. Get next                        \n"   \
+  "*** 11. Get previous                    \n"   \
+  "*** 12. Find                            \n"   \
+  "*** 13. Find value                      \n"   \
   "****************************************\n"   \
 
 #define LIST_COND_CHECK(COND, ERR_CODE, ret) if (COND)                          \

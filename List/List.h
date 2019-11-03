@@ -261,9 +261,10 @@ namespace ad6
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t Find( size_t num ) const
+    size_t Find( size_t num )
     {
       LST_ASSERT();
+
       if (num >= size)
         return -1;
       size_t act = 0;
@@ -282,9 +283,10 @@ namespace ad6
      * \return actual number of value if it was find
      * \return -1 otherwise.
      */
-    size_t FindValue( Data value ) const
+    size_t FindValue( Data value )
     {
       LST_ASSERT();
+
       size_t act = head;
       while (act != 0)
       {
@@ -292,6 +294,8 @@ namespace ad6
           return act;
         act = elems[act].next;
       }
+
+      LST_ASSERT();
       return -1;
     } /* End of 'FindValue' function */
 
@@ -663,6 +667,38 @@ void ListProcLoop( ad6::List<Data> *this_ )
         this_->Kill();
         printf("OK, this is your choice....\n");
       }
+      break;
+    case 8:
+      printf("Head: %d\n", this_->GetHead());
+      break;
+    case 9:
+      printf("Tail: %d\n", this_->GetTail());
+      break;
+    case 10:
+      OK = InputNumbers("Get Next\n", "Input number to get next:\n",
+        "%d", &_where);
+      assert(OK);
+      printf("Next: ");
+      std::cout << this_->GetNext(_where) << std::endl;
+      break;
+    case 11:
+      OK = InputNumbers("Get Previous\n", "Input number to get previous:\n",
+        "%d", &_where);
+      assert(OK);
+      printf("Previous: ");
+      std::cout << this_->GetPrev(_where) << std::endl;
+      break;
+    case 12:
+      OK = InputNumbers("Find\n", "Input logical number to find:\n",
+        "%d", &_where);
+      assert(OK);
+      printf("Actual number: %d\n", this_->Find(_where));
+      break;
+    case 13:
+      OK = InputNumbers("Find\n", "Input value to find:\n",
+        "%d", &_where);
+      assert(OK);
+      printf("Actual number: %d\n", this_->FindValue(_where));
       break;
     default:
       printf("Unrecognized switch\n");
