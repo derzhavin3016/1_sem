@@ -35,19 +35,39 @@ bool ad6::hash_table::LoadTxt( const char filename[] )
   return true;
 } /* End of 'LoadTxt' function */
 
+
+/**
+ * \brief Insert to hash table function
+ * \param [in] Hash pointer to hash function.
+ * \param [in] IsDic  boolean variable shows is searching needed (true default).
+ */
+bool ad6::hash_table::Insert( const String *str, bool IsDic /*= true*/ )
+{
+  hash_t h = Hash_func(str);
+    
+  try
+  {
+  if (IsDic || table[h % TABLE_SIZE].FindValue(str) != -1)
+    table[h % TABLE_SIZE].Push_tail(str);
+  }
+  catch (...)
+  {
+    printf("Error in list\n");
+    return false;
+  }
+  return true;
+} /* End of 'Insert' function */
+
 /**
  * \brief Hash all words from buf function.
  * \param [in] Hash pointer to hash function.
+ * \param [in] IsDic  boolean variable shows is searching needed (true default).
  */
 void ad6::hash_table::Hashing( hash_t (*Hash)( const String *str ), bool IsDic /* = true*/ )
 {
+  Hash_func = Hash;
   for (size_t cnt = 0; cnt < strs_size; cnt++)
-  {
-    hash_t h = Hash(strs + cnt);
-    
-    if (IsDic || table[h % TABLE_SIZE].FindValue(strs + cnt) != -1)
-      table[h % TABLE_SIZE].Push_tail(strs + cnt);
-  }
+    Insert(strs + cnt, IsDic);
 } /* End of 'Hashing' function */
 
 
