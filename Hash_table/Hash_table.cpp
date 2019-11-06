@@ -39,13 +39,14 @@ bool ad6::hash_table::LoadTxt( const char filename[] )
  * \brief Hash all words from buf function.
  * \param [in] Hash pointer to hash function.
  */
-void ad6::hash_table::Hashing( hash_t (*Hash)( const String *str ) )
+void ad6::hash_table::Hashing( hash_t (*Hash)( const String *str ), bool IsDic /* = true*/ )
 {
   for (size_t cnt = 0; cnt < strs_size; cnt++)
   {
     hash_t h = Hash(strs + cnt);
     
-    table[h % TABLE_SIZE].Push_tail(strs[cnt].str);
+    if (IsDic || table[h % TABLE_SIZE].FindValue(strs + cnt) != -1)
+      table[h % TABLE_SIZE].Push_tail(strs + cnt);
   }
 } /* End of 'Hashing' function */
 

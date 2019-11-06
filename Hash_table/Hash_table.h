@@ -13,7 +13,7 @@ namespace ad6
   class hash_table
   {
   private:
-    List<const char *> table[TABLE_SIZE];
+    List<const String *> table[TABLE_SIZE];
     /* pointer to hash function
     hash_t (*Hash)( String* str );*/
     char *buf;
@@ -34,7 +34,7 @@ namespace ad6
 
     bool LoadTxt( const char filename[] );
     
-    void Hashing( hash_t (*Hash)( const String *str ) );
+    void Hashing( hash_t (*Hash)( const String *str ), bool IsDic = true );
 
     bool PutToCSV( const char file_out[], char sep_sym, const char name[] );
 
