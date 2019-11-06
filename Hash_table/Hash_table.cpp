@@ -47,8 +47,8 @@ bool ad6::hash_table::Insert( const String *str, bool IsDic /*= true*/ )
     
   try
   {
-  if (IsDic || table[h % TABLE_SIZE].FindValue(str) != -1)
-    table[h % TABLE_SIZE].Push_tail(str);
+    if (IsDic || table[h % TABLE_SIZE].FindValue(str) != -1)
+      table[h % TABLE_SIZE].Push_tail(str);
   }
   catch (...)
   {
