@@ -1,7 +1,5 @@
 #include "Akinator.h"
 
-#define DEF_NAME "Pig"
-
 #define GREETING  "Hello. I'm an artificial intelligence.\n"                              \
                   "My dad is Andrey Derzhavin, and he has his own group in vk\n"          \
                   "Subscribe, if you want to know more about my dad's phystech life\n"    \
@@ -89,7 +87,6 @@ void ad6::Aki::ProcessLoop( void )
   printf("\n\n");
   printf("Let me guess what you think about.\n");
   printf("Guess somebody or something......\n");
-
   
   while (1)
   {

@@ -5,9 +5,9 @@ using namespace ad6;
 int main( void )
 {
   Aki ak;
-  ak.ReadTree("tree.txt");
+  ak.ReadTree("tree1.txt");
   ak.ProcessLoop();
-  ak.SaveTree("tree1.txt");
+  ak.SaveTree("tree2.txt");
 
   return 0;
 }

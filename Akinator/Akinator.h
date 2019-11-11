@@ -7,6 +7,8 @@
 #include <assert.h>
 //#include "D:\TX\TXLib.h"
 
+#define DEF_NAME "Pig"
+
 #pragma warning (disable: 4996)
 
 namespace ad6
