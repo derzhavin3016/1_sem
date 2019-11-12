@@ -1,11 +1,11 @@
 #ifndef __AKINATOR_H_
 #define __AKINATOR_H_
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <cstring>
 #include <assert.h>
-//#include "D:\TX\TXLib.h"
+#include "D:\TX\TXLib.h"
 
 #define DEF_NAME "Pig"
 
@@ -88,7 +88,7 @@ namespace ad6
 
     void ProcessLoop( void );
 
-    void Dump( void );
+    bool Dump( const char filename[] );
 
     // Destructor
     ~Aki( void )
@@ -97,6 +97,9 @@ namespace ad6
         delete root;
     }
   private:
+
+    
+    void RecDump( FILE *dmp, Node *node );
 
     bool PrintTree( FILE *f, Node *node );
 

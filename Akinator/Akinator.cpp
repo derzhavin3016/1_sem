@@ -3,7 +3,13 @@
 #define GREETING  "Hello. I'm an artificial intelligence.\n"                              \
                   "My dad is Andrey Derzhavin, and he has his own group in vk\n"          \
                   "Subscribe, if you want to know more about my dad's phystech life\n"    \
-                  "https://vk.com/andryha_mipt \n"
+                  "https://vk.com/andryha_mipt \n\n"                                      \
+                  "*** Here what can I do: \n"                                            \
+                  "*** 0. Exit (bye bye)\n"                                             \
+                  "*** 1. Play \n"                                                        \
+                  "*** 2. Save database to file\n"                                        \
+                  "*** 3. Load database from file\n"                                      \
+                  "*** 4. Dump tree with dot\n"
 
 #define PARTING  "Have a nice night, stranger!\n"
 
@@ -85,21 +91,56 @@ void ad6::Aki::ProcessLoop( void )
 {
   printf(GREETING);
   printf("\n\n");
-  printf("Let me guess what you think about.\n");
-  printf("Guess somebody or something......\n");
-  
+  int promt = 0;
+  char buf[ANSWER_MAX] = {};
   while (1)
   {
+    printf("Input number to start:");
+    scanf("%d", &promt);
+    switch (promt)
+    {
+    case 0:
+      printf(PARTING);
+      return;
+    case 1:
+
+      while (1)
+      {
+        printf("Let me guess what you think about.\n");
+        printf("Guess somebody or something......\n");
+        Play();
+        printf("Try again?\n");
+        char p = 0;
+        scanf("\n%c", &p);
+        if (p == 'n' || p == 'N')
+          break;
+      }
 
 
-    Play();
-    printf("Try again?\n");
-    char p = 0;
-    scanf("\n%c", &p);
-    if (p == 'n' || p == 'N')
       break;
+    case 2:
+      printf("Input file name to save tree:\n");
+      scanf("\n%s", buf);
+      if (!SaveTree(buf))
+        printf("ERROR\n");
+      break;
+    case 3:
+      printf("Input file name to load tree from:\n");
+      scanf("\n%s", buf);
+      if (!ReadTree(buf))
+        printf("ERROR\n");
+      break;
+    case 4:
+      printf("Input file name to dump tree:\n");
+      scanf("\n%s", buf);
+      if (!Dump(buf))
+        printf("ERROR!!!\n");
+      printf("Dump success\n");
+      break;
+    default:
+      printf("Incorrect number of command: %d\n", promt);
+    }
   }
-  printf(PARTING);
 }
 
 /**
@@ -203,8 +244,50 @@ bool ad6::Aki::BuildTree( FILE *f, Node *node )
 
 /**
  * \brief Alinator dump function.
+ * \param filename Name of a file to dump.
  */
-void ad6::Aki::Dump( void )
+bool  ad6::Aki::Dump( const char filename[] )
 {
+  assert(filename != nullptr);
 
+  FILE *dmp = fopen(filename, "w");
+
+  if (dmp == nullptr)
+  {
+    printf("Oh, some errors with openning file \"%s\"", filename);
+    return false;
+  }
+
+  fprintf(dmp, "digraph Dump \n{\n");
+
+  RecDump(dmp, root);
+
+  fprintf(dmp, "}");
+
+  fclose(dmp);
+  
+  char buf[ANSWER_MAX] = {};
+  sprintf(buf, "dot -Tpng %s -oDump.png", filename);
+
+  system(buf);
+  return true;
 } /* End of 'Dump' funciton */
+
+
+void ad6::Aki::RecDump( FILE *dmp, Node *node )
+{ 
+  assert(dmp != nullptr);
+
+#define IsLeaf(node)  ((node)->right == nullptr && (node)->left == nullptr)
+
+  if (IsLeaf(node))
+    return;
+  fprintf(dmp, "\"%s?\" -> \"%s%c\" [label = \"yes\"];\n", node->quest, node->right->quest, IsLeaf(node->right) ? '.' : '?');
+  fprintf(dmp, "\"%s?\" -> \"%s%c\" [label = \"no\"];\n", node->quest, node->left->quest, IsLeaf(node->left) ? '.' : '?');
+
+  RecDump(dmp, node->right);
+  RecDump(dmp, node->left);
+
+#undef IsLeaf
+
+} /* End of 'RecDump' function */
