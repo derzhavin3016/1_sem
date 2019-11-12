@@ -6,6 +6,8 @@
 #include <cstring>
 #include <assert.h>
 #include "D:\TX\TXLib.h"
+#include "..\List\List.h"
+#include "..\Stack\stack.h"
 
 #define DEF_NAME "Pig"
 
@@ -13,33 +15,52 @@
 
 namespace ad6
 {
+  #include <stdexcept>
+
+  struct Error : public std::runtime_error
+  {
+    int code;
+    const char* descr;
+    int line;
+    const char* file;
+    const char* func;
+    Error* reason;
+
+    virtual const std::string what() 
+    {
+      return descr; 
+    }
+  };
+
   const size_t ANSWER_MAX = 100;
   const size_t QUEST_MAX = 200;
   struct Node
   {
-    char quest[QUEST_MAX];
+    char *quest;
+    Node *parent;
     Node *right;
     Node *left;
     
     // default constructor
-    Node( void ) : quest{},
+    Node( void ) : quest(new char[ANSWER_MAX]),
                    right(nullptr),
-                   left(nullptr)
+                   left(nullptr),
+                   parent(nullptr)
     {
     }
 
 
     // Constructor by string
-    Node( const char str[] ) : quest{},
-                         right(nullptr),
-                         left(nullptr)
+    Node( const char str[] ) : quest(new char[ANSWER_MAX]),
+                               right(nullptr),
+                               left(nullptr),
+                               parent(nullptr)
     {
       strcpy(quest, str);
     }
 
     ~Node( void )
     {
-      memset(quest, 0, QUEST_MAX);
       if (right != nullptr)
       {
         delete right;
@@ -50,7 +71,9 @@ namespace ad6
         delete left;
         left = nullptr;
       }
-
+      if (quest != nullptr)
+        delete[] quest;
+      parent = nullptr;
     }
   };
 
@@ -73,14 +96,17 @@ namespace ad6
   {
   private:
     Node *root;
+    List<char *> Base;
 
   public:
     // Default constructor
-    Aki( void ) : root(new Node(DEF_NAME))
+    Aki( void ) : root(new Node(DEF_NAME)),
+                  Base()
     {
+      Base.Push_head(root->quest);
     }
 
-    bool SaveTree( const char filename[] );
+    bool SaveTree( const char filename[] ) const;
 
     bool ReadTree( const char filename[] );
 
@@ -88,26 +114,31 @@ namespace ad6
 
     void ProcessLoop( void );
 
-    bool Dump( const char filename[] );
+    void Character( const char name[] ) const;
+
+    bool Dump( const char filename[] ) const;
 
     // Destructor
     ~Aki( void )
     {
       if (root != nullptr)
         delete root;
+
     }
   private:
 
     
-    void RecDump( FILE *dmp, Node *node );
+    void RecDump( FILE *dmp, Node *node ) const;
 
-    bool PrintTree( FILE *f, Node *node );
+    bool PrintTree( FILE *f, Node *node ) const;
 
     bool BuildTree( FILE *f, Node *node );
 
     Node * Guess( Node *node, int *IsOk );
 
     bool CreateNodes( Node *prnt );
+
+    Node *Find( const char name[], Node *node ) const;
   };
 }
 

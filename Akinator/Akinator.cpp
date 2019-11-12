@@ -5,11 +5,12 @@
                   "Subscribe, if you want to know more about my dad's phystech life\n"    \
                   "https://vk.com/andryha_mipt \n\n"                                      \
                   "*** Here what can I do: \n"                                            \
-                  "*** 0. Exit (bye bye)\n"                                             \
+                  "*** 0. Exit (bye bye)\n"                                               \
                   "*** 1. Play \n"                                                        \
                   "*** 2. Save database to file\n"                                        \
                   "*** 3. Load database from file\n"                                      \
-                  "*** 4. Dump tree with dot\n"
+                  "*** 4. Dump tree with dot\n"                                           \
+                  "*** 5. Print characteristics of the object\n"
 
 #define PARTING  "Have a nice night, stranger!\n"
 
@@ -72,14 +73,30 @@ void ad6::Aki::Play( void )
   else
   {
     printf("OK, you win.....\nSo, who it was?\n");
-    CreateNodes(node);
-    strcpy(node->left->quest, node->quest);
-    scanf("\n%[^\n]", node->right->quest);
-    printf("Hmmm. And what %s has, that %s doesn't has?\n", 
-           node->right->quest, node->left->quest);
-    scanf("\n%[^\n]", node->quest);
-    printf("OK. I will remember that %s %s, and %s don't\n",
-           node->right->quest, node->quest, node->left->quest);
+    char *buf = new char[ANSWER_MAX];
+
+    scanf("\n%[^\n]", buf);
+
+    int num = Base.FindValue(buf);
+    if (num == -1)
+    {
+
+      printf("OOOOOOPS, I already know %s\n", buf);
+      delete[] buf;
+    }
+    else
+    {
+      CreateNodes(node);
+      node->left->quest = node->quest;
+      node->quest = buf;
+      Base.Push_tail(buf);
+      node->right->parent = node->left->parent = node;
+      printf("Hmmm. And what %s has, that %s doesn't has?\n", 
+             node->right->quest, node->left->quest);
+      scanf("\n%[^\n]", node->quest);
+      printf("OK. I will remember that %s is %s, and %s don't\n",
+             node->right->quest, node->quest, node->left->quest);
+    }
   }
 } /* End of 'Play' funciton */
 
@@ -131,11 +148,16 @@ void ad6::Aki::ProcessLoop( void )
         printf("ERROR\n");
       break;
     case 4:
-      printf("Input file name to dump tree:\n");
+      printf("Input file name to dump tree (only name):\n");
       scanf("\n%s", buf);
       if (!Dump(buf))
         printf("ERROR!!!\n");
       printf("Dump success\n");
+      break;
+    case 5:
+      printf("Input name of the object:\n");
+      scanf("\n%s", buf);
+      Character(buf);
       break;
     default:
       printf("Incorrect number of command: %d\n", promt);
@@ -149,7 +171,7 @@ void ad6::Aki::ProcessLoop( void )
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::Aki::SaveTree( const char filename[] )
+bool ad6::Aki::SaveTree( const char filename[] ) const
 {
   assert(filename != nullptr);
 
@@ -174,7 +196,7 @@ bool ad6::Aki::SaveTree( const char filename[] )
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::Aki::PrintTree( FILE *f, Node *node )
+bool ad6::Aki::PrintTree( FILE *f, Node *node ) const
 {
   assert(f != nullptr);
 #define IsLeaf(node)  ((node)->right == nullptr && (node)->left == nullptr)
@@ -210,7 +232,7 @@ bool ad6::Aki::ReadTree( const char filename[] )
     printf("Oh, some errors with openning file \"%s\"", filename);
     return false;
   }
-
+  Base.Kill();
   BuildTree(tree, root);
 
   fclose(tree);
@@ -231,9 +253,11 @@ bool ad6::Aki::BuildTree( FILE *f, Node *node )
 
   char IsLeaf = 0;
   fscanf(f, "{\"%[^!?]%c\"", node->quest, &IsLeaf);
+  Base.Push_tail(node->quest);
   if (IsLeaf == '?')
   {
     CreateNodes(node);
+    node->right->parent = node->left->parent = node;
     BuildTree(f, node->right);
     BuildTree(f, node->left);
   }
@@ -243,38 +267,45 @@ bool ad6::Aki::BuildTree( FILE *f, Node *node )
 } /* End of 'BuildTree' function */
 
 /**
- * \brief Alinator dump function.
+ * \brief Akinator dump function.
  * \param filename Name of a file to dump.
  */
-bool  ad6::Aki::Dump( const char filename[] )
+bool  ad6::Aki::Dump( const char filename[] ) const
 {
   assert(filename != nullptr);
 
-  FILE *dmp = fopen(filename, "w");
+  char buf[ANSWER_MAX] = {};
+
+  sprintf(buf, "%s.dot", filename);
+
+  FILE *dmp = fopen(buf, "w");
 
   if (dmp == nullptr)
   {
-    printf("Oh, some errors with openning file \"%s\"", filename);
+    printf("Oh, some errors with openning file %s\n", buf);
     return false;
   }
 
-  fprintf(dmp, "digraph Dump \n{\n");
+  fprintf(dmp, "digraph %s \n{\n", filename);
 
   RecDump(dmp, root);
 
   fprintf(dmp, "}");
 
   fclose(dmp);
-  
-  char buf[ANSWER_MAX] = {};
-  sprintf(buf, "dot -Tpng %s -oDump.png", filename);
+ 
+  sprintf(buf, "dot -Tpng %s.dot -o%s.png", filename, filename);
 
   system(buf);
   return true;
 } /* End of 'Dump' funciton */
 
-
-void ad6::Aki::RecDump( FILE *dmp, Node *node )
+/**
+ * \brief Recursion dump tree function.
+ * \param dmp  Pointer to opened file structure.
+ * \param node  Pointer to node.
+ */
+void ad6::Aki::RecDump( FILE *dmp, Node *node ) const
 { 
   assert(dmp != nullptr);
 
@@ -291,3 +322,80 @@ void ad6::Aki::RecDump( FILE *dmp, Node *node )
 #undef IsLeaf
 
 } /* End of 'RecDump' function */
+
+
+/**
+ * \brief Print characteristic of the object.
+ * \param name  Name of the object.
+ */
+void ad6::Aki::Character( const char name[] ) const
+{
+  assert(name != nullptr);
+
+  Node *node = Find(name, root);
+  if (node == nullptr)
+  {
+    printf("I don't know who it is...\n");
+    return;
+  }
+  Node **p_node = &(node->parent);
+  Stack<char *> chr;
+  StackInit(&chr);
+  Node **prev_p = &node;
+  printf("The %s is ", node->quest);
+  while (*p_node != nullptr)
+  {
+    if (*prev_p == (*p_node)->right)
+      StackPush(&chr, (*p_node)->quest);
+    else
+    {
+      StackPush(&chr, )
+    }
+    prev_p = p_node;
+    p_node = &(*p_node)->parent;
+  }
+
+  int size = chr.size;
+  char *buf = nullptr;
+  for (int i = 0; i < size; i++)
+  {
+    StackPop(&chr, &buf);
+    printf("%s%s", buf, i == size - 1 ? ".\n" : " and ");
+  }
+
+  StackClose(&chr);
+} /* End of 'Character' function */
+
+/**
+ * \brief Find name in tree function
+ * \param name  Name to find.
+ * \pararm node pointer to tree node.
+ * \return pointer to node if name was find.
+ * \return nullptr otherwise.
+ */
+ad6::Node * ad6::Aki::Find( const char name[], Node *node ) const
+{
+  assert(name != nullptr);
+  assert(node != nullptr);
+
+  if (strcmp(name, node->quest) == 0)
+    return node;
+
+  Node *buf = nullptr;
+  if (node->right != nullptr)
+  {
+    buf = Find(name, node->right);
+    if (buf != nullptr)
+      return buf;
+  }
+
+
+  if (node->left != nullptr)
+  {
+    buf = Find(name, node->left);
+    if (buf != nullptr)
+      return buf;
+  }
+
+  return nullptr;
+} /* End of 'Find' funtction */
