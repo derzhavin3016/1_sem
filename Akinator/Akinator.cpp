@@ -299,7 +299,10 @@ bool  ad6::Aki::Dump( const char filename[] ) const
 
   fprintf(dmp, "digraph %s \n{\n", filename);
 
-  RecDump(dmp, root);
+  if (root->left == nullptr)
+    fprintf(dmp, "\"%s\"", root->quest);
+  else
+    RecDump(dmp, root);
 
   fprintf(dmp, "}");
 
