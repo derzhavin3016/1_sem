@@ -4,7 +4,7 @@
 
 #define AKI_ASSERT(cond, err)           if (!(cond))                               \
                                         {                                          \
-                                          throw Error{err, AKI_LOCATION}  \
+                                          throw Error{err, AKI_LOCATION};          \
                                         }
 
 #define GREETING  "Hello. I'm an artificial intelligence.\n"                              \
@@ -33,8 +33,6 @@
  */
 ad6::Node * ad6::Aki::Guess( Node *node, int *IsOk )
 {
-
-  
   char *buf = InputAnswer("%s?\n", node->quest);
   
   if (stricmp("Yes", buf) == 0)
@@ -49,7 +47,7 @@ ad6::Node * ad6::Aki::Guess( Node *node, int *IsOk )
     if (node->left != nullptr)
       return Guess(node->left, IsOk);
     *IsOk = 0;
-    return node;
+    return node;  
   }
   printf("So strange answer, I don't understand  what '%s' mean\n", buf);
   printf("Try again :) \n");
@@ -78,7 +76,7 @@ bool ad6::Aki::CreateNodes( Node *prnt )
  */
 char * ad6::InputAnswer( const char printfstr[], ... )
 {
-  static char buf[ad6::ANSWER_MAX];
+  static char buf[ad6::ANSWER_MAX] = {};
   va_list args;
 
   if (printfstr == nullptr)
@@ -107,33 +105,29 @@ void ad6::Aki::Play( void )
   {
     char *buf = strdup(InputAnswer("OK, you win.....\nSo, who it was?\n"));
 
-    if (buf == nullptr)
+    AKI_ASSERT(buf != nullptr, "strdup returned nullptr\n");
+
+    int num = Base.FindValue(buf);
+    if (num != -1)
     {
-      printf("OOOOOOOOOOOOH, try again");
+    
+      printf("OOOOOOPS, I already know %s\n", buf);
+      free(buf);
     }
     else
     {
-      int num = Base.FindValue(buf);
-      if (num != -1)
-      {
-      
-        printf("OOOOOOPS, I already know %s\n", buf);
-        free(buf);
-      }
-      else
-      {
-        CreateNodes(node);
-        node->left->quest = node->quest;
-        node->right->quest = buf;
-        Base.Push_tail(buf);
-        node->right->parent = node->left->parent = node;
+      CreateNodes(node);
+      node->left->quest = node->quest;
+      node->right->quest = buf;
+      Base.Push_tail(buf);
+      node->right->parent = node->left->parent = node;
 
-        node->quest = strdup(InputAnswer("Hmmm. And what %s has, that %s doesn't has?\n", 
-               node->right->quest, node->left->quest));
-        printf("OK. I will remember that %s is %s, and %s don't\n",
-               node->right->quest, node->quest, node->left->quest);
-      }
+      node->quest = strdup(InputAnswer("Hmmm. And what %s has, that %s doesn't has?\n", 
+             node->right->quest, node->left->quest));
+      printf("OK. I will remember that %s is %s, and %s don't\n",
+             node->right->quest, node->quest, node->left->quest);
     }
+    
   }
 } /* End of 'Play' funciton */
 
@@ -174,16 +168,13 @@ void ad6::Aki::ProcessLoop( void )
 
       break;
     case 2:
-      if (!SaveTree(InputAnswer("Input file name to save tree:\n")))
-        printf("ERROR\n");
+      SaveTree(InputAnswer("Input file name to save tree:\n"));
       break;
     case 3:
-      if (!ReadTree(InputAnswer("Input file name to load tree from:\n")))
-        printf("ERROR\n");
+      (InputAnswer("Input file name to load tree from:\n"));
       break;
     case 4:
-      if (!Dump(InputAnswer("Input file name to dump tree (only name):\n")))
-        printf("ERROR!!!\n");
+      Dump(InputAnswer("Input file name to dump tree (only name):\n"));
       printf("Dump success\n");
       break;
     case 5:
@@ -192,15 +183,10 @@ void ad6::Aki::ProcessLoop( void )
     case 6:
       buf = strdup(InputAnswer("Input name of the first object:\n"));
       InputAnswer("Input name of the second object:\n");
-      if (buf == nullptr)
-      {
-        printf("ERROR");
-        return;
-      }
-      if (!Compare(buf, InputAnswer(nullptr)))
-      {
-        printf("ERROR!\n");
-      }
+      
+      AKI_ASSERT(buf != nullptr, "strdup returned nullptr");
+
+      Compare(buf, InputAnswer(nullptr));
       free(buf);
       break;
     default:
@@ -217,7 +203,7 @@ void ad6::Aki::ProcessLoop( void )
  */
 bool ad6::Aki::SaveTree( const char filename[] ) const
 {
-  assert(filename != nullptr);
+  AKI_ASSERT(filename != nullptr, "Incorrect file name");
 
   FILE *tree = fopen(filename, "w");
 
@@ -242,7 +228,9 @@ bool ad6::Aki::SaveTree( const char filename[] ) const
  */
 bool ad6::Aki::PrintTree( FILE *f, Node *node ) const
 {
-  assert(f != nullptr);
+  AKI_ASSERT(f != nullptr, "File not opened\n");
+  AKI_ASSERT(node != nullptr, "node was nullptr");
+
 #define IsLeaf(node)  ((node)->right == nullptr && (node)->left == nullptr)
 
   fprintf(f, "{\"%s%c\"", node->quest, IsLeaf(node) ? '!' : '?');
@@ -267,7 +255,7 @@ bool ad6::Aki::PrintTree( FILE *f, Node *node ) const
  */
 bool ad6::Aki::ReadTree( const char filename[] )
 {
-  assert(filename != nullptr);
+  AKI_ASSERT(filename != nullptr, "Incorrect file name");
 
   FILE *tree = fopen(filename, "rb");
 
@@ -292,8 +280,8 @@ bool ad6::Aki::ReadTree( const char filename[] )
  */
 bool ad6::Aki::BuildTree( FILE *f, Node *node )
 {
-  assert(f != nullptr);
-  assert(node != nullptr);
+  AKI_ASSERT(f != nullptr, "File not opened");
+  AKI_ASSERT(node != nullptr, "node was nullptr");
 
   char IsLeaf = 0;
   fscanf(f, "{\"%[^!?]%c\"", node->quest, &IsLeaf);
@@ -316,7 +304,7 @@ bool ad6::Aki::BuildTree( FILE *f, Node *node )
  */
 bool  ad6::Aki::Dump( const char filename[] ) const
 {
-  assert(filename != nullptr);
+  AKI_ASSERT(filename != nullptr, "Incorrect file name");
 
   char buf[ANSWER_MAX] = {};
 
@@ -354,7 +342,8 @@ bool  ad6::Aki::Dump( const char filename[] ) const
  */
 void ad6::Aki::RecDump( FILE *dmp, Node *node ) const
 { 
-  assert(dmp != nullptr);
+  AKI_ASSERT(dmp != nullptr, "File not opened");
+  AKI_ASSERT(node != nullptr, "node was nullptr");
 
 #define IsLeaf(node)  ((node)->right == nullptr && (node)->left == nullptr)
 
@@ -377,7 +366,7 @@ void ad6::Aki::RecDump( FILE *dmp, Node *node ) const
  */
 void ad6::Aki::Character( const char name[] ) const
 {
-  assert(name != nullptr);
+  AKI_ASSERT(name != nullptr, "Incorrect character name");
 
   Node *node = Find(name, root);
   if (node == nullptr)
@@ -412,8 +401,8 @@ void ad6::Aki::Character( const char name[] ) const
  */
 bool ad6::Aki::Compare( const char name1[], const char name2[] ) const
 {
-  assert(name1 != nullptr);
-  assert(name2 != nullptr);
+  AKI_ASSERT(name1 != nullptr, "Incorrect first character name");
+  AKI_ASSERT(name2 != nullptr, "Incorrect second character name");
 
   if (strcmp(name1, name2) == 0)
   {
@@ -479,6 +468,10 @@ bool ad6::Aki::Compare( const char name1[], const char name2[] ) const
  */
 bool ad6::Aki::FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node ) const
 {
+  AKI_ASSERT(answer != nullptr, "Pointer to answers stack was nullptr\n");
+  AKI_ASSERT(quest != nullptr, "Pointer to questions stack was nullptr\n");
+  AKI_ASSERT(node != nullptr, "Pointer to node was nullptr\n");
+
   Node **p_node = &(node->parent);
   Node **prev_p = &node;
   while (*p_node != nullptr)
@@ -503,10 +496,8 @@ bool ad6::Aki::FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node )
  */
 ad6::Node * ad6::Aki::Find( const char name[], Node *node ) const
 {
-  //AKI_ASSERT(name != nullptr, "name was nullptr\n");
-  //AKI_ASSERT(name != nullptr, "name was nullptr\n");
-  assert(name != nullptr);
-  assert(node != nullptr);
+  AKI_ASSERT(name != nullptr, "Name was nullptr\n");
+  AKI_ASSERT(node != nullptr, "Node was nullptr\n");
 
   if (strcmp(name, node->quest) == 0)
     return node;

@@ -31,7 +31,15 @@ namespace ad6
     const char* func;
     //Error* reason;
 
-    virtual const std::string what() 
+    Error( const char* des, int l, const char* filename, const char* function ) : descr(des),
+                                                                                  line(l),
+                                                                                  file(filename),
+                                                                                  func(function),
+                                                                                  std::runtime_error(des)
+    {
+    }
+
+    virtual const std::string what( void ) 
     {
       return descr; 
     }

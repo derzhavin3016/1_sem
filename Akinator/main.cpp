@@ -13,5 +13,10 @@ int main( void )
   {
     std::cerr << error.what() << std::endl;
   }
+  catch ( Error &error )
+  {
+    std::cerr << error.descr << " In file: " << error.file << 
+                 " line (" << error.line << ") function " << error.func << std::endl;
+  }
   return 0;
 }
