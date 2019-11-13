@@ -33,47 +33,26 @@
  */
 ad6::Node * ad6::Aki::Guess( Node *node, int *IsOk )
 {
-#define FREE_BUF if (buf != nullptr) \
-                   free(buf);
 
-  char *buf = nullptr;
-
-  buf = InputAnswer("%s?\n", node->quest);
-  if (buf == nullptr)
-  {
-    printf("So strange answer, I don't understand  what '%s' mean\n", buf);
-    printf("Try again :) \n");
-  }
-  else if (stricmp("Yes", buf) == 0)
+  
+  char *buf = InputAnswer("%s?\n", node->quest);
+  
+  if (stricmp("Yes", buf) == 0)
   {
     if (node->right != nullptr)
-    {
-      FREE_BUF;
       return Guess(node->right, IsOk);
-    }
     *IsOk = 1;
-    FREE_BUF;
     return node;
   }
   else if (stricmp("No", buf) == 0)
   {
     if (node->left != nullptr)
-    {
-      FREE_BUF;
       return Guess(node->left, IsOk);
-    }
     *IsOk = 0;
-    FREE_BUF;
     return node;
   }
-  else
-  {
-    printf("So strange answer, I don't understand  what '%s' mean\n", buf);
-    printf("Try again :) \n");
-  }
-
-  FREE_BUF;
-#undef FREE_BUF
+  printf("So strange answer, I don't understand  what '%s' mean\n", buf);
+  printf("Try again :) \n");
   return Guess(node, IsOk);
 } /* End of 'Guess' funciton */
 
@@ -95,12 +74,15 @@ bool ad6::Aki::CreateNodes( Node *prnt )
  * \param printfstr   String for printf.
  * \param  ...        Printf parameters.
  * \return  pointer to the answer.
- * \return nullptr otherwise.
+ * \warning Using static buffer.
  */
 char * ad6::InputAnswer( const char printfstr[], ... )
 {
   static char buf[ad6::ANSWER_MAX];
   va_list args;
+
+  if (printfstr == nullptr)
+    return buf;
 
   va_start(args, printfstr);
   vprintf(printfstr, args);
@@ -108,7 +90,7 @@ char * ad6::InputAnswer( const char printfstr[], ... )
 
   scanf("\n%1024[^\n]", buf);
 
-  return strdup(buf);
+  return buf;
 } /* End of 'InputAnswer' function */
 
 /**
@@ -123,7 +105,7 @@ void ad6::Aki::Play( void )
     printf("It was so easy\n");
   else
   {
-    char *buf = InputAnswer("OK, you win.....\nSo, who it was?\n");
+    char *buf = strdup(InputAnswer("OK, you win.....\nSo, who it was?\n"));
 
     if (buf == nullptr)
     {
@@ -146,8 +128,8 @@ void ad6::Aki::Play( void )
         Base.Push_tail(buf);
         node->right->parent = node->left->parent = node;
 
-        node->quest = InputAnswer("Hmmm. And what %s has, that %s doesn't has?\n", 
-               node->right->quest, node->left->quest);
+        node->quest = strdup(InputAnswer("Hmmm. And what %s has, that %s doesn't has?\n", 
+               node->right->quest, node->left->quest));
         printf("OK. I will remember that %s is %s, and %s don't\n",
                node->right->quest, node->quest, node->left->quest);
       }
@@ -164,7 +146,8 @@ void ad6::Aki::ProcessLoop( void )
   printf(GREETING);
   printf("\n\n");
   int promt = 0;
-  char *buf = nullptr, *buf2 = nullptr;
+  char *buf = nullptr;
+
   while (1)
   {
     printf("Input number to start:");
@@ -173,10 +156,6 @@ void ad6::Aki::ProcessLoop( void )
     {
     case 0:
       printf(PARTING);
-      if (buf != nullptr)
-        free(buf);
-      if (buf2 != nullptr)
-        free(buf2);
       return;
     case 1:
 
@@ -195,32 +174,34 @@ void ad6::Aki::ProcessLoop( void )
 
       break;
     case 2:
-      buf = InputAnswer("Input file name to save tree:\n");
-      if (!SaveTree(buf))
+      if (!SaveTree(InputAnswer("Input file name to save tree:\n")))
         printf("ERROR\n");
       break;
     case 3:
-      buf = InputAnswer("Input file name to load tree from:\n");
-      if (!ReadTree(buf))
+      if (!ReadTree(InputAnswer("Input file name to load tree from:\n")))
         printf("ERROR\n");
       break;
     case 4:
-      buf = InputAnswer("Input file name to dump tree (only name):\n");
-      if (!Dump(buf))
+      if (!Dump(InputAnswer("Input file name to dump tree (only name):\n")))
         printf("ERROR!!!\n");
       printf("Dump success\n");
       break;
     case 5:
-      buf = InputAnswer("Input name of the object:\n");
-      Character(buf);
+      Character(InputAnswer("Input name of the object:\n"));
       break;
     case 6:
-      buf = InputAnswer("Input name of the first object:\n");
-      buf2 = InputAnswer("Input name of the second object:\n");
-      if (!Compare(buf, buf2))
+      buf = strdup(InputAnswer("Input name of the first object:\n"));
+      InputAnswer("Input name of the second object:\n");
+      if (buf == nullptr)
+      {
+        printf("ERROR");
+        return;
+      }
+      if (!Compare(buf, InputAnswer(nullptr)))
       {
         printf("ERROR!\n");
       }
+      free(buf);
       break;
     default:
       printf("Incorrect number of command: %d\n", promt);
