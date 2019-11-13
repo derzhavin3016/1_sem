@@ -1,6 +1,9 @@
 #ifndef __AKINATOR_H_
 #define __AKINATOR_H_
 
+#define STK_OFF_SEC
+
+#pragma warning (disable: 4267)
 #include <stdlib.h>
 #include <iostream>
 #include <cstring>
@@ -8,6 +11,8 @@
 #include "D:\TX\TXLib.h"
 #include "..\List\List.h"
 #include "..\Stack\stack.h"
+
+
 
 #define DEF_NAME "Pig"
 
@@ -139,6 +144,8 @@ namespace ad6
     bool CreateNodes( Node *prnt );
 
     Node *Find( const char name[], Node *node ) const;
+
+    bool FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node ) const;
   };
 }
 

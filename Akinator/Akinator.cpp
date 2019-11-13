@@ -338,33 +338,68 @@ void ad6::Aki::Character( const char name[] ) const
     printf("I don't know who it is...\n");
     return;
   }
-  Node **p_node = &(node->parent);
+  printf("The %s is ", node->quest);
+
+  /*struct Route
+  {
+    char *name;
+    int answer;
+
+    //default constructor
+    Route( void ) : name(nullptr),
+                    answer(0)
+    {
+    }
+
+    // copy constructor
+    Route( Route &r ) : name(r.name),
+                        answer(r.answer)
+    {
+    }
+
+    Route &operator=( Route &r )
+    {
+      name = r.name;
+      answer = r.answer;
+    }
+  };*/
   Stack<char *> chr;
   StackInit(&chr);
-  Node **prev_p = &node;
-  printf("The %s is ", node->quest);
-  while (*p_node != nullptr)
-  {
-    if (*prev_p == (*p_node)->right)
-      StackPush(&chr, (*p_node)->quest);
-    else
-    {
-      StackPush(&chr, )
-    }
-    prev_p = p_node;
-    p_node = &(*p_node)->parent;
-  }
+  Stack<int> route;
+  StackInit(&route);
+  FillRoute(&route, &chr, node);
 
   int size = chr.size;
   char *buf = nullptr;
+  int answer = 0;
   for (int i = 0; i < size; i++)
   {
+    StackPop(&route, &answer);
     StackPop(&chr, &buf);
-    printf("%s%s", buf, i == size - 1 ? ".\n" : " and ");
+    printf("%s%s%s", answer ? " " : " not ", buf, i == size - 1 ? ".\n" : " and");
   }
 
   StackClose(&chr);
+  StackClose(&route);
 } /* End of 'Character' function */
+
+
+bool ad6::Aki::FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node ) const
+{
+  Node **p_node = &(node->parent);
+  Node **prev_p = &node;
+  while (*p_node != nullptr)
+  {
+    if (*prev_p == (*p_node)->right)
+      StackPush(answer, 1);
+    else
+      StackPush(answer, 0);
+    StackPush(quest, (*p_node)->quest);
+    prev_p = p_node;
+    p_node = &(*p_node)->parent;
+  }
+  return true;
+} /* End of 'FillRoute' function */
 
 /**
  * \brief Find name in tree function
