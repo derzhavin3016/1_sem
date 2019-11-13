@@ -1,5 +1,12 @@
 #include "Akinator.h"
 
+#define AKI_LOCATION  __LINE__, __FILE__, __FUNCSIG__
+
+#define AKI_ASSERT(cond, err)           if (!(cond))                               \
+                                        {                                          \
+                                          throw Error{err, AKI_LOCATION}  \
+                                        }
+
 #define GREETING  "Hello. I'm an artificial intelligence.\n"                              \
                   "My dad is Andrey Derzhavin, and he has his own group in vk\n"          \
                   "Subscribe, if you want to know more about my dad's phystech life\n"    \
@@ -16,6 +23,8 @@
 #define PARTING  "Have a nice night, stranger!\n"
 
 
+
+
 /**
  * \brief 'Guess' the subject function.
  * \param [in]  node  Pointer to node of tree.
@@ -24,29 +33,47 @@
  */
 ad6::Node * ad6::Aki::Guess( Node *node, int *IsOk )
 {
+#define FREE_BUF if (buf != nullptr) \
+                   free(buf);
 
-  char buf[ANSWER_MAX] = {};
+  char *buf = nullptr;
 
-  printf("%s?\n", node->quest);
-  scanf("%s", buf);
-
-  if (stricmp("Yes", buf) == 0)
+  buf = InputAnswer("%s?\n", node->quest);
+  if (buf == nullptr)
+  {
+    printf("So strange answer, I don't understand  what '%s' mean\n", buf);
+    printf("Try again :) \n");
+  }
+  else if (stricmp("Yes", buf) == 0)
   {
     if (node->right != nullptr)
+    {
+      FREE_BUF;
       return Guess(node->right, IsOk);
+    }
     *IsOk = 1;
+    FREE_BUF;
     return node;
   }
   else if (stricmp("No", buf) == 0)
   {
     if (node->left != nullptr)
+    {
+      FREE_BUF;
       return Guess(node->left, IsOk);
+    }
     *IsOk = 0;
+    FREE_BUF;
     return node;
   }
+  else
+  {
+    printf("So strange answer, I don't understand  what '%s' mean\n", buf);
+    printf("Try again :) \n");
+  }
 
-  printf("So strange answer, I don't understand  what '%s' mean\n", buf);
-  printf("Try again :) \n");
+  FREE_BUF;
+#undef FREE_BUF
   return Guess(node, IsOk);
 } /* End of 'Guess' funciton */
 
@@ -63,7 +90,30 @@ bool ad6::Aki::CreateNodes( Node *prnt )
 } /* End of 'CreateNode' function */
 
 /**
- * \brief Alinator play function
+ * \brief Get user's answer from stdout function.
+ * \brief This function put scanned string to static buffer, allocate memory for the answer and return pointer.
+ * \param printfstr   String for printf.
+ * \param  ...        Printf parameters.
+ * \return  pointer to the answer.
+ * \return nullptr otherwise.
+ */
+char * ad6::InputAnswer( const char printfstr[], ... )
+{
+  static char buf[ad6::ANSWER_MAX];
+  va_list args;
+
+  va_start(args, printfstr);
+  vprintf(printfstr, args);
+  va_end(args);
+
+  scanf("\n%1024[^\n]", buf);
+
+  return strdup(buf);
+} /* End of 'InputAnswer' function */
+
+/**
+ * \brief Akinator play function
+ * \warning Maximum string length is 1024.
  */
 void ad6::Aki::Play( void )
 {
@@ -73,30 +123,34 @@ void ad6::Aki::Play( void )
     printf("It was so easy\n");
   else
   {
-    printf("OK, you win.....\nSo, who it was?\n");
-    char *buf = new char[ANSWER_MAX];
+    char *buf = InputAnswer("OK, you win.....\nSo, who it was?\n");
 
-    scanf("\n%[^\n]", buf);
-
-    int num = Base.FindValue(buf);
-    if (num == -1)
+    if (buf == nullptr)
     {
-
-      printf("OOOOOOPS, I already know %s\n", buf);
-      delete[] buf;
+      printf("OOOOOOOOOOOOH, try again");
     }
     else
     {
-      CreateNodes(node);
-      node->left->quest = node->quest;
-      node->quest = buf;
-      Base.Push_tail(buf);
-      node->right->parent = node->left->parent = node;
-      printf("Hmmm. And what %s has, that %s doesn't has?\n", 
-             node->right->quest, node->left->quest);
-      scanf("\n%[^\n]", node->quest);
-      printf("OK. I will remember that %s is %s, and %s don't\n",
-             node->right->quest, node->quest, node->left->quest);
+      int num = Base.FindValue(buf);
+      if (num != -1)
+      {
+      
+        printf("OOOOOOPS, I already know %s\n", buf);
+        free(buf);
+      }
+      else
+      {
+        CreateNodes(node);
+        node->left->quest = node->quest;
+        node->right->quest = buf;
+        Base.Push_tail(buf);
+        node->right->parent = node->left->parent = node;
+
+        node->quest = InputAnswer("Hmmm. And what %s has, that %s doesn't has?\n", 
+               node->right->quest, node->left->quest);
+        printf("OK. I will remember that %s is %s, and %s don't\n",
+               node->right->quest, node->quest, node->left->quest);
+      }
     }
   }
 } /* End of 'Play' funciton */
@@ -110,7 +164,7 @@ void ad6::Aki::ProcessLoop( void )
   printf(GREETING);
   printf("\n\n");
   int promt = 0;
-  char buf[ANSWER_MAX] = {}, buf2[ANSWER_MAX] = {};
+  char *buf = nullptr, *buf2 = nullptr;
   while (1)
   {
     printf("Input number to start:");
@@ -119,6 +173,10 @@ void ad6::Aki::ProcessLoop( void )
     {
     case 0:
       printf(PARTING);
+      if (buf != nullptr)
+        free(buf);
+      if (buf2 != nullptr)
+        free(buf2);
       return;
     case 1:
 
@@ -137,34 +195,28 @@ void ad6::Aki::ProcessLoop( void )
 
       break;
     case 2:
-      printf("Input file name to save tree:\n");
-      scanf("\n%s", buf);
+      buf = InputAnswer("Input file name to save tree:\n");
       if (!SaveTree(buf))
         printf("ERROR\n");
       break;
     case 3:
-      printf("Input file name to load tree from:\n");
-      scanf("\n%s", buf);
+      buf = InputAnswer("Input file name to load tree from:\n");
       if (!ReadTree(buf))
         printf("ERROR\n");
       break;
     case 4:
-      printf("Input file name to dump tree (only name):\n");
-      scanf("\n%s", buf);
+      buf = InputAnswer("Input file name to dump tree (only name):\n");
       if (!Dump(buf))
         printf("ERROR!!!\n");
       printf("Dump success\n");
       break;
     case 5:
-      printf("Input name of the object:\n");
-      scanf("\n%[^\n]", buf);
+      buf = InputAnswer("Input name of the object:\n");
       Character(buf);
       break;
     case 6:
-      printf("Input name of the first object:\n");
-      scanf("\n%[^\n]", buf);
-      printf("Input name of the second object:\n");
-      scanf("\n%[^\n]", buf2);
+      buf = InputAnswer("Input name of the first object:\n");
+      buf2 = InputAnswer("Input name of the second object:\n");
       if (!Compare(buf, buf2))
       {
         printf("ERROR!\n");
@@ -217,7 +269,7 @@ bool ad6::Aki::PrintTree( FILE *f, Node *node ) const
     PrintTree(f, node->right);
   if (node->left != nullptr)
     PrintTree(f, node->left);
-
+  
   fprintf(f, "}");
 
 
@@ -236,7 +288,7 @@ bool ad6::Aki::ReadTree( const char filename[] )
 {
   assert(filename != nullptr);
 
-  FILE *tree = fopen(filename, "r");
+  FILE *tree = fopen(filename, "rb");
 
   if (tree == nullptr)
   {
@@ -354,9 +406,9 @@ void ad6::Aki::Character( const char name[] ) const
   }
   printf("The %s is ", node->quest);
 
-  Stack<char *> chr;
+  Stack<char *> chr = {};
   StackInit(&chr);
-  Stack<int> route;
+  Stack<int> route = {};
   StackInit(&route);
   FillRoute(&route, &chr, node);
 
@@ -442,7 +494,7 @@ bool ad6::Aki::Compare( const char name1[], const char name2[] ) const
  * \brief Fill routes stack function.
  * \param answer  pointer to stack with answers.
  * \param quest   pointer to stack with questions.
- * \param quest   pointer to Node.
+ * \param node   pointer to Node.
  */
 bool ad6::Aki::FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node ) const
 {
@@ -470,6 +522,8 @@ bool ad6::Aki::FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node )
  */
 ad6::Node * ad6::Aki::Find( const char name[], Node *node ) const
 {
+  //AKI_ASSERT(name != nullptr, "name was nullptr\n");
+  //AKI_ASSERT(name != nullptr, "name was nullptr\n");
   assert(name != nullptr);
   assert(node != nullptr);
 

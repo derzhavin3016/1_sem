@@ -22,14 +22,14 @@ namespace ad6
 {
   #include <stdexcept>
 
+  char * InputAnswer( const char printfstr[], ... );
   struct Error : public std::runtime_error
   {
-    int code;
     const char* descr;
     int line;
     const char* file;
     const char* func;
-    Error* reason;
+    //Error* reason;
 
     virtual const std::string what() 
     {
@@ -37,8 +37,7 @@ namespace ad6
     }
   };
 
-  const size_t ANSWER_MAX = 100;
-  const size_t QUEST_MAX = 200;
+  const size_t ANSWER_MAX = 1024;
   struct Node
   {
     char *quest;
@@ -47,7 +46,7 @@ namespace ad6
     Node *left;
     
     // default constructor
-    Node( void ) : quest(new char[ANSWER_MAX]),
+    Node( void ) : quest(nullptr),
                    right(nullptr),
                    left(nullptr),
                    parent(nullptr)
@@ -56,7 +55,7 @@ namespace ad6
 
 
     // Constructor by string
-    Node( const char str[] ) : quest(new char[ANSWER_MAX]),
+    Node( const char str[] ) : quest((char *)calloc(ANSWER_MAX, sizeof(char))),
                                right(nullptr),
                                left(nullptr),
                                parent(nullptr)
@@ -77,7 +76,7 @@ namespace ad6
         left = nullptr;
       }
       if (quest != nullptr)
-        delete[] quest;
+        free(quest);
       parent = nullptr;
     }
   };
@@ -108,7 +107,7 @@ namespace ad6
     Aki( void ) : root(new Node(DEF_NAME)),
                   Base()
     {
-      Base.Push_head(root->quest);
+      Base.Push_tail(root->quest);
     }
 
     bool SaveTree( const char filename[] ) const;
@@ -128,7 +127,6 @@ namespace ad6
     {
       if (root != nullptr)
         delete root;
-
     }
   private:
 
