@@ -146,6 +146,8 @@ namespace ad6
     Node *Find( const char name[], Node *node ) const;
 
     bool FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node ) const;
+
+    bool Compare( const char name1[], const char name2[] ) const;
   };
 }
 

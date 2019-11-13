@@ -10,7 +10,8 @@
                   "*** 2. Save database to file\n"                                        \
                   "*** 3. Load database from file\n"                                      \
                   "*** 4. Dump tree with dot\n"                                           \
-                  "*** 5. Print characteristics of the object\n"
+                  "*** 5. Print characteristics of the object\n"                          \
+                  "*** 6. Compare two objects\n"
 
 #define PARTING  "Have a nice night, stranger!\n"
 
@@ -109,7 +110,7 @@ void ad6::Aki::ProcessLoop( void )
   printf(GREETING);
   printf("\n\n");
   int promt = 0;
-  char buf[ANSWER_MAX] = {};
+  char buf[ANSWER_MAX] = {}, buf2[ANSWER_MAX] = {};
   while (1)
   {
     printf("Input number to start:");
@@ -156,8 +157,18 @@ void ad6::Aki::ProcessLoop( void )
       break;
     case 5:
       printf("Input name of the object:\n");
-      scanf("\n%s", buf);
+      scanf("\n%[^\n]", buf);
       Character(buf);
+      break;
+    case 6:
+      printf("Input name of the first object:\n");
+      scanf("\n%[^\n]", buf);
+      printf("Input name of the second object:\n");
+      scanf("\n%[^\n]", buf2);
+      if (!Compare(buf, buf2))
+      {
+        printf("ERROR!\n");
+      }
       break;
     default:
       printf("Incorrect number of command: %d\n", promt);
@@ -340,29 +351,6 @@ void ad6::Aki::Character( const char name[] ) const
   }
   printf("The %s is ", node->quest);
 
-  /*struct Route
-  {
-    char *name;
-    int answer;
-
-    //default constructor
-    Route( void ) : name(nullptr),
-                    answer(0)
-    {
-    }
-
-    // copy constructor
-    Route( Route &r ) : name(r.name),
-                        answer(r.answer)
-    {
-    }
-
-    Route &operator=( Route &r )
-    {
-      name = r.name;
-      answer = r.answer;
-    }
-  };*/
   Stack<char *> chr;
   StackInit(&chr);
   Stack<int> route;
@@ -383,7 +371,76 @@ void ad6::Aki::Character( const char name[] ) const
   StackClose(&route);
 } /* End of 'Character' function */
 
+/**
+ * \brief Compare two objects function.
+ */
+bool ad6::Aki::Compare( const char name1[], const char name2[] ) const
+{
+  assert(name1 != nullptr);
+  assert(name2 != nullptr);
 
+  if (strcmp(name1, name2) == 0)
+  {
+    printf("Seems they are the same..\n");
+    return true;
+  }
+
+#define FIND_NAME(node, name)                                 \
+  Node *node = Find(name, root);                              \
+  if (node == nullptr)                                        \
+  {                                                           \
+    printf("I don't know who it is - '%s'\n", name);          \
+    return false;                                             \
+  }
+
+#define FILL_ROUTE(quest, answ, node)                          \
+  Stack<char *> quest;                                        \
+  StackInit(&quest);                                          \
+  Stack<int> answ;                                            \
+  StackInit(&answ);                                           \
+  FillRoute(&answ, &quest, node);
+
+  FIND_NAME(node1, name1);
+
+  FIND_NAME(node2, name2);
+
+  FILL_ROUTE(quest1, answ1, node1);
+  FILL_ROUTE(quest2, answ2, node2);
+
+#define POP_ROUTE(quest, answ, route, buf)    \
+  StackPop(&answ, &route);                    \
+  StackPop(&quest, &buf);
+
+
+  char *buf1 = nullptr, *buf2 = nullptr;
+  int route1 = 0, route2 = 0;
+  POP_ROUTE(quest1, answ1, route1, buf1);
+  POP_ROUTE(quest2, answ2, route2, buf2);
+  if (route1 == route2)
+    printf("The %s and %s are both", node1->quest, node2->quest);
+  while (route1 == route2)
+  {
+    printf("%s%s and", route1 ? " " : " not ", buf1);
+    POP_ROUTE(quest1, answ1, route1, buf1);
+    POP_ROUTE(quest2, answ2, route2, buf2);
+  }
+  printf(" they have differnce:\n");
+  printf("The %s %s, but %s don't\n", route1 ? name1 : name2, route1 ? buf1 : buf2, route1 ? name2 : name1);
+
+  StackClose(&quest1);
+  StackClose(&quest2);
+  StackClose(&answ1);
+  StackClose(&answ2);
+  return true;
+} /* End of 'Compare' function */
+
+
+/** 
+ * \brief Fill routes stack function.
+ * \param answer  pointer to stack with answers.
+ * \param quest   pointer to stack with questions.
+ * \param quest   pointer to Node.
+ */
 bool ad6::Aki::FillRoute( Stack<int> *answer, Stack<char *> *quest, Node *node ) const
 {
   Node **p_node = &(node->parent);
