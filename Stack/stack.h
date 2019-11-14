@@ -24,7 +24,11 @@
                                            return false;                    \
                                          } 
 
-#define STK_ASSERT() assert(StackAssert(this_, STACK_LOCATION))
+#ifndef STK_OFF_SEC
+  #define STK_ASSERT() assert(StackAssert(this_, STACK_LOCATION))
+#else
+  #define STK_ASSERT()
+#endif
 
 #define STK_DATA(i) ((Data *)(this_->data + sizeof(canary_t)))[i]
 
@@ -40,7 +44,7 @@ const canary_t owldata1_control = 0xBEDADEAD;
 const canary_t owldata2_control = 0xCCAAFFBB;
 
 template <typename Data>
-const Data stack_poison_value = -6699;
+const Data stack_poison_value = 0;
 
 template <typename Data>
 struct Stack
@@ -69,6 +73,28 @@ enum STK_ERR
   STK_OWLDATA1_ERROR   =    10,
   STK_OWLDATA2_ERROR   =    11,
 };
+
+#ifndef STK_OFF_SEC
+/**
+ * \brief Stack hash calculation function (template).
+ * \param [in, out] this_  Pointer to stack.
+ * \return Calculated hash.
+ * \warning This function also write new hash value to stack structure.
+ */
+template <typename Data>
+hash_t StackHashReCalc( Stack<Data> *this_ )
+{
+  assert(this_ != nullptr);
+  
+  this_->hash = 0;
+  this_->hash = HashCalc(this_) + 
+                HashCalc(this_->data, this_->maxsize * sizeof(Data) + 2 * sizeof(canary_t));
+
+  return this_->hash;
+} /* End of 'StackHashReCalc' function */
+#else
+#define StackHashReCalc(a) true;
+#endif
 
 /**
  * \brief Allocate memory for stack function(template)
@@ -225,9 +251,10 @@ bool StackOk( Stack<Data> *this_ )
   assert(this_->owldata2 != nullptr);
   STACK_COND_CHECK(*(this_->owldata2) != owldata2_control, STK_OWLDATA2_ERROR);
 
+#ifndef STK_OFF_SEC
   hash_t prev_hash = this_->hash;
   STACK_COND_CHECK(StackHashReCalc(this_) != prev_hash, STK_HASH_ERROR);
-
+#endif
   STACK_COND_CHECK(StackCountPoi(this_, this_->size) != this_->maxsize - this_->size, 
                    STK_POI_ERROR);
   return true;
@@ -386,23 +413,6 @@ hash_t HashCalc( const Data *this_, size_t size = 1 )
   return hash;
 } /* End of 'HashCalc' function */
 
-/**
- * \brief Stack hash calculation function (template).
- * \param [in, out] this_  Pointer to stack.
- * \return Calculated hash.
- * \warning This function also write new hash value to stack structure.
- */
-template <typename Data>
-hash_t StackHashReCalc( Stack<Data> *this_ )
-{
-  assert(this_ != nullptr);
-  
-  this_->hash = 0;
-  this_->hash = HashCalc(this_) + 
-                HashCalc(this_->data, this_->maxsize * sizeof(Data) + 2 * sizeof(canary_t));
-
-  return this_->hash;
-} /* End of 'StackHashCalc' function */
 
 /**
  * \brief Stack resize function (template).
@@ -463,18 +473,6 @@ bool StackAssert( Stack<Data> *this_, const char filename[],
   return true;
 } /* End of 'StackAssert' function */
 
-/**
- * \brief Clamping value function (template).
- * \param [in] value  Value to clamp.
- * \param [in]  min   Minimal value.
- * \param [in]  max   Maximum value.
- * \return Clamping value.
- */
-template <typename Data>
-Data Clamp( Data value, Data min, Data max )
-{
-  return value > max ? max : value < min ? min : value;
-} /* End of 'Clamp' function */
 
 /**
  * \brief Work with stack function (template).
@@ -534,19 +532,6 @@ void StackProcLoop( Stack<Data> *this_ )
   }
 }
 
-/**
- * \brief Swap two values function by pointers (template).
- * \param [out]   *a  Pointer to first value.
- * \param [out]   *b  Pointer to second value.
- * \return None.
- */
-template <typename Data>
-void Swap( Data* A, Data *B )
-{
-  Data tmp = *A;
-  *A = *B;
-  *B = tmp;
-} /* End of 'Swap' function */
 
 #endif /* __stack_h_ */
 
