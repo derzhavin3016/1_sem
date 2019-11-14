@@ -267,6 +267,7 @@ bool ad6::Aki::ReadTree( const char filename[] )
   Base.Kill();
   if (root != nullptr)
     delete root;
+
   root = new Node;
 
   BuildTree(tree, root);
@@ -447,17 +448,22 @@ bool ad6::Aki::Compare( const char name1[], const char name2[] ) const
 
   char *buf1 = nullptr, *buf2 = nullptr;
   int route1 = 0, route2 = 0;
+
+  bool IsDiff = false;
+
   POP_ROUTE(quest1, answ1, route1, buf1);
   POP_ROUTE(quest2, answ2, route2, buf2);
   if (route1 == route2)
     printf("The %s and %s are both", node1->quest, node2->quest);
   while (route1 == route2)
   {
+    IsDiff = true;
     printf("%s%s and", route1 ? " " : " not ", buf1);
     POP_ROUTE(quest1, answ1, route1, buf1);
     POP_ROUTE(quest2, answ2, route2, buf2);
   }
-  printf(" they have differnce:\n");
+  if (IsDiff)
+    printf(" they have differnce:\n");
   printf("The %s %s, but %s don't\n", route1 ? name1 : name2, route1 ? buf1 : buf2, route1 ? name2 : name1);
 
   StackClose(&quest1);
