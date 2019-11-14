@@ -8,7 +8,7 @@ const int MAX_NAME = 100;
 
 int main( void )
 {
-  hash_table tbl;
+  hash_table tbl(BestHash);
   const int size_func = 7;
   char FileName[MAX_NAME] = {};
 
@@ -44,7 +44,7 @@ int main( void )
     tbl.PutToCSV(FileName, ';', names[i]);
     tbl.Clear();
   }
-
+  
 
   return 0;
 }

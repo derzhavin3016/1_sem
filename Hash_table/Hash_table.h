@@ -4,6 +4,7 @@
 #include "..\List\List.h"
 #include "..\Processor\Strings\strings.h"
 
+
 typedef unsigned long long hash_t;
 
 namespace ad6
@@ -32,7 +33,7 @@ namespace ad6
     {
     }
 
-    // default constructor
+    // constructor
     hash_table( hash_t (*func)( const String* s) ) : table{},
                                                      buf(nullptr),
                                                      buf_size(0),
@@ -51,6 +52,10 @@ namespace ad6
 
     bool Insert( const String *str, bool IsDic = true );
 
+    hash_t Find( const String *str, hash_t hsh /*= 0 */ );
+
+    bool TableOk( const char filename[], int line, const char funcname[] );
+
     ~hash_table( void )
     {
       if (buf != nullptr)
@@ -65,6 +70,7 @@ namespace ad6
     void PrintCSVHeader( FILE* f, char sep_sym );
   };
 }
+
 
 #endif /* __HASH_TABLE_H_ */
 
