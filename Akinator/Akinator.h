@@ -63,7 +63,7 @@ namespace ad6
 
 
     // Constructor by string
-    Node( const char str[] ) : quest((char *)calloc(ANSWER_MAX, sizeof(char))),
+    Node( const char str[] ) : quest(new char[ANSWER_MAX]),
                                right(nullptr),
                                left(nullptr),
                                parent(nullptr)
@@ -84,7 +84,7 @@ namespace ad6
         left = nullptr;
       }
       if (quest != nullptr)
-        free(quest);
+        delete[] quest;
       parent = nullptr;
     }
   };

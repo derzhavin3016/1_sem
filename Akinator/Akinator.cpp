@@ -171,7 +171,7 @@ void ad6::Aki::ProcessLoop( void )
       SaveTree(InputAnswer("Input file name to save tree:\n"));
       break;
     case 3:
-      (InputAnswer("Input file name to load tree from:\n"));
+      ReadTree(InputAnswer("Input file name to load tree from:\n"));
       break;
     case 4:
       Dump(InputAnswer("Input file name to dump tree (only name):\n"));
@@ -265,6 +265,10 @@ bool ad6::Aki::ReadTree( const char filename[] )
     return false;
   }
   Base.Kill();
+  if (root != nullptr)
+    delete root;
+  root = new Node;
+
   BuildTree(tree, root);
 
   fclose(tree);
@@ -284,14 +288,18 @@ bool ad6::Aki::BuildTree( FILE *f, Node *node )
   AKI_ASSERT(node != nullptr, "node was nullptr");
 
   char IsLeaf = 0;
+  node->quest = new char[ANSWER_MAX];
   fscanf(f, "{\"%[^!?]%c\"", node->quest, &IsLeaf);
-  Base.Push_tail(node->quest);
   if (IsLeaf == '?')
   {
     CreateNodes(node);
     node->right->parent = node->left->parent = node;
     BuildTree(f, node->right);
     BuildTree(f, node->left);
+  }
+  else
+  {
+    Base.Push_tail(node->quest);
   }
   fscanf(f, "%*c");
 

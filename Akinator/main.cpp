@@ -18,5 +18,9 @@ int main( void )
     std::cerr << error.descr << " In file: " << error.file << 
                  " line (" << error.line << ") function " << error.func << std::endl;
   }
+  catch (...)
+  {
+    std::cerr << "Strange error\n";
+  }
   return 0;
 }
