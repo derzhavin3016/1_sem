@@ -6,7 +6,86 @@
 #include <assert.h>
 #include "..//Stack/input.h"
 #include "List_def.h"
-//#include "D:\\TX\TXLib.h"
+//#include "D:\TX\TXLib.h"
+
+#define LIST_LOCATION __FILE__, __LINE__, __FUNCSIG__
+#define var_name(var) #var
+
+
+#define LST_START_PROMT                          \
+  "****************************************\n"   \
+  "****************************************\n"   \
+  "      Working with list program         \n"   \
+  "***********   MENU   *******************\n"   \
+  "*** 0. Exit                             \n"   \
+  "*** 1. Push value to head               \n"   \
+  "*** 2. Push value to tail               \n"   \
+  "*** 3. Insert value before              \n"   \
+  "*** 4. Insert value after               \n"   \
+  "*** 5. Delete value                     \n"   \
+  "*** 6. Dump                             \n"   \
+  "*** 7. KILL                             \n"   \
+  "*** 8. Get head                         \n"   \
+  "*** 9. Get tail                         \n"   \
+  "*** 10. Get next                        \n"   \
+  "*** 11. Get previous                    \n"   \
+  "*** 12. Find                            \n"   \
+  "*** 13. Find value                      \n"   \
+  "****************************************\n"   \
+
+#define LIST_COND_CHECK(COND, ERR_CODE, ret) if (COND)                          \
+                                             {                                  \
+                                              error = ERR_CODE;                \
+                                               return ret;                      \
+                                             }
+
+#ifndef NDEBUG
+  #define LST_ASSERT() if (!Assert(LIST_LOCATION)) \
+                        throw error;
+#else       
+  #define LST_ASSERT() 
+#endif
+
+#define LIST_IF_FREE                                     \
+  assert(elems[num].prev != LAST_FREE)
+
+#define LIST_IF_LAST_FREE if (elems[free_plc].next == LAST_FREE)  \
+                            Resize((maxsize - 1) * 2 + 1);        \
+
+#define LIST_FST_PUSH if (size == 0)                               \
+                      {                                            \
+                        LIST_IF_LAST_FREE;                         \
+                        int new_num = (int)free_plc;               \
+                        free_plc = (size_t)elems[free_plc].next;   \
+                        elems[new_num].data = value;               \
+                        elems[new_num].prev = 0;                   \
+                        elems[new_num].next = 0;                   \
+                        head = tail = 1;                           \
+                        size++;                                    \
+                        return head;                               \
+                      }
+
+#define LIST_INSERT(REL_ELEM, REL_ANOTHER, DIR_END)                  \
+  if (num == DIR_END)                                                \
+    DIR_END = free_plc;                                              \
+   int new_num = free_plc;                                           \
+                                                                     \
+  /* New first free element */                                       \
+  free_plc = elems[free_plc].next;                                   \
+  size++;                                                            \
+                                                                     \
+  /* Assign values in new element */                                 \
+  elems[new_num].data = value;                                       \
+  elems[new_num].##REL_ELEM = num;                                   \
+  elems[new_num].##REL_ANOTHER = elems[num].##REL_ANOTHER;           \
+                                                                     \
+  /* Insert element in list */                                       \
+  if (elems[new_num].##REL_ANOTHER != 0)                             \
+    elems[elems[new_num].##REL_ANOTHER].##REL_ELEM = new_num;        \
+  elems[num].##REL_ANOTHER = new_num;
+
+#define LIST_IF_COR_NUM                                              \
+  assert(num > 0 && num < maxsize)
 
 /**
  * \brief Swap two values function by pointers (template).
@@ -56,26 +135,31 @@ namespace ad6
      * \param None.
      * \return None.
      */
-    List( void ) : size(0),
-                   free_plc(1),
-                   maxsize(LIST_START_SIZE),
-                   error(0),
-                   elems(nullptr),
-                   head(0),
-                   tail(0)
+    List(void) : size(0),
+      free_plc(1),
+      maxsize(LIST_START_SIZE),
+      error(0),
+      elems(nullptr),
+      head(0),
+      tail(0)
 
     {
       DataCalloc();
     } /* End of 'List' function */
+    
+    size_t GetSize( void )
+    {
+      return size;
+    }
 
     // Get actual number of head
-    int GetHead( void ) const
+    int GetHead(void) const
     {
       return head;
     }
 
     // Get actual number of tail
-    int GetTail( void ) const
+    int GetTail(void) const
     {
       return tail;
     }
@@ -86,7 +170,7 @@ namespace ad6
      * \return actual num of next element
      * \return -1 if num incorrect
      */
-    int GetNext( size_t num ) const
+    int GetNext(size_t num) const
     {
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
@@ -99,7 +183,7 @@ namespace ad6
      * \return actual num of previous element
      * \return -1 if num incorrect
      */
-    int GetPrev( size_t num ) const
+    int GetPrev(size_t num) const
     {
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
@@ -112,7 +196,7 @@ namespace ad6
      * \return actual number of inserted element if all is ok.
      * \return -1 otherwise.
      */
-    int Push_tail( Data value )
+    int Push_tail(Data value)
     {
       LST_ASSERT();
       LIST_FST_PUSH;
@@ -125,7 +209,7 @@ namespace ad6
      * \return actual number of inserted element if all is ok.
      * \return -1 otherwise.
      */
-    int Push_head( Data value )
+    int Push_head(Data value)
     {
       LST_ASSERT();
       LIST_FST_PUSH;
@@ -139,13 +223,13 @@ namespace ad6
      * \return actual number of inserted element if all is ok.
      * \return -1 otherwise.
      */
-    int Insert_bef( Data value, size_t num )
+    int Insert_bef(Data value, size_t num)
     {
       LST_ASSERT();
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
       LIST_IF_LAST_FREE;
-      
+
       LIST_INSERT(next, prev, head);
 
       LST_ASSERT();
@@ -159,7 +243,7 @@ namespace ad6
      * \return actual number of inserted element if all is ok.
      * \return -1 otherwise.
      */
-    int Insert_af( Data value, size_t num )
+    int Insert_af(Data value, size_t num)
     {
       LST_ASSERT();
 
@@ -179,28 +263,19 @@ namespace ad6
      * \return true if all is OK.
      * \return false otherwise.
      */
-    bool Delete( size_t num, Data *value = nullptr )
+    bool Delete(size_t num, Data *value = nullptr)
     {
       LST_ASSERT();
 
       LIST_IF_COR_NUM;
       LIST_IF_FREE;
-      
+
       if (size <= 0)
       {
         error = LST_UNDERFLOW;
         LST_ASSERT();
         return false;
       }
-      if (maxsize > LIST_START_SIZE &&
-          size == maxsize / 2 - LIST_DELTA)
-        if (!Resize(maxsize / 2))
-        {
-          LST_ASSERT();
-          return false;
-        }
-      
-
 
       if (value != nullptr)
         *value = elems[num].data;
@@ -232,6 +307,14 @@ namespace ad6
 
       size--;
 
+      if (maxsize > LIST_START_SIZE &&
+        size == maxsize / 2 - LIST_DELTA)
+        if (!Resize(maxsize / 2))
+        {
+          LST_ASSERT();
+          return false;
+        }
+
       LST_ASSERT();
       return true;
     } /* End of 'Pop' function */
@@ -241,10 +324,10 @@ namespace ad6
      * \brief This function fetch list to the initial state.
      * \warning After this function ALL data will be lost!
      */
-    void Kill( void )
+    void Kill(void)
     {
       LST_ASSERT();
-      
+
       size = 0;
       head = tail = 0;
       free_plc = 1;
@@ -261,10 +344,12 @@ namespace ad6
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t Find( size_t num )
+    size_t Find(size_t num)
     {
       LST_ASSERT();
 
+      if (size == 0)
+        return 0;
       if (num >= size)
         return -1;
       size_t act = 0;
@@ -272,26 +357,28 @@ namespace ad6
         act = GoTail(num);
       else
         act = GoHead(num);
-      
+
       LST_ASSERT();
       return act;
     } /* End of 'Find' function */
 
     /**
      * \brief Search value in list function.
-     * \param [in] value to search. 
+     * \param [in] value to search.
      * \return actual number of value if it was find
      * \return -1 otherwise.
      */
-    size_t FindValue( Data value )
+    int FindValue( Data value )
     {
       LST_ASSERT();
+      if (size == 0)
+        return 0;
 
       size_t act = head;
       while (act != 0)
       {
         if (elems[act].data == value)
-          return act;
+          return (int)act;
         act = elems[act].next;
       }
 
@@ -299,12 +386,32 @@ namespace ad6
       return -1;
     } /* End of 'FindValue' function */
 
+        /**
+     * \brief List assertion function (template).
+     * \return true if all id OK.
+     * \return false otherwise.
+     */
+    bool Assert(const char filename[], int line, const char funcname[])
+    {
+      if (error != 0)
+      {
+        List_Process_Error(filename, line, funcname);
+        return false;
+      }
+      if (!ListOk())
+      {
+        List_Process_Error(filename, line, funcname);
+        return false;
+      }
+      return true;
+    } /* End of 'Assert' function */
+
     /**
      * \brief List destructor function (template).
      * \param None.
      * \return None.
      */
-    ~List( void )
+    ~List(void)
     {
       if (elems != nullptr)
         free(elems);
@@ -318,36 +425,36 @@ namespace ad6
      * \param [in]  funcname Name of a function where Dump function called.
      * \return None.
      */
-    void Dump( const char reason[], const char filename[],
-      int line, const char funcname[] ) const
+    void Dump(const char reason[], const char filename[],
+      int line, const char funcname[]) const
     {
       printf("Dump ('%s') from %s (%d) in %s\n", reason, filename, line, funcname);
 
       printf("List [0x%p] (%s)\n", this, error ? "ERROR!!!" : "ok");
 
       printf("{\n");
-      printf("  free_plc = %d\n", free_plc);
-      printf("  head = %d\n  tail = %d\n  size = %d\n  maxsize = %d\n",
-                head,        tail,        size,        maxsize);
+      printf("  free_plc = %zd\n", free_plc);
+      printf("  head = %zd\n  tail = %zd\n  size = %zd\n  maxsize = %zd\n",
+        head, tail, size, maxsize);
       printf("  error = %d (%s)\n", error, reason);
 
       printf("  Number: ");
-        for (size_t i = 0; i < maxsize; i++)
-          printf(" %05d |", i);
+      for (size_t i = 0; i < maxsize; i++)
+        printf(" %05lld |", i);
       printf("\n");
       printf("  Data: ");
-        for (size_t i = 0; i < maxsize; i++)
-          printf(" %05d |", elems[i].data);
+      for (size_t i = 0; i < maxsize; i++)
+        std::cout << elems[i].data << " |";
       printf("\n");
 
       printf("  Next: ");
-        for (size_t i = 0; i < maxsize; i++)
-          printf(" %05d |", elems[i].next);
+      for (size_t i = 0; i < maxsize; i++)
+        printf(" %05d |", elems[i].next);
       printf("\n");
 
       printf("  Prev: ");
-        for (size_t i = 0; i < maxsize; i++)
-          printf(" %05d |", elems[i].prev);
+      for (size_t i = 0; i < maxsize; i++)
+        printf(" %05d |", elems[i].prev);
       printf("\n");
       printf("}\n");
     } /* End of 'Dump' function */
@@ -359,7 +466,7 @@ namespace ad6
      * \return true if all is OK
      * \return false otherwise.
      */
-    bool DataCalloc( void )
+    bool DataCalloc(void)
     {
       elems = (list_elem<Data> *)calloc(maxsize, sizeof(list_elem<Data>));
       if (elems == nullptr)
@@ -372,7 +479,7 @@ namespace ad6
       // Fill array as free
       FillFree();
 
-      #undef MEM_ALL
+#undef MEM_ALL
       return true;
     } /* End of 'DataCalloc' function */
 
@@ -380,17 +487,17 @@ namespace ad6
      * \brief Fill elems array as a fully free.
      * \brief Next with increasing values, prev with FREE_PREV.
      * \param [in] index     Start index. 1 default
-     * \param [in] IsCheck   Boolean variable, 
+     * \param [in] IsCheck   Boolean variable,
      *  says if function need to check if the element free (false default).
      */
-    void FillFree( size_t index = 1, bool IsCheck = true )
+    void FillFree(size_t index = 1, bool IsCheck = true)
     {
       assert(index > 0 && index < maxsize);
 
       LST_ASSERT();
 
       size_t last = 0;
-      for (size_t i = index; i < maxsize; i++)  
+      for (size_t i = index; i < maxsize; i++)
         if (IsCheck || elems[i].prev == FREE_PREV)
         {
           elems[i].data = 0;
@@ -399,9 +506,9 @@ namespace ad6
           last = i;
         }
 
-        elems[last].next = LAST_FREE;
+      elems[last].next = LAST_FREE;
 
-        LST_ASSERT();
+      LST_ASSERT();
     } /* End of 'FillFree' function */
 
     /**
@@ -410,7 +517,7 @@ namespace ad6
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t GoTail( size_t num ) const
+    size_t GoTail(size_t num) const
     {
       if (num >= size)
         return -1;
@@ -420,7 +527,7 @@ namespace ad6
 
       while (count++ < num)
         act = elems[act].prev;
-      
+
       return act;
     } /* End of 'GoTail' function */
 
@@ -430,7 +537,7 @@ namespace ad6
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t GoHead( size_t num ) const
+    size_t GoHead(size_t num) const
     {
       if (num >= size)
         return -1;
@@ -438,7 +545,7 @@ namespace ad6
 
       while (count++ < num)
         act = elems[act].next;
-      
+
       return act;
     } /* End of 'GoHead' function */
 
@@ -447,21 +554,21 @@ namespace ad6
      * \return true if all is ok.
      * \return false otherwise.
      */
-    bool ListOk( void )
+    bool ListOk(void)
     {
-      #define LIST_IF_BETWEEN(num)  ((num) > maxsize - 1 || (num) < 0)
+#define LIST_IF_BETWEEN(num)  ((num) > maxsize - 1 || (num) < 0)
 #define IS_OK_CHECK(cond, err) LIST_COND_CHECK(cond, err, false)
 
-      IS_OK_CHECK(elems == nullptr,                         LST_DATA_ERROR);
-      IS_OK_CHECK(size < 0,                                 LST_UNDERFLOW);
-      IS_OK_CHECK(size > maxsize,                           LST_OVERFLOW);
+      IS_OK_CHECK(elems == nullptr, LST_DATA_ERROR);
+      IS_OK_CHECK(size < 0, LST_UNDERFLOW);
+      IS_OK_CHECK(size > maxsize, LST_OVERFLOW);
       IS_OK_CHECK(elems[0].data != LIST_POISON_VALUE<Data>, LST_POI_ERROR);
-      IS_OK_CHECK(LIST_IF_BETWEEN(free_plc),                LST_NO_FREE_ERROR);
-      IS_OK_CHECK(LIST_IF_BETWEEN(head),                    LST_HEAD_ERROR);
-      IS_OK_CHECK(LIST_IF_BETWEEN(tail),                    LST_TAIL_ERROR);
+      IS_OK_CHECK(LIST_IF_BETWEEN(free_plc), LST_NO_FREE_ERROR);
+      IS_OK_CHECK(LIST_IF_BETWEEN(head), LST_HEAD_ERROR);
+      IS_OK_CHECK(LIST_IF_BETWEEN(tail), LST_TAIL_ERROR);
 
-      #undef LIST_IF_BETWEEN
-      #undef IS_OK_CHECK
+#undef LIST_IF_BETWEEN
+#undef IS_OK_CHECK
       return true;
     } /* End of 'ListOk' function */
 
@@ -477,16 +584,16 @@ namespace ad6
                                                break;
       switch (error)
       {
-        LIST_DUMP_CASE(LST_DATA_ERROR,      "Elems was nullptr");
-        LIST_DUMP_CASE(LST_HEAD_ERROR,      "Incorrect head value");
-        LIST_DUMP_CASE(LST_MEM_ERROR,       "No free memory for list");
-        LIST_DUMP_CASE(LST_NEW_SIZE_ERROR,  "New size is too small");
-        LIST_DUMP_CASE(LST_NO_FREE_ERROR,   "No free place in list");
-        LIST_DUMP_CASE(LST_OVERFLOW,        "List overflow");
-        LIST_DUMP_CASE(LST_POI_ERROR,       "Poison values have broken");
-        LIST_DUMP_CASE(LST_SIZE_ERROR,      "Incorrect size value");
-        LIST_DUMP_CASE(LST_TAIL_ERROR,      "Incorrect tail value");
-        LIST_DUMP_CASE(LST_UNDERFLOW,       "List underflow");
+        LIST_DUMP_CASE(LST_DATA_ERROR, "Elems was nullptr");
+        LIST_DUMP_CASE(LST_HEAD_ERROR, "Incorrect head value");
+        LIST_DUMP_CASE(LST_MEM_ERROR, "No free memory for list");
+        LIST_DUMP_CASE(LST_NEW_SIZE_ERROR, "New size is too small");
+        LIST_DUMP_CASE(LST_NO_FREE_ERROR, "No free place in list");
+        LIST_DUMP_CASE(LST_OVERFLOW, "List overflow");
+        LIST_DUMP_CASE(LST_POI_ERROR, "Poison values have broken");
+        LIST_DUMP_CASE(LST_SIZE_ERROR, "Incorrect size value");
+        LIST_DUMP_CASE(LST_TAIL_ERROR, "Incorrect tail value");
+        LIST_DUMP_CASE(LST_UNDERFLOW, "List underflow");
 
       default:
         printf("Unrecognized error code = %d\n", error);
@@ -502,7 +609,7 @@ namespace ad6
      * \return true if all is ok.
      * \return false otherwise.
      */
-    bool Resize( size_t new_size )
+    bool Resize(size_t new_size)
     {
       LST_ASSERT();
 
@@ -514,7 +621,7 @@ namespace ad6
         return false;
       }
 
-      bool IsIncr = new_size > maxsize;
+      bool IsIncr = new_size > prev_size;
 
       if (IsIncr)
       {
@@ -533,7 +640,7 @@ namespace ad6
      * \param [in]  New size
      * \return Previous size
      */
-    int ChangeSize( size_t new_size )
+    int ChangeSize(size_t new_size)
     {
       assert(new_size >= 0);
       LST_ASSERT();
@@ -541,7 +648,7 @@ namespace ad6
       if (new_size == maxsize)
         return true;
 
-      #define RES_COND_CHECK(cond, err)  LIST_COND_CHECK(cond, err, -1)
+#define RES_COND_CHECK(cond, err)  LIST_COND_CHECK(cond, err, -1)
 
       RES_COND_CHECK(new_size < LIST_START_SIZE, LST_NEW_SIZE_ERROR);
 
@@ -556,29 +663,8 @@ namespace ad6
       #undef RES_COND_CHECK
       return prev_size;
     } /* End of 'ChangeSize' function */
-
-    /**
-     * \brief List assertion function (template).
-     * \return true if all id OK.
-     * \return false otherwise.
-     */
-    bool Assert( const char filename[], int line, const char funcname[] )
-    {
-      if (error != 0)
-      {
-        List_Process_Error(filename, line, funcname);
-        return false;
-      }
-      if (!ListOk())
-      {
-        List_Process_Error(filename, line, funcname);
-        return false;
-      }
-      return true;
-    } /* End of 'Assert' function */
   };
 }
-
 
 /**
  * \brief Work with list function (template).
@@ -707,6 +793,26 @@ void ListProcLoop( ad6::List<Data> *this_ )
   }
 }
 #undef LIST_FST_PUSH
+
+#undef LIST_LOCATION
+
+#undef var_name
+
+#undef LST_START_PROMT
+
+#undef LIST_COND_CHECK
+
+#undef LST_ASSERT
+
+#undef LIST_IF_FREE
+
+#undef LIST_IF_LAST_FREE
+
+#undef LIST_FST_PUSH
+
+#undef LIST_INSERT
+
+#undef LIST_IF_COR_NUM
 
 #endif /* __LIST_H_ */
 
