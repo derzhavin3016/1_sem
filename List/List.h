@@ -317,7 +317,7 @@ namespace ad6
 
       LST_ASSERT();
       return true;
-    } /* End of 'Pop' function */
+    } /* End of 'Delete' function */
 
     /**
      * \brief Clear list function
@@ -344,7 +344,7 @@ namespace ad6
      * \return actual element number.
      * \return -1 if element was not find.
      */
-    size_t Find(size_t num)
+    size_t Find( size_t num )
     {
       LST_ASSERT();
 
@@ -365,19 +365,22 @@ namespace ad6
     /**
      * \brief Search value in list function.
      * \param [in] value to search.
+     * \param [in] comp  Pointer to comparator function
      * \return actual number of value if it was find
      * \return -1 otherwise.
      */
-    int FindValue( Data value )
+    int FindValue( Data value, int (*comp)(Data a, Data b) = nullptr )
     {
       LST_ASSERT();
       if (size == 0)
         return 0;
+      if (comp == nullptr)
+        comp = defcomp;
 
       size_t act = head;
       while (act != 0)
       {
-        if (elems[act].data == value)
+        if (comp(elems[act].data, value) == 0)
           return (int)act;
         act = elems[act].next;
       }
@@ -386,7 +389,7 @@ namespace ad6
       return -1;
     } /* End of 'FindValue' function */
 
-        /**
+    /**
      * \brief List assertion function (template).
      * \return true if all id OK.
      * \return false otherwise.
@@ -414,7 +417,7 @@ namespace ad6
     ~List(void)
     {
       if (elems != nullptr)
-        free(elems);
+        delete[] elems;
     } /* End of '~List' function */
 
     /**
@@ -459,7 +462,15 @@ namespace ad6
       printf("}\n");
     } /* End of 'Dump' function */
 
-  private:
+    // default list comparator
+    static int defcomp( Data a, Data b )
+    {
+      return (int)(a - b);
+    }
+
+    private:
+
+
     /**
      * \brief Allocate memory for list function(template)
      * \param None
@@ -468,7 +479,7 @@ namespace ad6
      */
     bool DataCalloc(void)
     {
-      elems = (list_elem<Data> *)calloc(maxsize, sizeof(list_elem<Data>));
+      elems = new list_elem<Data>[maxsize];
       if (elems == nullptr)
       {
         return false;
