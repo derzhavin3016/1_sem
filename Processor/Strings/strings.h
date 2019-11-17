@@ -12,11 +12,13 @@
 
 #pragma warning (disable: 4996 4090)
 
-typedef struct
+struct String
 {
   const char *str;
   size_t len;
-} String;
+
+  bool operator==( const String* s );
+};
 
 char * LoadAndCreateStrings( const char filename[], size_t *str_count, int *error_code );
 
@@ -28,7 +30,7 @@ int FileLength( FILE *f );
 
 void LACS_Process_Error( int error_code );
 
-int StrCompareBegin( const char s1[], const char s2[] );
+int StrCompareBegin( const char s1[], const char s2[], char end_sym = '\0');
 
 void PrintStrs( const char filename[], const String strs[], size_t size );
 
@@ -37,6 +39,10 @@ void DelCom( String *strs, size_t size, char end_value );
 void StrConcat( char Dest[], const char Src[] );
 
 bool PutBufToFile( const char file_name[], const char buf[], size_t buf_size );
+
+char* FillBuf( const char file_in[], size_t *code_size );
+
+int StrCompareBegin( char s1[], char s2[] );
 
 enum
 {

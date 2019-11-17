@@ -9,8 +9,8 @@
  * \warning Dynamic memory, it is necessary to use free() function.
  * \note Write to the error_code 
  *       LACS_FSEEK_ERROR if error detected in fseek() fucntion,
- *       LACS_LENGTH_ERROR if error detected in length counting,
  *       LACS_BUF_MEMORY_ERROR if error in memory allocation for buffer,
+ *       LACS_LENGTH_ERROR if error detected in length counting,
  *       LACS_FOPEN_ERROR if error is detected upon attempt to open file.
  */
 char * LoadAndCreateStrings( const char filename[], size_t *str_count, int *error_code )
@@ -41,7 +41,7 @@ char * LoadAndCreateStrings( const char filename[], size_t *str_count, int *erro
     *error_code = LACS_BUF_MEMORY_ERROR;
     return NULL;
   }
-  len = fread(buf, sizeof(buf[0]), len, f);
+  len = (int)fread(buf, sizeof(buf[0]), len, f);
 
   *str_count = len;
   fclose(f);
@@ -92,7 +92,7 @@ void LACS_Process_Error( int error_code )
     printf("ERROR. Error with allocation memory for the buffer.\n");
     break;
   default:
-    printf("Incorrect error code.\n");
+    printf("Incorrect error code: %d.\n", error_code);
     break;
   }
 } /* End of 'LACS_Process_Error' function */
@@ -201,17 +201,62 @@ int StrCount( const char buf[], size_t buf_size, char end_value )
  * Compare two strings in alphabet order function from the beginings.
  * \param [in]     s1[]   First string.
  * \param [in]     s2[]   Second string.
+ * \param [in]     end_sym End of string symbol (0 default).
  * \return Positive value if first is greater,
  *         0 if strings are equal,
  *         negative value if second is greater.
  */
-int StrCompareBegin( const char s1[], const char s2[] )
+int StrCompareBegin( const char s1[], const char s2[], char end_sym /*= 0*/ )
 {
   assert(s1 != NULL);
   assert(s2 != NULL);
 
   const unsigned char *str1 = (unsigned char *)s1, 
                       *str2 = (unsigned char *)s2;
+#define END_SYM(s)  (s) != end_sym
+
+#define BREAK_COND !IfEndStr(*str2) || !IfEndStr(*str1) || !END_SYM(*str1) || !END_SYM(*str2)
+
+  while (1)
+  {
+    while (!isalpha(*str1) && IfEndStr(*str1) && END_SYM(*str1))
+      str1++;
+    while (!isalpha(*str2) && IfEndStr(*str2) && END_SYM(*str2))
+      str2++;
+    if (toupper(*str1) != toupper(*str2) || BREAK_COND)
+      break;
+    str1++, str2++;
+    if (BREAK_COND)
+      break;
+  }
+  /*while (*str1 == *str2 && IfEndStr(*str1))
+    str1++, str2++;*/
+
+#undef BREAK_COND
+
+#undef END_SYM
+
+  return toupper(*str1) - toupper(*str2);
+} /* End of 'StrCompareBegin' function */
+
+/**
+ * Compare two strings in alphabet order function from the beginings (non - const version).
+ * \param [in]     s1[]   First string.
+ * \param [in]     s2[]   Second string.
+ * \param [in]     end_sym End of string symbol (0 default).
+ * \return Positive value if first is greater,
+ *         0 if strings are equal,
+ *         negative value if second is greater.
+ */
+int StrCompareBegin( char s1[], char s2[] )
+{
+  assert(s1 != NULL);
+  assert(s2 != NULL);
+
+  unsigned char *str1 = (unsigned char *)s1, 
+                      *str2 = (unsigned char *)s2;
+
+#define BREAK_COND !IfEndStr(*str2) || !IfEndStr(*str1)
 
   while (1)
   {
@@ -219,14 +264,18 @@ int StrCompareBegin( const char s1[], const char s2[] )
       str1++;
     while (!isalpha(*str2) && IfEndStr(*str2))
       str2++;
-    if (toupper(*str1) != toupper(*str2) || !IfEndStr(*str2) || !IfEndStr(*str1))
+    if (toupper(*str1) != toupper(*str2) || BREAK_COND)
       break;
     str1++, str2++;
-    if (!IfEndStr(*str2) || !IfEndStr(*str1))
+    if (BREAK_COND)
       break;
   }
   /*while (*str1 == *str2 && IfEndStr(*str1))
     str1++, str2++;*/
+
+#undef BREAK_COND
+
+#undef END_SYM
 
   return toupper(*str1) - toupper(*str2);
 } /* End of 'StrCompareBegin' function */
@@ -297,3 +346,28 @@ bool PutBufToFile( const char file_name[], const char buf[], size_t buf_size )
   fclose(out);
   return true;
 } /* End of 'PutBufToFile' function */
+
+/**
+ * \brief Fill buffer with bynary code from file function.
+ * \param [in] file_in  Name of a file with binary code.
+ * \param [out] code_size    Pointer to size of code array
+ * \return pointer to code array (nullptr if error is occured).
+ */
+char* FillBuf( const char file_in[], size_t *code_size )
+{
+  assert(file_in != nullptr);
+
+  int err = 0;
+  char *code = LoadAndCreateStrings(file_in, code_size, &err);
+  if (code == nullptr)
+    LACS_Process_Error(err);
+
+  return code;
+} /* End of 'FillBuf' function */
+
+bool String::operator==( const String* s )
+{
+  if (StrCompareBegin(str, s->str) == 0)
+    return true;
+  return false;
+}
