@@ -106,11 +106,9 @@ void ad6::Aki::Play( void )
     char *buf = strdup(InputAnswer("OK, you win.....\nSo, who it was?\n"));
 
     AKI_ASSERT(buf != nullptr, "strdup returned nullptr\n");
-
-    int num = Base.FindValue(buf);
+    int num = Base.FindValue(buf, StrCompareBegin);
     if (num != -1)
     {
-    
       printf("OOOOOOPS, I already know %s\n", buf);
       free(buf);
     }

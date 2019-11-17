@@ -8,9 +8,11 @@
 #include <iostream>
 #include <cstring>
 #include <assert.h>
+#include <string>
 #include "D:\TX\TXLib.h"
 #include "..\List\List.h"
 #include "..\Stack\stack.h"
+#include "..\Processor\Strings\strings.h" 
 
 
 
@@ -159,4 +161,4 @@ namespace ad6
 
 
 #endif /* __AKINATOR_H_ */
-
+  
