@@ -1,5 +1,5 @@
-#ifndef __stack_h_
-#define __stack_h_
+#ifndef __STACK_H_
+#define __STACK_H_
 
 #include <stdio.h>
 #include <iostream>
@@ -9,13 +9,6 @@
 
 #define STACK_LOCATION __FILE__, __LINE__, __FUNCSIG__
 #define var_name(var) #var
-
-
-#define STACK_COND_CHECK(COND, ERR_CODE) if (COND)                          \
-                                         {                                  \
-                                           error = ERR_CODE;         \
-                                           return false;                    \
-                                         }
 
 #ifndef NDEBUG
   #define STK_ASSERT() if (!Assert(STACK_LOCATION)) \
@@ -50,8 +43,8 @@ enum STK_ERR
   const canary_t owl2_control = 0xBEDAFADE;
   const canary_t owldata1_control = 0xBEDADEAD;
   const canary_t owldata2_control = 0xCCAAFFBB;
-  const size_t stack_start_size = 6;
-  const size_t stack_delta = 2;
+  const size_t stack_start_size = 7;
+  const size_t stack_delta = 3;
 
   template <typename Data>
   const Data stack_poison_value = -6699;
@@ -136,6 +129,16 @@ private:
 #endif
 
 public:
+
+
+  /**
+   * \brief Return size of stack function
+   */
+  size_t Size( void )
+  {
+    return size;
+  } /* End of 'Size' function */
+
   /**
    * \brief Default stack constructor function (template).
    * \param None.
@@ -217,14 +220,44 @@ public:
   } /* End of 'Pop' function */
 
   /**
+   * \brief Pop value from stack function (reload template).
+   * \param None.
+   * \return Data from stack.
+   */
+  Data Pop( void )
+  {
+    STK_ASSERT();
+
+    if (size == 0)
+    {
+      STK_ASSERT();
+      return 0;
+    }
+    if (maxsize > stack_start_size &&
+      size == maxsize / 2 - stack_delta)
+      if (!Resize(maxsize / 2))
+      {
+        STK_ASSERT();
+        return 0;
+      }
+
+    Data value = STK_DATA(--size);
+    FillPoi(size);
+    HashReCalc();
+    STK_ASSERT();
+    return value;
+  } /* End of 'Pop' function */
+
+  /**
    * \brief Stack destructor function (template).
    * \param None.
    * \return None.
    */
   ~Stack( void )
   {
-
-    free(data);
+    owldata1 = owldata2 = nullptr;
+    if (data != nullptr)
+      free(data);
     size = 0;
   } /* End of '~Stack' function */
 
@@ -307,6 +340,12 @@ private:
    */
   bool StackOk( void )
   {
+    #define STACK_COND_CHECK(COND, ERR_CODE) if (COND)                          \
+                                         {                                  \
+                                           error = ERR_CODE;                \
+                                           return false;                    \
+                                         }
+
     if (this == nullptr)
       return false;
 
@@ -333,6 +372,7 @@ private:
       STK_POI_ERROR);
     return true;
 
+#undef STACK_COND_CHECK
   } /* End of 'StackOk' function */
 
   /**
@@ -432,6 +472,7 @@ private:
     FillPoi(size);
     owldata2 = ((canary_t *)((Data *)(data + sizeof(canary_t)) + maxsize));
     *owldata2 = owldata2_control;
+    HashReCalc();
     STK_ASSERT();
     return true;
   } /* End of 'Resize' function */
@@ -458,6 +499,6 @@ private:
   } /* End of 'Assert' function */
 };
 
-#endif /* __stack_h_ */
+#endif /* __STACK_H_ */
 
 
