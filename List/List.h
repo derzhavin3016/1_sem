@@ -443,7 +443,7 @@ namespace ad6
 
       printf("  Number: ");
       for (size_t i = 0; i < maxsize; i++)
-        printf(" %05lld |", i);
+        printf(" %05u |", i);
       printf("\n");
       printf("  Data: ");
       for (size_t i = 0; i < maxsize; i++)
@@ -632,7 +632,7 @@ namespace ad6
         return false;
       }
 
-      bool IsIncr = new_size > prev_size;
+      bool IsIncr = new_size > (size_t)prev_size;
 
       if (IsIncr)
       {
