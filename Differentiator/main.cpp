@@ -8,16 +8,17 @@ int main( void )
   {
   tree tr;
   tr.read_tree("t.txt");
+//  printf("%lg\n", tr.tree_calc());
   tr.dump("tt");
   int dummy = 0;
   }
   catch ( Error &err)
   {
-    std::cout << err.descr << std::endl;
+    std::cerr << err.descr << std::endl;
   }
   catch ( std::bad_alloc &err )
   {
-    std::cout << err.what() << std::endl;
+    std::cerr << err.what() << std::endl;
   }
   catch (...)
   {
