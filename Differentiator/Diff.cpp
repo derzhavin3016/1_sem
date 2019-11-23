@@ -16,17 +16,6 @@
 #define PARTING  "Have a nice night, stranger!\n"
 
 /**
- * \brief Craete right and left leaves function function.
- */
-bool ad6::tree::create_leaves( node *prnt )
-{
-  prnt->left = new node;
-  prnt->right = new node;
-
-  return true;
-} /* End of 'Createnode' function */
-
-/**
  * \brief Get user's answer from stdout function.
  * \brief This function put scanned string to static buffer, allocate memory for the answer and return pointer.
  * \param printfstr   String for printf.
@@ -51,41 +40,6 @@ char * ad6::InputAnswer( const char printfstr[], ... )
   return buf;
 } /* End of 'InputAnswer' function */
 
-/**
- * \brief Process loop function.
- */
-void ad6::tree::process_loop( void )
-{
-  printf(GREETING);
-  printf("\n\n");
-  int promt = 0;
-
-  while (1)
-  {
-    printf("Input number to start:");
-    scanf("%d", &promt);
-    switch (promt)
-    {
-    case 0:
-      printf(PARTING);
-      return;
-    case 1:
-      break;
-    case 2:
-      save_tree(InputAnswer("Input file name to save tree:\n"));
-      break;
-    case 3:
-      read_tree(InputAnswer("Input file name to load tree from:\n"));
-      break;
-    case 4:
-      dump(InputAnswer("Input file name to dump tree (only name):\n"));
-      printf("Dump success\n");
-      break;
-    default:
-      printf("Incorrect number of command: %d\n", promt);
-    }
-  }
-}
 
 /**
  * \brief Save tree to file function.
@@ -123,15 +77,6 @@ bool ad6::tree::print_tree( FILE *f, node *node ) const
   TREE_ASSERT(f != nullptr, "File not opened\n");
   TREE_ASSERT(node != nullptr, "node was nullptr");
 
-#define IsLeaf(node)  ((node)->right == nullptr && (node)->left == nullptr)
-
-  fprintf(f, "{\"%s%c\"", node->name, IsLeaf(node) ? '!' : '?');
-  if (node->right != nullptr)
-    print_tree(f, node->right);
-  if (node->left != nullptr)
-    print_tree(f, node->left);
-  
-  fprintf(f, "}");
 
 
 #undef IsLeaf
@@ -149,8 +94,7 @@ bool ad6::tree::read_tree( const char filename[] )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
-  size_t buf_size = 0;
-  char *buf = FillBuf(filename, &buf_size);
+  buf = FillBuf(filename, &buf_size);
 
   char IsOk = 0;
   size_t pos = 0;
@@ -159,17 +103,34 @@ bool ad6::tree::read_tree( const char filename[] )
   if (root != nullptr)
     delete root;
 
-  root = new node;
+  root = par.getG(buf);
 
-  build_tree(buf);
-
-  delete[] buf;
   return true;
 } /* End of 'read_tree' function */
 
 
+size_t ad6::IsCorrBraces( char *buf, size_t size )
+{
+  int IsCorr = 0;
+  size_t i = 0;
+
+  for (i = 0; i < size; i++)
+  {
+    if (buf[i] == '(')
+      IsCorr++;
+    else if (buf[i] == ')')
+    {
+      if (IsCorr <= 0)
+        return i + 1;
+      IsCorr--;
+    }
+  }
+    if (IsCorr == 0)
+      return 0;
+    return i; 
+}
 /**
- * \brief Build tree from buffer function.
+ * \brief Build  tree from buffer function.
  * \param [in] pointer to buffer
  * \param [in] node pointer to tree's node.
  * \return true if all is OK.
@@ -177,107 +138,6 @@ bool ad6::tree::read_tree( const char filename[] )
  */
 bool ad6::tree::build_tree( char *buf )
 {
-  TREE_ASSERT(buf != nullptr, "File not opened");
- 
-
-#define CHECK_BR if (((new_ptr = SkipSpaces(buf_ptr)) == nullptr) || *new_ptr != ')')                                  \
-                 {                                                                                                     \
-                   char buffer[ANSWER_MAX] = {0};                                                                      \
-                   sprintf(buffer, "Expected ')' in position %d, but met '%c'", buf_ptr - buf + 1, *new_ptr);          \
-                                                                                                                       \
-                   throw Error(buffer, TREE_LOCATION);                                                                 \
-                 }
- 
-  char *buf_ptr = buf;
-  node **cur = &root;
-  size_t pos = 0;
-
-  while (*buf_ptr != 0)
-  {
-    char *new_ptr = nullptr;
-    if ((new_ptr = SkipSpaces(buf_ptr)) == nullptr)
-      break;
-    buf_ptr = new_ptr;
-
-    if (*buf_ptr == '(')
-    {
-      (*cur)->left = new node;
-      (*cur)->left->parent = *cur;
-      buf_ptr++;
-      cur = &(*cur)->left;
-      continue;
-    }
-    else if (sscanf(buf_ptr, " %lg%n", &(*cur)->value, &pos) == 1)
-    {
-      buf_ptr += pos;
-      (*cur)->type = TYPE_NUMBER;
-      CHECK_BR;
-      buf_ptr = new_ptr;
-      cur = &(*cur)->parent;  
-      continue;
-    }
-    else if (*buf_ptr != ')')
-    {
-      (*cur)->name = new char[ANSWER_MAX];
-      sscanf(buf_ptr, " %[^ ()]%n", (*cur)->name, &pos);
-      buf_ptr += pos;
-      buf_ptr = SkipSpaces(buf_ptr);
-
-      size_t number = 0;
-      if ((number = find_op((*cur)->name)) != -1)
-      {
-        buf_ptr++;
-        (*cur)->type = TYPE_OPERATOR;
-        (*cur)->num = number;
-        
-        (*cur)->right = new node;
-        (*cur)->right->parent = (*cur);
-
-        cur = &(*cur)->right;
-
-        continue;
-      }
-      else
-      {
-        (*cur)->type = TYPE_VAR;
-        int num = 0;
-
-        if ((num = variables.FindValue((*cur)->name, StrCompare) == -1))
-          num = variables.Push_head((*cur)->name);
-        (*cur)->num = (size_t)num;
-        
-        CHECK_BR;
-
-        buf_ptr = new_ptr + 1;
-        cur = &(*cur)->parent;  
-        continue;
-      }
-    }
-    else
-    {
-      if ((*cur)->parent == nullptr)
-      {
-        char buffer[ANSWER_MAX] = {0};
-        sprintf(buffer, "Detected exess ')' in position %d\n", buf_ptr - buf + 1);
-        
-        throw Error(buffer, TREE_LOCATION);
-      }
-
-      buf_ptr++;
-
-      cur = &(*cur)->parent;
-      continue;
-    }
-  }
-
-  char buffer[ANSWER_MAX] = {0};
-  sprintf(buffer, "Expected ')' in position %d, but met the end of the line", buf_ptr - buf + 1);
-
-#undef CHECK_BR
-
-  TREE_ASSERT(*cur == root, buffer);
-
-
   return true;
 } /* End of 'build_tree' function */
 
@@ -287,18 +147,16 @@ bool ad6::tree::build_tree( char *buf )
  * \return number of the operator if it was find.
  * \return -1 otherwise.
 */
-int ad6::tree::find_op( char *string )
+int ad6::tree::find_op( char sym )
 {
-  TREE_ASSERT(string != nullptr, "string was nullptr");
 
-  #define DEF_OP(num, name, calc, str)                 \
-     if (stricmp(str, string) == 0)            \
+  #define DEF_OP(num, name, calc, diff)                 \
+     if (sym == num)                              \
        return num;
 
   #include "cmd.h"
 
   #undef DEF_OP
-
   return -1;
 } /* End of 'find_op' function */
 
@@ -307,7 +165,7 @@ int ad6::tree::find_op( char *string )
  * \brief treenator dump function.
  * \param filename Name of a file to dump.
  */
-bool  ad6::tree::dump( const char filename[] ) const
+bool  ad6::tree::dump( const char filename[], node *nd ) const
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
@@ -324,13 +182,11 @@ bool  ad6::tree::dump( const char filename[] ) const
   }
 
   fprintf(dmp, "digraph %s \n{\n", filename);
-
-  if (root->left == nullptr && root->right == nullptr)
-    fprintf(dmp, "\"%s\"", root->name);
-  else
-    rec_dump(dmp, root);
-
-  fprintf(dmp, "}");
+  
+  rec_dump(dmp, nd);
+  
+  fprintf(dmp, "}\n");
+  
 
   fclose(dmp);
  
@@ -357,20 +213,22 @@ void ad6::tree::rec_dump( FILE *dmp, node *node ) const
     {
       fprintf(dmp, "\"%p\" -> ", node);
       rec_dump(dmp, node->left);
-      fprintf(dmp, "\"%p\" [label = \"%s\"];\n", node, node->name);
+      fprintf(dmp, "\"%p\" [label = \"%c\"];\n", node, node->num);
     }
     if (node->right != nullptr)
     {
       fprintf(dmp, "\"%p\" -> ", node);
       rec_dump(dmp, node->right);
-      fprintf(dmp, "\"%p\" [label = \"%s\"];\n", node, node->name);
+      fprintf(dmp, "\"%p\" [label = \"%c\"];\n", node, node->num);
     }
     break;
   case TYPE_NUMBER:
     fprintf(dmp, "\"%p\";\n\"%p\" [label = \"%lg\"];\n", node, node, node->value);
     break;
   case TYPE_VAR:
-    fprintf(dmp, "\"%p\";\n\"%p\" [label = \"%s\"];\n", node, node, node->name);
+    fprintf(dmp, "\"%p\";\n\"%p\" [label = \"", node, node);
+    node->name.print_in_file(dmp);
+    fprintf(dmp, "\"];\n");
     break;
   default:
     printf("Unrecognised type : %d", node->type);
@@ -393,20 +251,69 @@ double ad6::tree::tree_calc( void ) const
   return rec_calc(root);
 } /* End of 'tree_calc' function */
 
-void ad6::tree::tree_diff( void )
+/**
+ * \brief Create differntiate tree function
+ */
+void ad6::tree::tree_diff( const char var[] )
 {
   TREE_ASSERT(root != nullptr, "Root was nullptr");
-  
-  *diff = rec_diff(*root);
+
+  size_t var_num = 0;
+  TREE_ASSERT((var_num = par.find_var(var)) != -1, "Incorrect var");
+
+  diff = &rec_diff(*root, var_num);
 } /* End of 'tree_diff' function */
 
-ad6::node & ad6::tree::rec_diff( node &nd )
+/**
+ * \brief Recursive differentiator of tree. 
+ */
+ad6::node & ad6::tree::rec_diff( node &nd, size_t var_num )
 {
+  #define dL rec_diff(*(nd.left), var_num)
+  #define dR rec_diff(*(nd.right), var_num)
+  
+  #define cL *(rec_copy(nd.left))
+  #define cR *(rec_copy(nd.right))
+
+
   switch (nd.type)
   {
-    
+  case TYPE_OPERATOR:
+
+  #define DEF_OP(num, name, calc, diff)              \
+    case num:                                        \
+      diff;                                          \
+      break;
+ 
+    switch (nd.num)
+    {
+
+  #include "cmd.h"
+
+    default:
+      TREE_ASSERT(0, "Unrecognized type");
+    }
+#undef DEF_OP
+
+    break;
+  case TYPE_NUMBER:
+    return *(new node(0));
+    break;
+  case TYPE_VAR:
+    if (var_num == nd.num)
+      return *(new node(1));
+    return *(new node(0));
+    break;
+  default:
+    TREE_ASSERT(0, "Unrecognized type");
+    break;
   }
   return nd;
+
+  #undef dL
+  #undef dR
+  #undef cL
+  #undef cR
 } /* End of 'rec_diff' function */
 
 /**
@@ -418,7 +325,7 @@ double ad6::tree::rec_calc( node *nd ) const
 {
   TREE_ASSERT(nd != nullptr, "root was nullptr");
   
-#define DEF_OP(num, name, calc, str)  \
+#define DEF_OP(num, name, calc, diff)  \
     case num:                    \
       calc;
 

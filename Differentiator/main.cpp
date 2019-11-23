@@ -8,8 +8,13 @@ int main( void )
   {
   tree tr;
   tr.read_tree("t.txt");
-//  printf("%lg\n", tr.tree_calc());
-  tr.dump("tt");
+  //printf("%lg\n", tr.tree_calc());
+    tr.dump_root("tata");
+  tr.tree_diff("y");
+  tr.dump_diff("diffy");
+
+ /* tr.dump_diff("tij");
+  tr.dump_diff("tji");*/
   int dummy = 0;
   }
   catch ( Error &err)

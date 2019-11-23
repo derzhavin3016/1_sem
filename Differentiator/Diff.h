@@ -3,13 +3,14 @@
 
 #define STK_OFF_SEC
 #include "..\DEFS.h"
+#include "Parser/parser.h"
 #include <stdarg.h>
 
 #define TREE_LOCATION  __LINE__, __FILE__, __FUNCSIG__
 
 #define TREE_ASSERT(cond, err)           if (!(cond))                               \
                                         {                                          \
-                                          throw Error{err, TREE_LOCATION};          \
+                                          throw Error(err, TREE_LOCATION);          \
                                         }
 
 #pragma warning (disable: 4267)
@@ -19,25 +20,10 @@ namespace ad6
 {
   char * InputAnswer( const char printfstr[], ... );
   const size_t ANSWER_MAX = 1024;
-
-  struct Error
-  {
-    const char* descr;
-    int line;
-    const char* file;
-    const char* func;
-    //Error* reason;
-
-    Error( const char* des, int l, const char* filename, const char* function ) : descr(des),
-                                                                                  line(l),
-                                                                                  file(filename),
-                                                                                  func(function)
-    {
-    }
-  };
-
   
-#define DEF_OP(num, name, calc, str)  OPER_##name = num,
+  size_t IsCorrBraces( char *buf, size_t size );
+
+#define DEF_OP(num, name, calc, diff)  OPER_##name = num,
 
   enum opers
   {
@@ -45,75 +31,24 @@ namespace ad6
   };
 
 #undef DEF_OP
+ 
 
-  enum node_type
-  {
-    TYPE_NUMBER = 1,
-    TYPE_VAR = 2,
-    TYPE_OPERATOR = 3
-  };
-
-  struct node
-  {
-    char *name;
-    double value;
-    node_type type;
-    size_t num;
-    node *parent;
-    node *right;
-    node *left;
-    
-    // default constructor
-    node( void ) : name(nullptr),
-                   right(nullptr),
-                   left(nullptr),
-                   parent(nullptr),
-                   value(0),
-                   num(0)
-    {
-    }
-
-    node( node_type tpe, size_t op_num, node *l, node *r ) : type(tpe),
-                                                             left(l),
-                                                             right(r)
-    {
-    }
-
-    node &createnode( void )
-    {
-      return *this;
-    }
-
-    ~node( void )
-    {
-      if (right != nullptr)
-      {
-        delete right;
-        right = nullptr;
-      }
-      if (left != nullptr)
-      {
-        delete left;
-        left = nullptr;
-      }
-      if (name != nullptr)
-        delete[] name;
-      parent = nullptr;
-    }
-  }; 
-
+  const size_t MAX_BUFF = 100;
   class tree
   {
   private:
     node *root;
-    node *diff;
-    List<char *> variables;
+    node * diff;
 
+    char *buf;
+    size_t buf_size;
+    parser par;
   public:
     // Default constructor
     tree( void ) : root(),
                    diff(),
-                   variables()
+                   buf(nullptr),
+                   buf_size(0)
     {
     }
 
@@ -123,24 +58,37 @@ namespace ad6
 
     void process_loop( void );
 
-    bool dump( const char filename[] ) const;
+    bool dump_root( const char filename[] )
+    {
+      return dump(filename, root);
+    }
+
+    bool dump_diff( const char filename[] )
+    {
+      static size_t i = 0;
+      return dump(filename, diff);
+    }
 
     double tree_calc( void ) const;
 
-    void tree_diff( void );
+    void tree_diff( const char var[] );
 
     // Destructor
     ~tree( void )
     {
-      if (root != nullptr)
-        delete root;
       if (diff != nullptr)
         delete diff;
-
+      if (root != nullptr)
+        delete root;
+      if (buf != nullptr)
+        delete[] buf;
     }
+
   private:
     
-    node & rec_diff( node &nd );
+    bool dump( const char filename[], node *nd ) const;
+
+    node & rec_diff( node &nd, size_t var_num );
 
     void rec_dump( FILE *dmp, node *node ) const;
 
@@ -148,11 +96,9 @@ namespace ad6
 
     bool build_tree( char *buf );
 
-    bool create_leaves( node *prnt );
-
     double rec_calc( node *nd ) const;
 
-    int find_op( char *string );
+    int find_op( char sym );
 
     int find_var( char *var );
   };
