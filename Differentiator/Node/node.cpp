@@ -35,11 +35,11 @@ ad6::node::node( double value ) : type(TYPE_NUMBER),
 }
 
 
-ad6::node::node( const char *var_name, size_t name_size, size_t var_num ) : type(TYPE_VAR),
-                                                                            name(var_name, name_size),
-                                                                            num(var_num),
-                                                                            left(nullptr),
-                                                                            right(nullptr)
+ad6::node::node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* left, node* right ) : type(tpe),
+                                                                                                                    name(var_name, name_size),
+                                                                                                                    num(var_num),
+                                                                                                                    left(left),
+                                                                                                                    right(right)
 {
 }
 

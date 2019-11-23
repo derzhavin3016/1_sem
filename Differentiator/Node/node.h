@@ -32,8 +32,8 @@ namespace ad6
     // operator constructor
     node( char op_num, node *l, node *r );
 
-    // variable constructor
-    node( const char *var_name, size_t name_size, size_t var_num );
+    // variable or function constructor
+    node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* left = nullptr, node* right = nullptr );
 
     // number constructor
     node( double value );
