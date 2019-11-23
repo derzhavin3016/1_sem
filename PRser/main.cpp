@@ -11,8 +11,18 @@ int main( void )
   char str[100];
 
   scanf("%s", str);
-
+  try
+  {
   printf("%d\n", pr.getG(str));
-
+  }
+  catch( Error &err )
+  {
+    std::cerr << err.descr << " \nfile" << err.file << "in function" <<
+      err.func << "in line " << err.line << std::endl;
+  }
+  catch(...)
+  {
+    std::cerr << "Strange throw" << std::endl;
+  }
   return 0;
 }

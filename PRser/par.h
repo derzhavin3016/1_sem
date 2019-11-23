@@ -6,6 +6,22 @@
 
 namespace ad6
 {
+  struct Error
+  {
+    const char* descr;
+    int line;
+    const char* file;
+    const char* func;
+    //Error* reason;
+
+    Error( const char* des, int l, const char* filename, const char* function ) : descr(des),
+                                                                                  line(l),
+                                                                                  file(filename),
+                                                                                  func(function)
+    {
+    }
+  };
+
   class parser
   {
   private: 
@@ -32,6 +48,10 @@ namespace ad6
     int getP( void );
 
     int getN( void );
+
+    int getId( void );
+
+    int getFunc( void );
 
     ~parser( void )
     {
