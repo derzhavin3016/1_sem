@@ -89,6 +89,8 @@ ad6::node * ad6::parser::_getP( void )
   }
   if (isdigit(*(ptr)))
     return _getN();
+  if ((nd = _getFunc()) != nullptr)
+    return nd;
   return _getId();
 } /* End of 'getP' function */
 
@@ -115,10 +117,10 @@ ad6::node * ad6::parser::_getId( void )
 {
   int pos = 0;
   const char *old_ptr = ptr;
-  while (isalpha(*ptr))
+  do
+  {
     ptr++;
-
-  SYNTAX_ASSERT(old_ptr != ptr, "Incorect variable name");
+  } while (isalpha(*ptr));
 
   string str(old_ptr, (size_t)(ptr - old_ptr)); 
 
@@ -130,7 +132,7 @@ ad6::node * ad6::parser::_getId( void )
     variables.add(str);
   }
 
-  return new node(old_ptr, (size_t)(ptr - old_ptr), (size_t)num);
+  return new node(TYPE_VAR, old_ptr, (size_t)(ptr - old_ptr), (size_t)num);
 } /* End of 'getId' function  */
 
 
@@ -155,8 +157,34 @@ int ad6::parser::find_var( const char str[] )
  */
 ad6::node * ad6::parser::_getFunc( void )
 {
+  int pos = 0;
+  const char *old_ptr = ptr;
+  do
+  {
+    ptr++;
+  } while (isalpha(*ptr));
 
+  string str(old_ptr, (size_t)(ptr - old_ptr));
 
+#define DEF_FNC(name, num, diff)                                                \
+  else if (StrChrCmp(#name, str) == 0)                                          \
+  {                                                                             \
+    SYNTAX_ASSERT(*ptr == '(', "function '"#name"' without braces");            \
+    ptr++;                                                                      \
+    node *nd = _getE();                                                         \
+    SYNTAX_ASSERT(*ptr == ')', "function '"#name"' without braces");            \
+    ptr++;                                                                      \
+    return new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);    \
+  }
+
+  if (0);
+
+  #include "..\func.h"
+
+  else
+    ptr = old_ptr;
+
+ #undef DEF_FNC
   return nullptr;
 } /* End of 'getFunc' function */
 
