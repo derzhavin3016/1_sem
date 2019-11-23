@@ -38,6 +38,7 @@ DEF_OP('/', DIV,
     return (dL * cR - cL * dR) / (cR * cR);
   })
 
+
 #undef REC_R
 
 #undef REC_L

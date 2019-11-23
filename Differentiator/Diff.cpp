@@ -230,6 +230,13 @@ void ad6::tree::rec_dump( FILE *dmp, node *node ) const
     node->name.print_in_file(dmp);
     fprintf(dmp, "\"];\n");
     break;
+  case TYPE_FUNC:
+    fprintf(dmp, "\"%p\" -> ", node);
+    rec_dump(dmp, node->right);
+    fprintf(dmp, "\"%p\" [label = \"", node);
+    node->name.print_in_file(dmp);
+    fprintf(dmp, "\"];\n");
+    break;
   default:
     printf("Unrecognised type : %d", node->type);
     break;
@@ -303,6 +310,24 @@ ad6::node & ad6::tree::rec_diff( node &nd, size_t var_num )
     if (var_num == nd.num)
       return *(new node(1));
     return *(new node(0));
+    break;
+  case TYPE_FUNC:
+
+  #define DEF_FNC(name, num ,diff)                     \
+      case num:                                        \
+        diff;                                          \
+        break;
+
+    switch (nd.num)
+    {
+ 
+    #include "func.h"
+
+    default:
+      TREE_ASSERT(0, "Unrecognized function");
+    }
+
+  #undef DEF_FNC
     break;
   default:
     TREE_ASSERT(0, "Unrecognized type");
