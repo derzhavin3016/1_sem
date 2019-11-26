@@ -3,13 +3,39 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include "D:\TX\TXLib.h"
+//#include "D:\TX\TXLib.h"
 #include "List\List.h"
 #include "Stack\stack.h"
 #include "Differentiator/STOCK.H"
 #include "Processor/Strings/strings.h"
 #include "Strs/strs.h"
 #include <assert.h>
+
+/* Debug memory allocation support */ 
+#ifndef NDEBUG 
+# define _CRTDBG_MAP_ALLOC
+# include <crtdbg.h> 
+# define SetDbgMemHooks() \
+  _CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF | \
+  _CRTDBG_ALLOC_MEM_DF | _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG))
+
+static class __Dummy 
+{ 
+public: 
+  /* Class constructor */
+  __Dummy( void ) 
+  { 
+    SetDbgMemHooks(); 
+  } /* End of '__Dummy' constructor */
+} __ooppss;
+
+#endif /* _DEBUG */ 
+
+#ifdef _DEBUG 
+# ifdef _CRTDBG_MAP_ALLOC 
+#   define new new(_NORMAL_BLOCK, __FILE__, __LINE__) 
+# endif /* _CRTDBG_MAP_ALLOC */ 
+#endif /* _DEBUG */
 
 
 namespace ad6
