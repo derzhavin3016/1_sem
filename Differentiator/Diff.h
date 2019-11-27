@@ -23,7 +23,7 @@ namespace ad6
   
   size_t IsCorrBraces( char *buf, size_t size );
 
-#define DEF_OP(num, name, calc, diff)  OPER_##name = num,
+#define DEF_OP(num, name, calc, diff, simp)  OPER_##name = num,
 
   enum opers
   {
@@ -38,17 +38,18 @@ namespace ad6
   {
   private:
     node *root;
-    node * diff;
-
+    node **diff;
+    int symp_counter;
     char *buf;
     size_t buf_size;
     parser par;
   public:
     // Default constructor
     tree( void ) : root(),
-                   diff(),
+                   diff(nullptr),
                    buf(nullptr),
-                   buf_size(0)
+                   buf_size(0),
+                   symp_counter(0)
     {
     }
 
@@ -63,12 +64,6 @@ namespace ad6
       return dump(filename, root);
     }
 
-    bool dump_diff( const char filename[] )
-    {
-      static size_t i = 0;
-      return dump(filename, diff);
-    }
-
     double tree_calc( void ) const;
 
     void tree_diff( const char var[] );
@@ -77,15 +72,35 @@ namespace ad6
     ~tree( void )
     {
       if (diff != nullptr)
-        delete diff;
+        delete[] diff;
       if (root != nullptr)
         delete root;
       if (buf != nullptr)
         delete[] buf;
     }
+    node *get_root( void )
+    {
+      return root;
+    }
+
+    node **get_diff( void )
+    {
+       return diff;
+    }
+
+
+    void tex_dump( const char filename[], node* root );
+
+    bool _simplifier( node **nd );
 
   private:
-    
+
+    void _tex_rec( FILE *f, node *nd );
+
+    node* _rec_symp( node *nd );
+
+    bool _is_calc( node *nd ) const;
+
     bool dump( const char filename[], node *nd ) const;
 
     node & rec_diff( node &nd, size_t var_num );
