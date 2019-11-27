@@ -43,13 +43,15 @@ namespace ad6
     char *buf;
     size_t buf_size;
     parser par;
+    bool is_diff_init;
   public:
     // Default constructor
     tree( void ) : root(),
                    diff(nullptr),
                    buf(nullptr),
                    buf_size(0),
-                   symp_counter(0)
+                   symp_counter(0),
+                   is_diff_init(false)
     {
     }
 
@@ -66,7 +68,7 @@ namespace ad6
 
     double tree_calc( void ) const;
 
-    void tree_diff( const char var[] );
+    bool tree_diff( const char var[] );
 
     // Destructor
     ~tree( void )
@@ -98,9 +100,11 @@ namespace ad6
 
     void tex_dump( const char filename[], node* root );
 
-    bool _simplifier( node **nd );
-
   private:
+
+    void _diff_init( void );
+
+    bool _simplifier( node **nd );
 
     void _fill_diff( void );
 

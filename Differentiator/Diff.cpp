@@ -297,14 +297,12 @@ void ad6::tree::_fill_diff( void )
     diff[i] = nullptr;
 }
 
-/**
- * \brief Create differntiate tree function
- */
-void ad6::tree::tree_diff( const char var[] )
-{
-  TREE_ASSERT(root != nullptr, "Root was nullptr");
 
-  size_t var_num = 0;
+/**
+ * \brief Create a differentiating tree's array function
+ */
+void ad6::tree::_diff_init( void )
+{
   if (par.var_size() == 0)
   {
     diff = nullptr;
@@ -312,12 +310,31 @@ void ad6::tree::tree_diff( const char var[] )
   }
   diff = new node*[par.var_size()];
   _fill_diff();
+} /* End of '_diff_init' function */
 
-  TREE_ASSERT((var_num = par.find_var(var)) != -1, "Incorrect var");
+/**
+ * \brief Create differntiate tree function
+ */
+bool ad6::tree::tree_diff( const char var[] )
+{
+  TREE_ASSERT(root != nullptr, "Root was nullptr");
+
+  if (!is_diff_init)
+  {
+    _diff_init();
+    is_diff_init = true;
+  }
+
+  size_t var_num = 0;
+
+  if ((var_num = par.find_var(var)) == -1)
+    return false;
 
   diff[var_num] = &rec_diff(*root, var_num);
 
   _simplifier(&diff[var_num]);
+  
+  return true;
 } /* End of 'tree_diff' function */
 
 /**
@@ -536,6 +553,12 @@ bool ad6::tree::_is_calc( node *nd ) const
   return is_calc_left && is_calc_right;
 } /* End of '_is_calc' function */
 
+
+/**
+ * \brief Dump tree in .tex file function.
+ * \param [in] filename Name of a file to save.
+ * \brief [root]   pointer to tree's root.
+*/
 void ad6::tree::tex_dump( const char filename[], node* root )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect filename");
@@ -553,7 +576,7 @@ void ad6::tree::tex_dump( const char filename[], node* root )
   fprintf(tex, "$\n \\left(");
 
   _tex_rec(tex, root);
-  fprintf(tex, " \\right) $");
+  fprintf(tex, " \\right) $\n");
   fprintf(tex, TEX_END);
 
   fclose(tex);
@@ -565,8 +588,13 @@ void ad6::tree::tex_dump( const char filename[], node* root )
 
   sprintf(buf, "%s.pdf", filename);
   system(buf);
-}
+} /* End of 'tex_dump' function */
 
+/**
+ * \brief Recursive dump tree in .tex file function.
+ * \param [in] f Pointer ro opened file's structure.
+ * \brief [nd]   pointer to tree's node.
+*/
 void ad6::tree::_tex_rec( FILE *f, node *nd )
 {
   TREE_ASSERT(f != nullptr, "File wasn't open");
@@ -608,6 +636,7 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
     nd->name.print_in_file(f);
     break;
   case TYPE_FUNC:
+    fprintf(f, "\\");
     nd->name.print_in_file(f);
     fprintf(f, " \\left( ");
     _tex_rec(f, nd->right);
@@ -618,7 +647,7 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
     break;
   }
 
-}
+} /* End of '_tex_rec' function */
 
 void ad6::tree::process_loop( void )
 {
@@ -645,7 +674,8 @@ void ad6::tree::process_loop( void )
         buf = InputAnswer("Input a variable to differentiate or 0 to quit: ");
         if (buf[0] == '0')
           break;
-        tree_diff(buf);
+        if (!tree_diff(buf))
+          printf("Incorrect variable, try again\n");
       }
       break;
       case 2:
@@ -692,6 +722,11 @@ void ad6::tree::process_loop( void )
   }
 }
 
+/**
+ * \brief Find variable in tree function.
+ * \param [in] start Pointer to tree's node.
+ * \param [in] var_num Number of variable in variables array.
+*/
 bool ad6::tree::_find_var_tree( node *start, size_t var_num ) const
 {
   if (start->type == TYPE_VAR && start->num == var_num)
@@ -709,7 +744,8 @@ bool ad6::tree::_find_var_tree( node *start, size_t var_num ) const
 #undef CHECK_NODE
 
   return is_var_left && is_var_right;
-}
+} /* End of '_find_var_tree' function */
+
 
 #undef TEX_DMP
 
