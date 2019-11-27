@@ -1,7 +1,7 @@
 #include "Diff.h"
 
 #define TEX_DMP \
-"\\documentclass[12pt,a4paper,fleqn]{article}\n"\
+"\\documentclass[12pt,a4paper,fleqn]{article} \n"\
 "\\usepackage[utf8]{inputenc}                                     \n"\
 "\\usepackage{amssymb, amsmath, multicol}                         \n"\
 "\\usepackage[russian]{babel}                                     \n"\
@@ -183,7 +183,7 @@ bool ad6::tree::build_tree( char *buf )
 int ad6::tree::find_op( char sym )
 {
 
-  #define DEF_OP(num, name, calc, diff, simp)                 \
+  #define DEF_OP(num, name, calc, diff)                 \
      if (sym == num)                              \
        return num;
 
@@ -291,6 +291,12 @@ double ad6::tree::tree_calc( void ) const
   return rec_calc(root);
 } /* End of 'tree_calc' function */
 
+void ad6::tree::_fill_diff( void )
+{
+  for (size_t i = 0; i < par.var_size(); i++)
+    diff[i] = nullptr;
+}
+
 /**
  * \brief Create differntiate tree function
  */
@@ -301,13 +307,17 @@ void ad6::tree::tree_diff( const char var[] )
   size_t var_num = 0;
   if (par.var_size() == 0)
   {
-    diff = new node*(0);
+    diff = nullptr;
     return;
   }
   diff = new node*[par.var_size()];
+  _fill_diff();
+
   TREE_ASSERT((var_num = par.find_var(var)) != -1, "Incorrect var");
 
   diff[var_num] = &rec_diff(*root, var_num);
+
+  _simplifier(&diff[var_num]);
 } /* End of 'tree_diff' function */
 
 /**
@@ -326,7 +336,7 @@ ad6::node & ad6::tree::rec_diff( node &nd, size_t var_num )
   {
   case TYPE_OPERATOR:
 
-  #define DEF_OP(num, name, calc, diff, simp)              \
+  #define DEF_OP(num, name, calc, diff)              \
     case num:                                        \
       diff;                                          \
       break;
@@ -389,7 +399,7 @@ double ad6::tree::rec_calc( node *nd ) const
 {
   TREE_ASSERT(nd != nullptr, "root was nullptr");
   
-#define DEF_OP(num, name, calc, diff, simp)  \
+#define DEF_OP(num, name, calc, diff)  \
     case num:                    \
       calc;
 
@@ -476,7 +486,7 @@ ad6::node* ad6::tree::_rec_symp( node *nd )
     return nd;
   case TYPE_OPERATOR:
     
-#define DEF_OP(num, name, calc, diff, simp)              \
+#define DEF_SMP(num, simp)                               \
      case num:                                           \
       simp;                                              \
       break;
@@ -484,14 +494,14 @@ ad6::node* ad6::tree::_rec_symp( node *nd )
     switch (nd->num)
     {
     
-    #include"cmd.h"
+    #include "simp.h"
 
     default:
       TREE_ASSERT(0, "Unrecognized operator");
     }
 
 
-    #undef DEF_OP
+    #undef DEF_SMP
     
     return nd;
     break;
@@ -512,15 +522,18 @@ bool ad6::tree::_is_calc( node *nd ) const
   if (nd->type == TYPE_VAR)
     return false;
 
-  bool is_l_calc = true;
-  if (nd->left != nullptr)
-    is_l_calc = _is_calc(nd->left);
+#define CHECK_NODE(nd_check)                         \
+  bool is_calc_##nd_check = true;                    \
+  if (nd->##nd_check != nullptr)                     \
+    is_calc_##nd_check = _is_calc(nd->##nd_check);
 
-  bool is_r_calc = true;
-  if (nd->right != nullptr)
-     is_r_calc = _is_calc(nd->right);
+  CHECK_NODE(left);
 
-  return is_r_calc && is_l_calc;
+  CHECK_NODE(right);
+
+
+#undef CHECK_NODE
+  return is_calc_left && is_calc_right;
 } /* End of '_is_calc' function */
 
 void ad6::tree::tex_dump( const char filename[], node* root )
@@ -564,9 +577,8 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
   {
   case TYPE_OPERATOR:
     if (nd->num == '/')
-    
     {
-      fprintf(f, "\\dfrac { ");
+      fprintf(f, " \\dfrac{ ");
       _tex_rec(f, nd->left);
       fprintf(f, "}{");
       _tex_rec(f, nd->right);
@@ -627,7 +639,7 @@ void ad6::tree::process_loop( void )
     case 1:
       buf = InputAnswer("Input filename to read function from: ");
       if (read_tree(buf))
-        printf("build success");
+        printf("build success\n");
       while (1)
       {
         buf = InputAnswer("Input a variable to differentiate or 0 to quit: ");
@@ -637,8 +649,8 @@ void ad6::tree::process_loop( void )
       }
       break;
       case 2:
-        buf = InputAnswer("Input filename to dump tree with .dot: ");
-        printf("1 - root, 2 - differetiated tree");
+        buf = strdup(InputAnswer("Input filename to dump tree with .dot: "));
+        printf("1 - root, 2 - differetiated tree ");
         scanf("%d", &num);
         if (num == 1)
           dump(buf, root);
@@ -649,16 +661,16 @@ void ad6::tree::process_loop( void )
             ans = InputAnswer("Input variable name: ");
             size_t num = par.find_var(ans);
             if (num == -1)
-              printf("No variables such this\n");
+              printf("\nNo variables such this\n");
             else
               dump(buf, diff[num]);
           }
         }
-
+        free(buf);
         break;
       case 3:
-        buf = InputAnswer("Input filename to dump tree with tex: ");
-        printf("1 - root, 2 - differetiated tree");
+        buf = strdup(InputAnswer("Input filename to dump tree with tex: "));
+        printf("1 - root, 2 - differetiated tree ");
         scanf("%d", &num);
         if (num == 1)
           tex_dump(buf, root);
@@ -674,10 +686,29 @@ void ad6::tree::process_loop( void )
               tex_dump(buf, diff[num]);
           }
         }
-
+        free(buf);
         break;
     }
   }
+}
+
+bool ad6::tree::_find_var_tree( node *start, size_t var_num ) const
+{
+  if (start->type == TYPE_VAR && start->num == var_num)
+    return false;
+  
+  #define CHECK_NODE(nd_check)                                      \
+  bool is_var_##nd_check = true;                                    \
+  if (start->##nd_check != nullptr)                                 \
+    is_var_##nd_check = _find_var_tree(start->##nd_check, var_num);
+
+  CHECK_NODE(left);
+
+  CHECK_NODE(right);
+
+#undef CHECK_NODE
+
+  return is_var_left && is_var_right;
 }
 
 #undef TEX_DMP

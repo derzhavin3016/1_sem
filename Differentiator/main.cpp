@@ -8,15 +8,15 @@ int main( void )
   {
   tree tr;
   tr.process_loop();
-  /*tr.read_tree("t.txt");
+  //tr.read_tree("t.txt");
   //printf("%lg\n", tr.tree_calc());
-  tr.dump_root("tata");
-  tr.tree_diff("x");
+  //tr.dump_root("tata");
+  /*tr.tree_diff("x");
   tr.dump_diff("diffx");
   node **df = tr.get_diff();
   tr._simplifier(df);
   tr.dump_diff("diffx_smp");
-  tr.tex_dump("go", tr.get_root());
+  tr.tex_dump("go", tr.get_root());*/
  /* tr.dump_diff("tij");
   tr.dump_diff("tji");*/
   int dummy = 0;

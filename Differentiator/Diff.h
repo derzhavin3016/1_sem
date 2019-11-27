@@ -23,7 +23,7 @@ namespace ad6
   
   size_t IsCorrBraces( char *buf, size_t size );
 
-#define DEF_OP(num, name, calc, diff, simp)  OPER_##name = num,
+#define DEF_OP(num, name, calc, diff)  OPER_##name = num,
 
   enum opers
   {
@@ -72,7 +72,14 @@ namespace ad6
     ~tree( void )
     {
       if (diff != nullptr)
+      {
+        for (size_t i = 0; i < par.var_size(); i++)
+        {
+          if (diff[i] != nullptr)
+            delete diff[i];
+        }
         delete[] diff;
+      }
       if (root != nullptr)
         delete root;
       if (buf != nullptr)
@@ -94,6 +101,10 @@ namespace ad6
     bool _simplifier( node **nd );
 
   private:
+
+    void _fill_diff( void );
+
+    bool _find_var_tree( node *start, size_t var_num ) const;
 
     void _tex_rec( FILE *f, node *nd );
 
