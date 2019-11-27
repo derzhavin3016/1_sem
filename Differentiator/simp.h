@@ -100,3 +100,34 @@ DEF_SMP('^',
     KILL_ONE(RN, LN);
   })
 
+#undef VAL
+
+#undef TYPE
+
+#undef LN
+
+#undef RN
+
+#undef LV
+
+#undef RV
+
+#undef RT
+
+#undef LT
+
+#undef DEL
+
+#undef CHANGE_ND
+
+#undef SET_ND
+
+#undef END
+
+#undef ND_CMP
+
+#undef IF_ND_ZERO
+
+#undef KILL_ZERO
+
+#undef KILL_ONE

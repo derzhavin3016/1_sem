@@ -195,7 +195,7 @@ int ad6::tree::find_op( char sym )
 
 
 /**
- * \brief treenator dump function.
+ * \brief tree dump function.
  * \param filename Name of a file to dump.
  */
 bool  ad6::tree::dump( const char filename[], node *nd ) const
@@ -291,11 +291,15 @@ double ad6::tree::tree_calc( void ) const
   return rec_calc(root);
 } /* End of 'tree_calc' function */
 
+
+/**
+ * \brief Fill diff array with nullptr values function
+*/
 void ad6::tree::_fill_diff( void )
 {
   for (size_t i = 0; i < par.var_size(); i++)
     diff[i] = nullptr;
-}
+} /* End of '_fill_diff' function */
 
 
 /**
@@ -465,13 +469,13 @@ bool ad6::tree::_simplifier( node **nd )
 } /* End of '_simplifier' function */
 
 /**
- * \brief Recursive simplifier function
- * \param [in] nd pointer to tree's node.
- * \return true if all is OK.
- * \return false otherwise.
+ * \brief Calculate tree if it is possible.
+ * \param [in] pointer to node.
 */
-ad6::node* ad6::tree::_rec_symp( node *nd )
+bool ad6::tree::_calc_tree( node *nd )
 {
+  TREE_ASSERT(nd != nullptr, "Node was nullptr");
+
   if (_is_calc(nd) && nd->type != TYPE_NUMBER)
   {
     nd->value = rec_calc(nd);
@@ -483,8 +487,24 @@ ad6::node* ad6::tree::_rec_symp( node *nd )
     nd->right = nullptr;
     nd->left = nullptr;
     symp_counter++;
-    return nd;
+    return true;
   }
+  return false;
+} /* End of '_calc_tree' function */
+
+/**
+ * \brief Recursive simplifier function
+ * \param [in] nd pointer to tree's node.
+ * \return true if all is OK.
+ * \return false otherwise.
+*/
+ad6::node* ad6::tree::_rec_symp( node *nd )
+{
+  TREE_ASSERT(nd != nullptr, "Node was nullptr");
+
+  if (_calc_tree(nd));
+    return nd;
+
 
   if (nd->left != nullptr)
     nd->left = _rec_symp(nd->left);

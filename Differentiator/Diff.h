@@ -102,6 +102,8 @@ namespace ad6
 
   private:
 
+    bool _calc_tree( node *nd );
+
     void _diff_init( void );
 
     bool _simplifier( node **nd );
