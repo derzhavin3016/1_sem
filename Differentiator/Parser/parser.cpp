@@ -103,8 +103,6 @@ ad6::node * ad6::parser::_getP( void )
   }
   if (isdigit(*(ptr)) || *ptr == '-' )
     return _getN();
-  if ((nd = _getFunc()) != nullptr)
-    return nd;
   return _getId();
 } /* End of 'getP' function */
 
@@ -163,18 +161,35 @@ ad6::node * ad6::parser::_getId( void )
 
   string str(old_ptr, (size_t)(ptr - old_ptr)); 
 
-  int num = 0;
-
-  if ((num = variables.find(str)) == -1)
-  {
-    num = variables.size();
-    variables.add(str);
+  #define DEF_FNC(name, num, diff, calc)                                          \
+  else if (StrChrCmp(#name, str) == 0)                                          \
+  {                                                                             \
+    SYNTAX_ASSERT(*ptr == '(', "function '"#name"' without braces");            \
+    ptr++;                                                                      \
+    node *nd = _getE();                                                         \
+    SYNTAX_ASSERT(*ptr == ')', "function '"#name"' without braces");            \
+    ptr++;                                                                      \
+    return new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);    \
   }
 
-  return new node(TYPE_VAR, old_ptr, (size_t)(ptr - old_ptr), (size_t)num);
+  if (0);
+
+  #include "..\func.h"
+
+  else
+  {
+    int num = 0;
+    
+    if ((num = variables.find(str)) == -1)
+    {
+      num = variables.size();
+      variables.add(str);
+    }
+    return new node(TYPE_VAR, old_ptr, (size_t)(ptr - old_ptr), (size_t)num);
+  }
 } /* End of 'getId' function  */
-
-
+    
+    
 
 /**
  * \brief Find variable in variables array by string.
