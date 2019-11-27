@@ -23,6 +23,11 @@ namespace ad6
     {
     }
 
+    size_t var_size( void )
+    {
+      return variables.size();
+    }
+
     node * getG( const char *str );
 
     int find_var( const char str[] );
@@ -39,6 +44,8 @@ namespace ad6
     node * _getId( void );
     
     node * _getFunc( void );
+
+    node * _getPow( void );
   };
 }
 

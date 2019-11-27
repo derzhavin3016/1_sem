@@ -2,10 +2,6 @@
 
 #define PR_LOCATION __LINE__, __FILE__, __FUNCSIG__
 
-#define cVal *node_copy(val, true)
-
-#define cVal2 *node_copy(val2, true)
-
 #define SYNTAX_ASSERT(cond, err)    \
   if (!(cond))                      \
   {                                 \
@@ -40,9 +36,9 @@ ad6::node * ad6::parser::_getE( void )
     node *val2 = _getT();
 
     if (op == '+')
-      val = &(cVal + cVal2);
+      val = &(*val + *val2);
     else
-      val = &(cVal - cVal2);
+      val = &(*val - *val2);
   }
 
   return val;
@@ -53,21 +49,39 @@ ad6::node * ad6::parser::_getE( void )
  */
 ad6::node * ad6::parser::_getT( void )
 {
-  node *val = _getP();
+  node *val = _getPow();
 
   while (*ptr == '*' || *ptr == '/')
   {
     char op = *ptr;
 
     ptr++;
-    node *val2 = _getP();
+    node *val2 = _getPow();
 
     if (op == '*')
-      val = &(cVal * cVal2);
+      val = &(*val * *val2);
     else
-      val = &(cVal / cVal2);
+      val = &(*val / *val2);
 
     int dummy = 0;
+  }
+
+  return val;
+} /* End of 'getT' function */
+
+/**
+ * \brief Get power rule function.
+ */
+ad6::node * ad6::parser::_getPow( void )
+{
+  node *val = _getP();
+
+  while (*ptr == '^')
+  {
+    ptr++;
+    node *val2 = _getP();
+
+    val = &(*val ^ *val2);
   }
 
   return val;
@@ -87,25 +101,50 @@ ad6::node * ad6::parser::_getP( void )
     ptr++;
     return nd;
   }
-  if (isdigit(*(ptr)))
+  if (isdigit(*(ptr)) || *ptr == '-' )
     return _getN();
   if ((nd = _getFunc()) != nullptr)
     return nd;
   return _getId();
 } /* End of 'getP' function */
 
+double dec_neg_pow( int deg )
+{
+  if (deg == 0)
+    return 1;
+  return dec_neg_pow(deg + 1) / 10.0;
+}
+
 /**
  * \brief Get number's rule function.
  */
 ad6::node * ad6::parser::_getN( void )
 {
-  int val = 0;
-
+  double val = 0;
+  bool IsNeg = false;
+  if (*ptr == '-')
+  {
+    IsNeg = true;
+    ptr++;
+  }
   do
   {
     val = val * 10 + *ptr - '0';
     ptr++;
   } while (*ptr >= '0' && *ptr <= '9');
+  if (*ptr == '.')
+  {
+    ptr++;
+    int deg_cnt = -1;
+    do
+    {
+      val += (*ptr - '0') * dec_neg_pow(deg_cnt--);
+      ptr++;
+    } while (*ptr >= '0' && *ptr <= '9');
+  }
+
+  if (IsNeg)
+    val = -val;
 
   return new node(val);
 } /* End of 'getN' function */
@@ -166,7 +205,7 @@ ad6::node * ad6::parser::_getFunc( void )
 
   string str(old_ptr, (size_t)(ptr - old_ptr));
 
-#define DEF_FNC(name, num, diff)                                                \
+#define DEF_FNC(name, num, diff, calc)                                          \
   else if (StrChrCmp(#name, str) == 0)                                          \
   {                                                                             \
     SYNTAX_ASSERT(*ptr == '(', "function '"#name"' without braces");            \
