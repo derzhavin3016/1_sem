@@ -84,6 +84,12 @@ ad6::node & ad6::operator/( ad6::node &n1, ad6::node &n2 )
   return *(new ad6::node('/', &n1, &n2));
 } /* End of 'operator*' function */
 
+ad6::node & ad6::operator^( ad6::node &n1, ad6::node &n2 )
+{
+  using namespace ad6;
+  // ((x+8)-9)
+  return *(new ad6::node('^', &n1, &n2));
+} /* End of 'operator*' function */
 
 /**
  * \brief Copy of tree fucntion.

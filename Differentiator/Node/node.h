@@ -49,6 +49,8 @@ namespace ad6
 
   node & operator/( node &n1, node &n2 );
 
+  node & operator^( node &n1, node &n2 );
+
   node * rec_copy( node *nd );
 
   node * node_copy( node *root, bool IsDel = false );
