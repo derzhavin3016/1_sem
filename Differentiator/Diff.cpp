@@ -1,19 +1,10 @@
 #include "Diff.h"
 
 #define TEX_DMP \
-"\\documentclass[12pt,a4paper,fleqn]{article} \n"\
+"\\documentclass[12pt,a4paper,fleqn]{article} \n"                    \
 "\\usepackage[utf8]{inputenc}                                     \n"\
 "\\usepackage{amssymb, amsmath, multicol}                         \n"\
 "\\usepackage[russian]{babel}                                     \n"\
-"\\usepackage{graphicx}                                           \n"\
-"\\usepackage[shortcuts,cyremdash]{extdash}                       \n"\
-"\\usepackage{wrapfig}                                            \n"\
-"\\usepackage{floatflt}                                           \n"\
-"\\usepackage{lipsum}                                             \n"\
-"\\usepackage{hyperref}                                           \n"\
-"\\usepackage{verbatim}                                           \n"\
-"\\usepackage{concmath}                                         \n"\
-"\\usepackage{euler}                                            \n"\
 "                                                                 \n"\
 "\\oddsidemargin=-15.4mm                                          \n"\
 "\\textwidth=190mm                                                \n"\
@@ -23,15 +14,6 @@
 "\\parindent=0pt                                                  \n"\
 "\\parskip=8pt                                                    \n"\
 "\\pagestyle{empty}                                               \n"\
-"\\renewcommand{\\tg}{\\mathop{\\mathrm{tg}}\\nolimits}           \n"\
-"\\renewcommand{\\ctg}{\\mathop{\\mathrm{ctg}}\\nolimits}         \n"\
-"\\renewcommand{\\arctan}{\\mathop{\\mathrm{arctg}}\\nolimits}    \n"\
-"\\newcommand{\\divisible}{\\mathop{\\raisebox{-2pt}{\\vdots}}}   \n"\
-"\\RequirePackage{caption2}                                       \n"\
-"\\renewcommand\\captionlabeldelim{}                              \n"\
-"\\newcommand*{\\hm}[1]{#1\\nobreak\\discretionary{}%             \n"\
-"{\\hbox{$\\mathsurround=0pt #1$}}{}}                             \n"\
-"                                                                 \n"\
 "\\begin{document}                                                \n"
 
 #define TEX_END "\\end{document}"
@@ -502,7 +484,7 @@ ad6::node* ad6::tree::_rec_symp( node *nd )
 {
   TREE_ASSERT(nd != nullptr, "Node was nullptr");
 
-  if (_calc_tree(nd));
+  if (_calc_tree(nd))
     return nd;
 
 
