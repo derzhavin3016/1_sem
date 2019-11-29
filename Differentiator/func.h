@@ -7,6 +7,10 @@
 #define CH  *(new node(TYPE_FUNC, "ch", 2, 8, nullptr, &cR ))
 #define SH  *(new node(TYPE_FUNC, "sh", 2, 7, nullptr, &cR ))
 
+#define ONE *(new node(1))
+
+#define MINUS_ONE *(new node(-1))
+
 DEF_FNC(sin, 1, 
   {
     return COS * dR;
@@ -17,7 +21,7 @@ DEF_FNC(sin, 1,
 
 DEF_FNC(cos, 2, 
   {
-    return (*(new node(-1)) * SIN) * dR;
+    return (MINUS_ONE * SIN) * dR;
   },
   {
     return cos(REC_R);
@@ -25,7 +29,7 @@ DEF_FNC(cos, 2,
 
 DEF_FNC(tg, 3, 
   {
-    return (*(new node(1)) / (COS * COS)) * dR;
+    return (ONE / (COS * COS)) * dR;
   },
   {
     double co = cos(REC_R)
@@ -36,7 +40,7 @@ DEF_FNC(tg, 3,
 
 DEF_FNC(ctg, 4, 
   {
-    return (*(new node(-1)) / (SIN * SIN)) * dR;
+    return (MINUS_ONE / (SIN * SIN)) * dR;
   },
   {
     double res = REC_R;
@@ -48,7 +52,7 @@ DEF_FNC(ctg, 4,
 
 DEF_FNC(ln, 5, 
   {
-    return (*(new node(1)) / cR) * dR;
+    return (ONE / cR) * dR;
   },
   {
     double res = REC_R;
@@ -59,7 +63,7 @@ DEF_FNC(ln, 5,
 
 DEF_FNC(sqrt, 6, 
   {
-    return (*(new node(1)) / (*(new node(2)) * cR)) * dR;
+    return (ONE / (*(new node(2)) * cR)) * dR;
   },
   {
     double res = REC_R;
@@ -86,7 +90,7 @@ DEF_FNC(ch, 8,
 
 DEF_FNC(th, 9, 
   {
-    return (*(new node(1)) / (CH * CH)) * dR;
+    return (ONE / (CH * CH)) * dR;
   },
   {
     return tanh(REC_R);
@@ -94,7 +98,7 @@ DEF_FNC(th, 9,
 
 DEF_FNC(cth, 10, 
   {
-    return (*(new node(-1)) / (SH * SH)) * dR;
+    return (MINUS_ONE / (SH * SH)) * dR;
   },
   {
     double res = REC_R;
