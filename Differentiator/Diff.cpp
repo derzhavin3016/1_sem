@@ -638,11 +638,19 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
     nd->name.print_in_file(f);
     break;
   case TYPE_FUNC:
-    fprintf(f, "\\");
-    nd->name.print_in_file(f);
-    fprintf(f, " \\left( ");
+    if (nd->num == 11)
+      fprintf(f, "e^{");
+    else
+    {
+      fprintf(f, "\\");
+      nd->name.print_in_file(f);
+      fprintf(f, " \\left( ");
+    }
     _tex_rec(f, nd->right);
-    fprintf(f, " \\right) ");
+    if (nd->num != 11)
+      fprintf(f, " \\right) ");
+    else
+      fprintf(f, "} ");
     break;
   default:
     printf("Unrecognised type : %d", nd->type);
