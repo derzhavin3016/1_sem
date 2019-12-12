@@ -1,0 +1,89 @@
+#ifndef __PARSER_H_
+#define __PARSER_H_
+
+#include "..\..\DEFS.h"
+#include "..\Tokens\Tok.h"
+
+namespace ad6
+{
+  class parser
+  {
+  private: 
+      const token *ptr;
+      stock<string> variables;
+  public:
+
+    // default constructor
+    parser( void ) : variables()
+    {
+    }
+
+    // destructor
+    ~parser( void )
+    {
+    }
+
+    size_t var_size( void )
+    {
+      return variables.size();
+    }
+
+    node * getG( const token *tok );
+
+    int find_var( const char str[] );
+
+  private:
+    node * _getE( void );
+    
+    node * _getT( void );
+    
+    node * _getP( void );
+    
+    node * _getN( void );
+    
+    node * _getId( void );
+
+    node * _getPow( void );
+
+    node * _getAct( void );
+
+    node * _getFunc( void );
+
+    node * _getOp( void );
+
+    node * _getAss( void );
+
+    node * _getIf( void );
+
+    node * _getWhile( void );
+
+    node * _getRet( void );
+
+    node * _getDec( void );
+
+    node * _getIns( void );
+
+    node * _getArgs( void );
+
+    bool _check_ptr_type( tok_type check );
+  };
+
+  // Process error structure
+  struct syntax_error
+  {
+    const char* descr;
+    int line, pos;
+    const char* file;
+    const char* func;
+    //Error* reason;
+
+    syntax_error( const char* des, int l, int pos ) : descr(des),
+                                                      line(l),
+                                                      pos(pos)
+    {
+    }
+  };
+}
+
+#endif /* __PARSER_H_ */
+
