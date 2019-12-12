@@ -177,6 +177,13 @@ namespace ad6
       return elems[num].next;
     } /* End of 'GetNext' function */
 
+    Data &GetValue( size_t num ) const
+    {
+      LIST_IF_COR_NUM;
+      LIST_IF_FREE;
+      return elems[num].data;
+    }
+
     /**
      * \brief get actual number of the previous element for current one.
      * \param [in] num   actual number of element.
@@ -373,7 +380,7 @@ namespace ad6
     {
       LST_ASSERT();
       if (size == 0)
-        return 0;
+        return -1;
       if (comp == nullptr)
         comp = defcomp;
 
