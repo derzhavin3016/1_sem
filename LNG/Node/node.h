@@ -32,6 +32,9 @@ namespace ad6
     // Copy constructor
     node( node& nd );
 
+    // op constructor
+    node( node *left, node *right );
+
     // operator constructor
     node( char op_num, node *l, node *r );
 
