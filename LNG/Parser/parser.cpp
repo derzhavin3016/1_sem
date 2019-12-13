@@ -76,6 +76,55 @@ ad6::node * ad6::parser::_getFunc( void )
 } /* End of '_getFunc' function */
 
 /**
+ * \brief get comprasion rule function
+ */
+ad6::node * ad6::parser::_getComp( void )
+{
+
+#define STR_ADD(str)\
+  if (CHECK_STR(str))                                                          \
+  {                                                                                \
+    ptr++;                                                                         \
+    node *nd = new node(TYPE_OPERATOR, str, 2, 0, left, _getE());                  \
+    return nd;                                                                     \
+  }
+
+#define CHECK_CREATE(fst_smb, add_smb)                                             \
+  if (CHECK_SMB(#add_smb[0]))                                                      \
+    {                                                                              \
+      ptr++;                                                                       \
+      node *nd = new node(TYPE_OPERATOR, #fst_smb#add_smb, 2, 0, left, _getE());  \
+      return nd;                                                                   \
+    }
+
+#define CHECK_FST_ADD(fst, add)                                                    \
+  if (CHECK_SMB(#fst[0]))                                                          \
+  {                                                                                \
+    ptr++;                                                                         \
+    CHECK_CREATE(fst, add);                                                         \
+    node *nd = new node(TYPE_OPERATOR, #fst, 1, 0, left, _getE());                  \
+    return nd;                                                                     \
+  }
+
+  node *left = _getE();
+
+  CHECK_FST_ADD(>, =);
+  CHECK_FST_ADD(<, =);
+  
+  STR_ADD("!=");
+  STR_ADD("==");
+
+  SYNTAX_ASSERT(0, "Incorrect comprasion");
+
+#undef STR_ADD
+
+#undef CHECK_CREATE
+
+#undef CHECK_FST_ADD
+  return nullptr;
+}
+
+/**
  * \brief Get operator rule function.
  */ 
 ad6::node * ad6::parser::_getOp( void )
@@ -109,14 +158,37 @@ ad6::node * ad6::parser::_getOp( void )
     SYNTAX_ASSERT(CHECK_SMB('('), "No condition for if operator");
     ptr++;
 
-    SYNTAX_ASSERT(CHECK_SMB('('), "No condition for if operator");
+    node *_if_else = new node(TYPE_OPERATOR, "if-else", 7, 0, nullptr, nullptr); 
+    node *_if = new node(TYPE_OPERATOR, "if", 2, 0, _getComp(), _if_else);
+    node *op = new node(_if, nullptr);
+    _if_else->left = new node(_getOp(), nullptr);
+    if (CHECK_STR("else"))
+    {
+      ptr++;
+      _if_else->right = new node(_getOp(), nullptr);
+    }
+
+
+    SYNTAX_ASSERT(CHECK_SMB(')'), "No condition for if operator");
     ptr++;
+    return op;
   }
 
   if (StrChrCmp("while", ptr->get_string()))
   {
+    ptr++;
+    SYNTAX_ASSERT(CHECK_SMB('('), "No condition for 'while' operator");
+    ptr++;
+
+    node *_while = new node(TYPE_OPERATOR, "while", 5, 0, _getComp(), nullptr);
+    node *op = new node(_while, nullptr);
+    _while->right = new node(_getOp(), nullptr);
+
+    SYNTAX_ASSERT(CHECK_SMB(')'), "No condition for 'while' operator");
+    ptr++;
+    return op;
   }
-} /* End of '' function */
+} /* End of '_getOp' function */
 
 
 /**

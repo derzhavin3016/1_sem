@@ -35,6 +35,8 @@ namespace ad6
   private:
     node * _getE( void );
     
+    node * _getComp( void );
+
     node * _getT( void );
     
     node * _getP( void );
