@@ -83,11 +83,13 @@ ad6::node * ad6::parser::_getFunc( void )
 ad6::node * ad6::parser::_getComp( void )
 {
 
-#define STR_ADD(str)\
-  if (CHECK_STR(str))                                                          \
+#define TWO_SMB_ADD(str)\
+  if (CHECK_SMB(str##[0]))                                                             \
   {                                                                                \
     ptr++;                                                                         \
-    node *nd = new node(TYPE_CMP, str, 2, 0, left, _getE());                  \
+    SYNTAX_ASSERT(CHECK_SMB(str##[1]), "Incorrect comprasion");                    \
+    ptr++;                                                                         \
+    node *nd = new node(TYPE_CMP, str, 2, 0, left, _getE());                       \
     return nd;                                                                     \
   }
 
@@ -113,8 +115,8 @@ ad6::node * ad6::parser::_getComp( void )
   CHECK_FST_ADD(>, =);
   CHECK_FST_ADD(<, =);
   
-  STR_ADD("!=");
-  STR_ADD("==");
+  TWO_SMB_ADD("!=");
+  TWO_SMB_ADD("==");
 
   SYNTAX_ASSERT(0, "Incorrect comprasion");
 
@@ -167,7 +169,7 @@ ad6::node * ad6::parser::_getOp( void )
     return new node(_getDec(), nullptr);
 
   if (StrChrCmp("put", ptr->get_string()) == 0)
-    return _getPut();
+    return new node(_getPut(), nullptr);
 
   node *ass = new node(_getAss(), nullptr);
   return ass;
@@ -333,7 +335,7 @@ ad6::node * ad6::parser::_getP( void )
     ptr++;
     return nd;
   }
-  if (_check_ptr_type(TOK_NUM) || CHECK_SMB('-'))
+  if (_check_ptr_type(TOK_NUM) || (ptr + 1)->get_type() == TOK_NUM)
     return _getN();
   return _getId();
 } /* End of 'getP' function */
@@ -371,18 +373,33 @@ ad6::node * ad6::parser::_getN( void )
 ad6::node * ad6::parser::_getId( void )
 {
   int pos = 0;
+  node *Id = nullptr;
+  if (CHECK_SMB('-'))
+  {
+    ptr++;
+    Id = new node('*', new node(-1.0), nullptr);
+  }
 
   string str(ptr->get_string()); 
   ptr++;
-  #define DEF_FNC(name, num, diff, calc)                                          \
-  else if (StrChrCmp(#name, str) == 0)                                          \
-  {                                                                             \
-    SYNTAX_ASSERT(CHECK_SMB('('), "function '"#name"' without braces");            \
-    ptr++;                                                                      \
-    node *nd = _getE();                                                         \
-    SYNTAX_ASSERT(CHECK_SMB(')'), "function '"#name"' without braces");            \
-    ptr++;                                                                      \
-    return new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);    \
+#define CHECK_ID\
+    if (Id != nullptr)                                                              \
+    {                                                                               \
+      Id->right = fin;                                                              \
+      return Id;                                                                    \
+    }                                                                               \
+
+  #define DEF_FNC(name, num, diff, calc)                                            \
+  else if (StrChrCmp(#name, str) == 0)                                              \
+  {                                                                                 \
+    SYNTAX_ASSERT(CHECK_SMB('('), "function '"#name"' without braces");             \
+    ptr++;                                                                          \
+    node *nd = _getE();                                                             \
+    SYNTAX_ASSERT(CHECK_SMB(')'), "function '"#name"' without braces");             \
+    ptr++;                                                                          \
+    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);   \
+    CHECK_ID;                                                                       \
+    return fin;                                                                     \
   }
 
   if (0);
@@ -391,11 +408,16 @@ ad6::node * ad6::parser::_getId( void )
 
   else
   {
+    
     int num = variables.find(var(str, act_fnc));
     if (num == -1)
       num = variables.find(var(str, GLOBAL_VAR));
     if (num != -1)
-      return new node(TYPE_VAR, str, (size_t)num);
+    {
+      node *fin = new node(TYPE_VAR, str, (size_t)num);
+      CHECK_ID;
+      return fin;
+    }
 
     node *args = _getArgsE();
 
@@ -404,8 +426,11 @@ ad6::node * ad6::parser::_getId( void )
       cnt = (int)args->value;
     SYNTAX_ASSERT((num = functions.find(fnc(str, cnt)) != -1), "Incorrect function call")
 
-    return new node(TYPE_USR_FNC, str, (size_t)num, args);
+    node *fin = new node(TYPE_USR_FNC, str, (size_t)num, args);
+    CHECK_ID;
+    return fin;
   }
+#undef CHECK_ID
 } /* End of 'getId' function */
 
 ad6::node * ad6::parser::_getArgsE( void )
