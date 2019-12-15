@@ -1,4 +1,4 @@
-#include "Lng.h"
+#include "Frontend\Lng.h"
 
 using namespace ad6;
 
@@ -7,9 +7,9 @@ int main( void )
   try
   {
     tree tr;
-    tr.read_tree("t.txt");
-    tr.dump_root("dmp");
-    tr.save_tree("tr.txt");
+    tr.read_tree("fact.txt");
+    tr.dump_root("fact");
+    tr.save_tree("fc.txt");
   }
   catch ( Error &err)
   {
