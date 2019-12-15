@@ -1,0 +1,1 @@
+{;{$fact{,@{number}}{op{if{<={number}{1}}{if-else{op{ret{1}@}@}@}}{op{ret{*{number}{$fact{,@{-{number}{1}}}@}}@}@}}}{;{$main@{op{={number}{$get}}{op{$put{$fact{,@{number}}@}@}@}}}@}}

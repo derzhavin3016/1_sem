@@ -1,0 +1,31 @@
+$getD( a, b, c )
+{
+  return b * b - 4 * a * c;  
+}
+$main()
+{
+  var a = get();
+  var b = get();
+  var c = get();
+  var discr = getD(a, b, c);
+
+  if (discr < 0)
+  {
+    put(0);
+    return;
+  }
+  if (discr == 0)
+  {
+    put(1);               
+    put(-b / (2 * a));
+    return;
+  }
+  else
+  {
+    put(2);         
+    var sqrd = sqrt(discr);      
+    put(-b / (2 * a) + sqrd);
+    put(-b / (2 * a) - sqrd);
+    return;
+  }  
+}
