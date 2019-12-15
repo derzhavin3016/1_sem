@@ -1,52 +1,5 @@
 #include "Lng.h"
 
-#define TEX_DMP \
-"\\documentclass[12pt,a4paper,fleqn]{article} \n"\
-"\\usepackage[utf8]{inputenc}                                     \n"\
-"\\usepackage{amssymb, amsmath, multicol}                         \n"\
-"\\usepackage[russian]{babel}                                     \n"\
-"\\usepackage{graphicx}                                           \n"\
-"\\usepackage[shortcuts,cyremdash]{extdash}                       \n"\
-"\\usepackage{wrapfig}                                            \n"\
-"\\usepackage{floatflt}                                           \n"\
-"\\usepackage{lipsum}                                             \n"\
-"\\usepackage{hyperref}                                           \n"\
-"\\usepackage{verbatim}                                           \n"\
-"\\usepackage{concmath}                                         \n"\
-"\\usepackage{euler}                                            \n"\
-"\\oddsidemargin=-15.4mm                                          \n"\
-"\\textwidth=190mm                                                \n"\
-"\\headheight=-32.4mm                                             \n"\
-"\\textheight=277mm                                               \n"\
-"\\tolerance=100                                                  \n"\
-"\\parindent=0pt                                                  \n"\
-"\\parskip=8pt                                                    \n"\
-"\\pagestyle{empty}                                               \n"\
-"\\renewcommand{\\tg}{\\mathop{\\mathrm{tg}}\\nolimits}           \n"\
-"\\renewcommand{\\ctg}{\\mathop{\\mathrm{ctg}}\\nolimits}         \n"\
-"\\renewcommand{\\arctan}{\\mathop{\\mathrm{arctg}}\\nolimits}    \n"\
-"\\newcommand{\\divisible}{\\mathop{\\raisebox{-2pt}{\\vdots}}}   \n"\
-"\\RequirePackage{caption2}                                       \n"\
-"\\renewcommand\\captionlabeldelim{}                              \n"\
-"\\newcommand*{\\hm}[1]{#1\\nobreak\\discretionary{}%             \n"\
-"{\\hbox{$\\mathsurround=0pt #1$}}{}}                             \n"\
-"                                                                 \n"\
-"\\begin{document}                                                \n"
-
-#define TEX_END "\\end{document}"
-
-#define GREETING  "Hello. I'm an artificial intelligence.\n"                              \
-                  "My dad is Andrey Derzhavin, and he has his own group in vk\n"          \
-                  "Subscribe, if you want to know more about my dad's phystech life\n"    \
-                  "https://vk.com/andryha_mipt \n\n"                                      \
-                  "*** Here what can I do: \n"                                            \
-                  "*** 0. Exit (bye bye)\n"                                               \
-                  "*** 1. Diff \n"                                                        \
-                  "*** 2. Dump tree with dot\n"                                           \
-                  "*** 3. Dump tree with tex\n"                          
-
-#define PARTING  "Have a nice night, stranger!\n"
-
 /**
  * \brief Get user's answer from stdout function.
  * \brief This function put scanned string to static buffer, allocate memory for the answer and return pointer.
