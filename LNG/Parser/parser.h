@@ -1,21 +1,30 @@
 #ifndef __PARSER_H_
 #define __PARSER_H_
 
-#include "..\..\DEFS.h"
+#include "var_fnc.h"
 #include "..\Tokens\Tok.h"
 
 namespace ad6
 {
+  const int GLOBAL_VAR = -1;
+
   class parser
   {
   private: 
       const token *ptr;
-      stock<string> variables;
+      stock<var> variables;
+      stock<fnc> functions;
+
+      int act_fnc;
   public:
 
     // default constructor
-    parser( void ) : variables()
+    parser( void ) : variables(),
+                     functions(),
+                     ptr(nullptr),
+                     act_fnc(-1)
     {
+      functions.add(fnc(string("get", 3), 0));
     }
 
     // destructor
@@ -28,13 +37,22 @@ namespace ad6
       return variables.size();
     }
 
+    int get_args_num( size_t num ) const
+    {
+      return functions[num].get_args();
+    }
+
     node * getG( const token *tok );
 
     int find_var( const char str[] );
 
+    string & get_var( size_t num ) const;
+
   private:
     node * _getE( void );
     
+    node * _getArgsE( void );
+
     node * _getComp( void );
 
     node * _getT( void );
@@ -67,7 +85,11 @@ namespace ad6
 
     node * _getArgs( void );
 
+    size_t _var_add( const string &st );
+
     bool _check_ptr_type( tok_type check );
+
+    node * _getPut( void );
   };
 
   // Process error structure

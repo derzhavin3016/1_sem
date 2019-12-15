@@ -29,11 +29,11 @@ ad6::node * ad6::parser::getG( const token *toks )
 
 ad6::node * ad6::parser::_getIns( void )
 {
-  node *act = new node(';', _getAct(), nullptr);
+  node *act = new node(TYPE_SEP, ";", 1, 0, _getAct(), nullptr);
   node *nd = act;
   while (!_check_ptr_type(TOK_NUL))
   {
-    nd->right = new node(';', _getAct(), nullptr);
+    nd->right = new node(TYPE_SEP, ";", 1, 0, _getAct(), nullptr);
     nd = nd->right;
   }
 
@@ -50,9 +50,11 @@ ad6::node * ad6::parser::_getAct( void )
   if (CHECK_SMB('$'))
   {
     ptr++;
+    act_fnc = functions.size();
     return _getFunc();
   }
-  return _getAss();
+  act_fnc = GLOBAL_VAR;
+  return _getDec();
 } /* End of '_getAct' function */
 
 /**
@@ -63,14 +65,14 @@ ad6::node * ad6::parser::_getFunc( void )
   string name(ptr->get_string());
   ptr++;
   node *args = _getArgs();
+  int num_of_args = 0;
 
-  SYNTAX_ASSERT(CHECK_SMB('{'), "Left brace for function body wasn't find.");
-  ptr++;
+  if (args != nullptr)
+    num_of_args = (int)args->value;
 
-  node *fnc = new node(TYPE_USR_FNC, name, 0, args, _getOp());
+  functions.add(fnc(name, num_of_args));
 
-  SYNTAX_ASSERT(CHECK_SMB('}'), "Right brace for function body wasn't find.");
-  ptr++;
+  node *fnc = new node(TYPE_USR_FNC, name, functions.size() - 1, args, _getOp());
 
   return fnc;
 } /* End of '_getFunc' function */
@@ -85,7 +87,7 @@ ad6::node * ad6::parser::_getComp( void )
   if (CHECK_STR(str))                                                          \
   {                                                                                \
     ptr++;                                                                         \
-    node *nd = new node(TYPE_OPERATOR, str, 2, 0, left, _getE());                  \
+    node *nd = new node(TYPE_CMP, str, 2, 0, left, _getE());                  \
     return nd;                                                                     \
   }
 
@@ -93,7 +95,7 @@ ad6::node * ad6::parser::_getComp( void )
   if (CHECK_SMB(#add_smb[0]))                                                      \
     {                                                                              \
       ptr++;                                                                       \
-      node *nd = new node(TYPE_OPERATOR, #fst_smb#add_smb, 2, 0, left, _getE());  \
+      node *nd = new node(TYPE_CMP, #fst_smb#add_smb, 2, 0, left, _getE());  \
       return nd;                                                                   \
     }
 
@@ -101,8 +103,8 @@ ad6::node * ad6::parser::_getComp( void )
   if (CHECK_SMB(#fst[0]))                                                          \
   {                                                                                \
     ptr++;                                                                         \
-    CHECK_CREATE(fst, add);                                                         \
-    node *nd = new node(TYPE_OPERATOR, #fst, 1, 0, left, _getE());                  \
+    CHECK_CREATE(fst, add);                                                        \
+    node *nd = new node(TYPE_CMP, #fst, 1, 0, left, _getE());                      \
     return nd;                                                                     \
   }
 
@@ -134,13 +136,13 @@ ad6::node * ad6::parser::_getOp( void )
     SYNTAX_ASSERT(CHECK_SMB('{'), "Incorrect separating symbol");
     ptr++;
     node *op = nullptr;
-    node *ops = op;
+    node **ops = &op;
 
     while (!_check_ptr_type(TOK_SMB))
     {
-      ops = _getOp();
+      *ops = _getOp();
       if (ops != nullptr)
-        ops = ops->right;
+        ops = &(*ops)->right;
     }
 
     SYNTAX_ASSERT(CHECK_SMB('}'), "Incorrect separating symbol");
@@ -151,44 +153,44 @@ ad6::node * ad6::parser::_getOp( void )
 
   if (!_check_ptr_type(TOK_STR))
     return nullptr;
-  
-  if (StrChrCmp("if", ptr->get_string()))
-  {
-    ptr++;
-    SYNTAX_ASSERT(CHECK_SMB('('), "No condition for if operator");
-    ptr++;
 
-    node *_if_else = new node(TYPE_OPERATOR, "if-else", 7, 0, nullptr, nullptr); 
-    node *_if = new node(TYPE_OPERATOR, "if", 2, 0, _getComp(), _if_else);
-    node *op = new node(_if, nullptr);
-    _if_else->left = new node(_getOp(), nullptr);
-    if (CHECK_STR("else"))
-    {
-      ptr++;
-      _if_else->right = new node(_getOp(), nullptr);
-    }
+  if (StrChrCmp("if", ptr->get_string()) == 0)
+    return new node(_getIf(), nullptr);
 
+  if (StrChrCmp("while", ptr->get_string()) == 0)
+    return new node(_getWhile(), nullptr);
 
-    SYNTAX_ASSERT(CHECK_SMB(')'), "No condition for if operator");
-    ptr++;
-    return op;
-  }
+  if (StrChrCmp("return", ptr->get_string()) == 0)
+    return new node(_getRet(), nullptr);
 
-  if (StrChrCmp("while", ptr->get_string()))
-  {
-    ptr++;
-    SYNTAX_ASSERT(CHECK_SMB('('), "No condition for 'while' operator");
-    ptr++;
+  if (StrChrCmp("var", ptr->get_string()) == 0)
+    return new node(_getDec(), nullptr);
 
-    node *_while = new node(TYPE_OPERATOR, "while", 5, 0, _getComp(), nullptr);
-    node *op = new node(_while, nullptr);
-    _while->right = new node(_getOp(), nullptr);
+  if (StrChrCmp("put", ptr->get_string()) == 0)
+    return _getPut();
 
-    SYNTAX_ASSERT(CHECK_SMB(')'), "No condition for 'while' operator");
-    ptr++;
-    return op;
-  }
+  node *ass = new node(_getAss(), nullptr);
+  return ass;
 } /* End of '_getOp' function */
+
+/**
+ * \brief Get 'Put' rule function.
+ */
+ad6::node * ad6::parser::_getPut( void )
+{
+  ptr++;
+  SYNTAX_ASSERT(CHECK_SMB('('), "No left brace for put");
+  ptr++;
+
+  node *put = new node(TYPE_USR_FNC, "put", 3, 0, _getE());
+
+  SYNTAX_ASSERT(CHECK_SMB(')'), "No right brace for put");
+  ptr++;
+  SYNTAX_ASSERT(CHECK_SMB(';'), "No ';' find for put");
+  ptr++;
+
+  return put;
+} /* End of 'Put' function */
 
 
 /**
@@ -196,28 +198,55 @@ ad6::node * ad6::parser::_getOp( void )
  */
 ad6::node * ad6::parser::_getArgs( void )
 {
+#define NEW_VAR                                                              \
+  new node(TYPE_VAR, ptr->get_string(), _var_add(ptr->get_string()))
+
   SYNTAX_ASSERT(CHECK_SMB('('), "Left brace wasn't find in function declaration");
   ptr++;
   
   node *args = nullptr;
 
+  int args_cnt = 0;
+
   if (_check_ptr_type(TOK_STR))
   {
-    args = new node(',', nullptr, _getId());
+    args = new node(TYPE_SEP, ",", 1, 0, nullptr, NEW_VAR);
+    ptr++;
+    args_cnt++;
     node *arg2 = args;
     while (CHECK_SMB(','))
     {
       ptr++;
-      arg2->left = new node(',', nullptr, _getId());
+      args_cnt++;
+      arg2->left = new node(TYPE_SEP, ",", 1, 0, nullptr, NEW_VAR);
+      ptr++;
       arg2 = arg2->left;
     }
   }
 
-  SYNTAX_ASSERT(CHECK_SMB(')'), "Left brace wasn't find in function declaration");
+  SYNTAX_ASSERT(CHECK_SMB(')'), "Right brace wasn't find in function declaration");
   ptr++;
+  if (args != nullptr)
+    args->value = args_cnt;
 
+#undef NEW_VAR
   return args;
 } /* End of '_getArgs' function */
+
+/**
+ * \brief Add new variable function
+ */
+size_t ad6::parser::_var_add( const string &st )
+{
+  var _new(st, act_fnc);
+  int num = variables.find(_new);
+
+  SYNTAX_ASSERT(num == -1, "Variable redeclaration");
+
+  variables.add(_new);
+
+  return variables.size() - 1;
+} /* End of '_var_add' function */
 
 /*
  */
@@ -362,18 +391,58 @@ ad6::node * ad6::parser::_getId( void )
 
   else
   {
-    int num = 0;
-    
-    if ((num = variables.find(str)) == -1)
-    {
-      num = variables.size();
-      variables.add(str);
-    }
-    return new node(TYPE_VAR, str, (size_t)num);
+    int num = variables.find(var(str, act_fnc));
+    if (num == -1)
+      num = variables.find(var(str, GLOBAL_VAR));
+    if (num != -1)
+      return new node(TYPE_VAR, str, (size_t)num);
+
+    node *args = _getArgsE();
+
+    int cnt = 0;
+    if (args != nullptr)
+      cnt = (int)args->value;
+    SYNTAX_ASSERT((num = functions.find(fnc(str, cnt)) != -1), "Incorrect function call")
+
+    return new node(TYPE_USR_FNC, str, (size_t)num, args);
   }
-} /* End of 'getId' function  */
-    
-    
+} /* End of 'getId' function */
+
+ad6::node * ad6::parser::_getArgsE( void )
+{
+  SYNTAX_ASSERT(CHECK_SMB('('), "Left brace wasn't find in function call");
+  ptr++;
+  
+  node *args = nullptr;
+
+  int args_cnt = 0;
+
+  if (!CHECK_SMB(')'))
+  {
+    args = new node(TYPE_SEP, ",", 1, 0, nullptr, _getE());
+    args_cnt++;
+    node *arg2 = args;
+    while (CHECK_SMB(','))
+    {
+      ptr++;
+      args_cnt++;
+      arg2->left = new node(TYPE_SEP, ",", 1, 0, nullptr, _getE());
+      arg2 = arg2->left;
+    }
+  }
+
+  SYNTAX_ASSERT(CHECK_SMB(')'), "Right brace wasn't find in function call");
+  ptr++;
+  if (args != nullptr)
+    args->value = args_cnt;
+  return args;
+}
+
+ad6::string & ad6::parser::get_var( size_t num ) const
+{
+  return variables[num].get_name();  
+}
+
 
 /**
  * \brief Find variable in variables array by string.
@@ -384,11 +453,25 @@ ad6::node * ad6::parser::_getId( void )
 int ad6::parser::find_var( const char str[] )
 {
   for (size_t i = 0 ; i < variables.size(); i++)
-    if (StrChrCmp(str, variables[i]) == 0)
+    if (StrChrCmp(str, variables[i].get_name()) == 0)
       return i;
 
   return -1;
 } /* End of 'find_var' function */
+
+/**
+ * \brief Get declaration rule function.
+ */
+ad6::node * ad6::parser::_getDec( void )
+{
+  SYNTAX_ASSERT(CHECK_STR("var"), "Incorrect variable declaration");
+  ptr++;
+  SYNTAX_ASSERT(_check_ptr_type(TOK_STR), "Incorrect variable name");
+
+  int num = _var_add(ptr->get_string());
+
+  return _getAss();
+} /* End of '_getDec' function */
 
 /**
  * \brief Get assignment rule function.
@@ -402,26 +485,69 @@ ad6::node * ad6::parser::_getAss( void )
   ptr++;
 
   node *expr = _getE();
+  SYNTAX_ASSERT(CHECK_SMB(';'), "';' was not met");
+  ptr++;
 
   return new node('=', var, expr);
 } /* End of '_getAss' function */
 
+/**
+ * \brief Get 'if' rule function
+*/
 ad6::node * ad6::parser::_getIf( void )
 {
+  SYNTAX_ASSERT(CHECK_STR("if"), "Incorrect 'if'");
+  ptr++;
+  SYNTAX_ASSERT(CHECK_SMB('('), "No condition for if operator");
+  ptr++;
+
+  node *_if_else = new node(TYPE_POL_OP, "if-else", 7, 0, nullptr, nullptr); 
+  node *_if = new node(TYPE_POL_OP, "if", 2, 0, _getComp(), _if_else);
+
+  SYNTAX_ASSERT(CHECK_SMB(')'), "No condition for if operator");
+  ptr++;
+
+  _if_else->left = _getOp();
+  if (CHECK_STR("else"))
+  {
+    ptr++;
+    _if_else->right = _getOp();
+  }
+  return _if;
 }
 
+/**
+ * \brief Get 'while' rule function.
+ */
 ad6::node * ad6::parser::_getWhile( void )
 {
+  SYNTAX_ASSERT(CHECK_STR("while"), "Incorrect 'while'");
+  ptr++;
+  SYNTAX_ASSERT(CHECK_SMB('('), "No condition for 'while' operator");
+  ptr++;
+
+  node *_while = new node(TYPE_POL_OP, "while", 5, 0, _getComp(), nullptr);
+
+  SYNTAX_ASSERT(CHECK_SMB(')'), "No condition for 'while' operator");
+  ptr++;
+
+  _while->right = _getOp();
+  return _while;
 }
 
+/**
+ * \brief Get return rule function
+ */
 ad6::node * ad6::parser::_getRet( void )
 {
-}
-
-ad6::node * ad6::parser::_getDec( void )
-{
-
-}
+  SYNTAX_ASSERT(CHECK_STR("return"), "");
+  ptr++;
+  node* ret = new node(TYPE_POL_OP, "ret", 3, 0, nullptr, nullptr);
+  if (!CHECK_SMB(';'))
+    ret->left = _getE();
+  ptr++;
+  return ret;
+} /* End of 'Ret' fucntion */
 
 #undef cVal
 
