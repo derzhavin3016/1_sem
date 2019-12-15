@@ -1,4 +1,5 @@
 #include "Frontend\Lng.h"
+#include "Frontend^-1/frontback.h"
 
 using namespace ad6;
 
@@ -6,10 +7,13 @@ int main( void )
 {
   try
   {
-    tree tr;
-    tr.read_tree("fact.txt");
-    tr.dump_root("fact");
-    tr.save_tree("fc.txt");
+    frontend fr;
+    fback fb;
+    fr.read_tree("Programs\\fact.txt");
+    fr.dump_root("fact");
+    fr.save_tree("fac.txt");
+    fb.read_tree("fac.txt");
+    fb.dump_root("ff");
   }
   catch ( Error &err)
   {

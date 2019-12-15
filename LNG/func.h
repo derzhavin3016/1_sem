@@ -110,3 +110,7 @@ DEF_FNC(exp, 11,
   {
     return exp(REC_R);
   })
+
+DEF_FNC(put, 12, {}, {})
+
+DEF_FNC(get, 13, {}, {})
