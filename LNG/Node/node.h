@@ -1,7 +1,7 @@
 #ifndef __NODE_H_
 #define __NODE_H_
 
-#include "..\..\DEFS.h"
+#include "..\..\Strs\strs.h"
 
 namespace ad6
 {
@@ -12,7 +12,9 @@ namespace ad6
     TYPE_OPERATOR = 3,
     TYPE_FUNC = 4,
     TYPE_SEP = 5,
-    TYPE_USR_FNC = 6
+    TYPE_USR_FNC = 6,
+    TYPE_CMP = 7,
+    TYPE_POL_OP = 8
   };
 
   class node
@@ -30,7 +32,7 @@ namespace ad6
     node( void );
 
     // Copy constructor
-    node( node& nd );
+    explicit node( node& nd );
 
     // op constructor
     node( node *left, node *right );
@@ -48,6 +50,8 @@ namespace ad6
     node( double value );
 
     node( node_type tpe, string &str, size_t var_num, node* left = nullptr, node* right = nullptr );
+
+    node( node_type tpe, const string &str, size_t var_num, node* left = nullptr, node* right = nullptr );
 
     ~node( void );
   };

@@ -49,9 +49,11 @@ ad6::node::node( node_type tpe, const char *var_name, size_t name_size, size_t v
                                                                                                                     right(right)
 {
 }
+// 
+
 
 // op cinstructor
-ad6::node::node( node *left, node *right ) : type(TYPE_OPERATOR),
+ad6::node::node( node *left, node *right ) : type(TYPE_SEP),
                                              name("op", 2),
                                              left(left),
                                              right(right)
@@ -63,6 +65,14 @@ ad6::node::node( node_type tpe, string &str, size_t var_num, node* left, node* r
                                                                                          num((char)var_num),
                                                                                          left(left),
                                                                                          right(right)
+{
+}
+
+ad6::node::node( node_type tpe, const string &str, size_t var_num, node* left, node* right ) : type(tpe),
+                                                                                               name(str),
+                                                                                               num((char)var_num),
+                                                                                               left(left),
+                                                                                               right(right)
 {
 }
 
