@@ -24,7 +24,6 @@ namespace ad6
                      ptr(nullptr),
                      act_fnc(-1)
     {
-      functions.add(fnc(string("get", 3), 0));
     }
 
     // destructor

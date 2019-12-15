@@ -70,6 +70,7 @@ ad6::node * ad6::parser::_getFunc( void )
   if (args != nullptr)
     num_of_args = (int)args->value;
 
+
   functions.add(fnc(name, num_of_args));
 
   node *fnc = new node(TYPE_USR_FNC, name, functions.size() - 1, args, _getOp());
@@ -184,7 +185,7 @@ ad6::node * ad6::parser::_getPut( void )
   SYNTAX_ASSERT(CHECK_SMB('('), "No left brace for put");
   ptr++;
 
-  node *put = new node(TYPE_USR_FNC, "put", 3, 0, _getE());
+  node *put = new node(TYPE_FUNC, "put", 3, 0, _getE());
 
   SYNTAX_ASSERT(CHECK_SMB(')'), "No right brace for put");
   ptr++;
@@ -327,6 +328,7 @@ ad6::node * ad6::parser::_getPow( void )
 ad6::node * ad6::parser::_getP( void )
 {
   node *nd = nullptr;
+
   if (CHECK_SMB('('))
   {
     ptr++;
@@ -335,6 +337,8 @@ ad6::node * ad6::parser::_getP( void )
     ptr++;
     return nd;
   }
+  if (CHECK_SMB(')'))
+    return nullptr;
   if (_check_ptr_type(TOK_NUM) || (ptr + 1)->get_type() == TOK_NUM)
     return _getN();
   return _getId();
@@ -397,7 +401,7 @@ ad6::node * ad6::parser::_getId( void )
     node *nd = _getE();                                                             \
     SYNTAX_ASSERT(CHECK_SMB(')'), "function '"#name"' without braces");             \
     ptr++;                                                                          \
-    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);   \
+    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nd, nullptr);   \
     CHECK_ID;                                                                       \
     return fin;                                                                     \
   }

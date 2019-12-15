@@ -11,7 +11,6 @@ namespace ad6
   {
     string name;
     int args;
-
   public:
 
     fnc( void );
