@@ -160,3 +160,79 @@ ad6::node * ad6::rec_copy( node *nd )
 
   return new_nd;
 } /* End of 'rec_copy' function */
+
+// Copy constructor
+void ad6::node::set_node( node& nd )
+{
+  value = nd.value;
+  name = nd.name;
+  IsOp = nd.IsOp;
+  num = nd.num;
+  type = nd.type;
+  right = nd.right;
+  left = nd.left;
+}
+
+// op constructor
+void ad6::node::set_node( node *l, node *r )
+{
+  name = string("op", 2);
+  type = TYPE_SEP;
+  right = r;
+  left = l;
+}
+
+// operator constructor
+void ad6::node::set_node( char op_num, node *l, node *r )
+{
+  num = op_num;
+  type = TYPE_OPERATOR;
+  right = r;
+  left = l;
+}
+
+// separator constructor
+void ad6::node::set_node( bool Is, node *l, node *r )
+{
+  IsOp = Is;
+  type = TYPE_SEP;
+  right = r;
+  left = l;
+}
+
+// variable or function constructor
+void ad6::node::set_node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* l /*= nullptr*/, node* r /*= nullptr*/ )
+{
+  name = string(var_name, name_size);
+  num = (char)var_num;
+  type = tpe;
+  right = r;
+  left = l;
+}
+
+// number constructor
+void ad6::node::set_node( double val )
+{
+  value = val;
+  type = TYPE_NUMBER;
+  right = nullptr;
+  left = nullptr;
+}
+
+void ad6::node::set_node( node_type tpe, string &str, size_t var_num, node* l /* = nullptr*/, node* r /*= nullptr*/ )
+{
+  name = str;
+  num = (char)var_num;
+  type = tpe;
+  right = r;
+  left = l;
+}
+
+void ad6::node::set_node( node_type tpe, const string &str, size_t var_num, node* l /*= nullptr*/, node* r /*= nullptr*/ )
+{
+  name = str;
+  num = (char)var_num;
+  type = tpe;
+  right = r;
+  left = l;
+}

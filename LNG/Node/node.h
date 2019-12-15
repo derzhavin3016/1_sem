@@ -53,6 +53,28 @@ namespace ad6
 
     node( node_type tpe, const string &str, size_t var_num, node* left = nullptr, node* right = nullptr );
 
+    // Copy constructor
+    void set_node( node& nd );
+
+    // op constructor
+    void set_node( node *l, node *r );
+
+    // operator constructor
+    void set_node( char op_num, node *l, node *r );
+
+    // separator constructor
+    void set_node( bool Is, node *l, node *r );
+
+    // variable or function constructor
+    void set_node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* l = nullptr, node* r = nullptr );
+
+    // number constructor
+    void set_node( double val );
+
+    void set_node( node_type tpe, string &str, size_t var_num, node* l = nullptr, node* r = nullptr );
+
+    void set_node( node_type tpe, const string &str, size_t var_num, node* l = nullptr, node* r = nullptr );
+
     ~node( void );
   };
   
