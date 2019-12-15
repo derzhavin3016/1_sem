@@ -4,6 +4,7 @@
 #define STK_OFF_SEC
 #include "..\DEFS.h"
 #include "Parser/parser.h"
+#include "dic.h"
 #include <stdarg.h>
 
 #define TREE_LOCATION  __LINE__, __FILE__, __FUNCSIG__
@@ -18,6 +19,24 @@
 
 namespace ad6
 {
+
+  const oper smb_op[] = 
+  {
+   {'+', "gold"},
+   {'-', "orchid2"},
+   {'*', "pink"},
+   {'/', "peachpuff"},
+   {'^', "ivory"},
+  };
+
+  const oper pol_op[] = 
+  {
+   {"while", "pentagon"},
+   {"if", "hexagon"},
+   {"if-else", "hexagon"},
+   {"ret", "septagon"}
+  };
+
   char * InputAnswer( const char printfstr[], ... );
   const size_t ANSWER_MAX = 1024;
   
@@ -63,16 +82,10 @@ namespace ad6
 
     bool read_tree( const char filename[] );
 
-    void process_loop( void );
-
     bool dump_root( const char filename[] )
     {
       return dump(filename, root);
     }
-
-    double tree_calc( void ) const;
-
-    bool tree_diff( const char var[] );
 
     // Destructor
     ~tree( void )
@@ -112,33 +125,19 @@ namespace ad6
 
     void _pre_par( void );
 
-    bool _calc_tree( node *nd );
-
-    void _diff_init( void );
-
-    bool _simplifier( node **nd );
-
-    void _fill_diff( void );
-
     bool _find_var_tree( node *start, size_t var_num ) const;
-
-    void _tex_rec( FILE *f, node *nd );
-
-    node* _rec_symp( node *nd );
-
-    bool _is_calc( node *nd ) const;
 
     bool dump( const char filename[], node *nd ) const;
 
-    node & rec_diff( node &nd, size_t var_num );
-
     void rec_dump( FILE *dmp, node *node ) const;
 
-    bool print_tree( FILE *f, node *node ) const;
-
-    double rec_calc( node *nd ) const;
+    bool _print_tree( FILE *f, node *node ) const;
 
     int find_op( char sym );
+
+    const char * _get_op_col( char num ) const;
+
+    const char * _get_op_shp( const string &name ) const;
   };
 
 }

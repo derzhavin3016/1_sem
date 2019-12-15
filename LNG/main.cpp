@@ -9,6 +9,7 @@ int main( void )
     tree tr;
     tr.read_tree("t.txt");
     tr.dump_root("dmp");
+    tr.save_tree("tr.txt");
   }
   catch ( Error &err)
   {
