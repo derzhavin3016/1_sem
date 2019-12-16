@@ -77,6 +77,8 @@ namespace ad6
 
     node_type _check_ops( const char *str, size_t size );
 
+    void _read_tree( const char filename[] );
+
     // class destructor
     ~tree( void );
   public:
@@ -84,8 +86,6 @@ namespace ad6
     {
       dump(filename, root);
     }
-
-    void _read_tree( const char filename[] );
   };
 }
 
