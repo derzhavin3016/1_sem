@@ -185,7 +185,7 @@ ad6::node * ad6::parser::_getPut( void )
   SYNTAX_ASSERT(CHECK_SMB('('), "No left brace for put");
   ptr++;
 
-  node *put = new node(TYPE_FUNC, "put", 3, 0, _getE());
+  node *put = new node(TYPE_FUNC, "put", 3, 0, nullptr, _getE());
 
   SYNTAX_ASSERT(CHECK_SMB(')'), "No right brace for put");
   ptr++;
@@ -401,7 +401,7 @@ ad6::node * ad6::parser::_getId( void )
     node *nd = _getE();                                                             \
     SYNTAX_ASSERT(CHECK_SMB(')'), "function '"#name"' without braces");             \
     ptr++;                                                                          \
-    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nd, nullptr);   \
+    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);   \
     CHECK_ID;                                                                       \
     return fin;                                                                     \
   }
