@@ -18,11 +18,13 @@ namespace ad6
     // class constructor
     fback( void );
 
-    void _tree_to_txt( const char filename[] );
+    void tree_to_code( const char file_in[], const char file_out[] );
 
     // class destructor
     ~fback( void );
   private:
+
+    void _tree_to_txt( const char filename[] );
 
     void _print_pol_op( node *nd, int ind_size );
 

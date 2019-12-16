@@ -312,6 +312,17 @@ bool ad6::fback::_check_add_var( string &name )
   return true;
 } /* End of '_check_add_var' function */
 
+/**
+ * \brief Translate tree to code function.
+ * \param [in]  file_in       file name to read from.
+ * \param [in]  file_out      file name to write code.
+ */
+void ad6::fback::tree_to_code( const char file_in[], const char file_out[] )
+{
+  _read_tree(file_in);
+  _tree_to_txt(file_out);
+} /* End of 'tree_to_code' fucntion */
+
 // class destructor
 ad6::fback::~fback( void )
 {
