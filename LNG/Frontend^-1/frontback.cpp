@@ -60,8 +60,8 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
   case TYPE_FUNC:
     nd->name.print_in_file(tr);
     fprintf(tr, "(");
-    if (nd->left != nullptr)
-      PRINT_L(0);
+    if (nd->right != nullptr)
+      PRINT_R(0);
     fprintf(tr, ")");
     break;
   case TYPE_NUMBER:
