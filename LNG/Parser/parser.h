@@ -5,8 +5,7 @@
 #include "..\Tokens\Tok.h"
 
 namespace ad6
-{
-  const int GLOBAL_VAR = -1;
+{   
 
   class parser
   {

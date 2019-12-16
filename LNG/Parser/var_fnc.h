@@ -6,6 +6,8 @@
 
 namespace ad6
 {
+  const int GLOBAL_VAR = -1;
+
   // function container
   class fnc
   {

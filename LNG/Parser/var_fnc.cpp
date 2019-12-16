@@ -98,7 +98,7 @@ ad6::var & ad6::var::operator=( const var& f )
 
 bool ad6::var::operator==( const var& f )
 {
-  if (name == f.name && fnc_num == f.fnc_num)
+  if (name == f.name && (fnc_num == f.fnc_num || f.fnc_num == GLOBAL_VAR || fnc_num == GLOBAL_VAR))
     return true;
 
   return false;
