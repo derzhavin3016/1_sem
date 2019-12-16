@@ -51,22 +51,41 @@ namespace ad6
     node *root;
     char *buf;
     size_t buf_size;
+    FILE *tr;
+    stock<string> variables;
+    const char *buf_ptr = "";
+
 
     // default constructor
     tree( void );
 
-    bool dump( const char filename[], node *nd ) const;
+    bool dump( const char filename[], node *nd );
 
-    void rec_dump( FILE *dmp, node *node ) const;
+    void rec_dump( node *node ) const;
 
-    bool _print_tree( FILE *f, node *node ) const;
+    bool _print_tree( node *node ) const;
 
     const char * _get_op_col( char num ) const;
 
     const char * _get_op_shp( const string &name ) const;
 
+    void _build_tree( node **nd );
+
+    node * _check_buf_ptr( size_t tok_size );
+
+    node_type _check_one_smb( char smb );
+
+    node_type _check_ops( const char *str, size_t size );
+
     // class destructor
     ~tree( void );
+  public:
+    void dump_root( const char filename[] )
+    {
+      dump(filename, root);
+    }
+
+    void read_tree( const char filename[] );
   };
 }
 

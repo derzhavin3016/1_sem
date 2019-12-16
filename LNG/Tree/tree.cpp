@@ -1,8 +1,9 @@
 #include "tree.h"
 
 ad6::tree::tree( void ) : root(nullptr),
-               buf(nullptr),
-               buf_size()
+                          buf(nullptr),
+                          buf_size(0),
+                          tr(nullptr)
 {
 
 }
@@ -12,7 +13,7 @@ ad6::tree::tree( void ) : root(nullptr),
  * \brief tree dump function.
  * \param filename Name of a file to dump.
  */
-bool ad6::tree::dump( const char filename[], node *nd ) const
+bool ad6::tree::dump( const char filename[], node *nd )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
@@ -20,22 +21,21 @@ bool ad6::tree::dump( const char filename[], node *nd ) const
 
   sprintf(buf, "%s.dot", filename);
 
-  FILE *dmp = fopen(buf, "w");
+  tr = fopen(buf, "w");
 
-  if (dmp == nullptr)
+  if (tr == nullptr)
   {
     printf("Oh, some errors with openning file %s\n", buf);
     return false;
   }
 
-  fprintf(dmp, "digraph %s \n{\n", filename);
+  fprintf(tr, "digraph %s \n{\n", filename);
   
-  rec_dump(dmp, nd);
+  rec_dump(nd);
   
-  fprintf(dmp, "}\n");
-  
-
-  fclose(dmp);
+  fprintf(tr, "}\n");
+ 
+  fclose(tr);
  
   sprintf(buf, "dot -Tpng %s.dot -o%s.png", filename, filename);
 
@@ -45,29 +45,33 @@ bool ad6::tree::dump( const char filename[], node *nd ) const
 
 /**
  * \brief Recursion dump tree function.
- * \param dmp  Pointer to opened file structure.
  * \param node  Pointer to node.
  */
-void ad6::tree::rec_dump( FILE *dmp, node *node ) const
+void ad6::tree::rec_dump( node *node ) const
 {
-  TREE_ASSERT(dmp != nullptr, "File not opened");
+  TREE_ASSERT(tr != nullptr, "File not opened");
   TREE_ASSERT(node != nullptr, "node was nullptr");
 #define PUT_END(shp, fill, col)              \
-  fprintf(dmp, "\", shape = %s, style = %s, fillcolor = %s, color = black];\n", shp, fill, col);
+  fprintf(tr, "\", shape = %s, style = %s, fillcolor = %s, color = black];\n", shp, fill, col);
 
 #define CHECK_L                                         \
   if (node->left != nullptr)                            \
   {                                                     \
-    fprintf(dmp, "\"%p\" -> ", node);                   \
-    rec_dump(dmp, node->left);                          \
+    fprintf(tr, "\"%p\" -> ", node);                    \
+    rec_dump(node->left);                               \
   }
 
 #define CHECK_R                                         \
   if (node->right != nullptr)                           \
   {                                                     \
-    fprintf(dmp, "\"%p\" -> ", node);                   \
-    rec_dump(dmp, node->right);                         \
+    fprintf(tr, "\"%p\" -> ", node);                    \
+    rec_dump(node->right);                              \
   }
+
+#define PRINT_BR                                         \
+   fprintf(tr, "\n\"%p\" [label = \"", node);           \
+    node->name.print_in_file(tr);
+
 
 #define CHECK_L_R  \
   {                \
@@ -81,9 +85,9 @@ void ad6::tree::rec_dump( FILE *dmp, node *node ) const
   case TYPE_OPERATOR:
     CHECK_L_R;
 
-    fprintf(dmp, "\n\"%p\" [label = \"%c", node, node->num);
+    fprintf(tr, "\n\"%p\" [label = \"%c", node, node->num);
     if (node->num == '=')
-      fprintf(dmp, "\", shape = larrow];\n");
+      fprintf(tr, "\", shape = larrow];\n");
     else
       PUT_END("diamond", "filled", _get_op_col(node->num));
 
@@ -91,54 +95,51 @@ void ad6::tree::rec_dump( FILE *dmp, node *node ) const
     break;
   case TYPE_NUMBER:
 
-    fprintf(dmp, "\"%p\";\n\"%p\" [label = \"%lg", node, node, node->value);
+    fprintf(tr, "\"%p\";\n\"%p\" [label = \"%lg", node, node, node->value);
     PUT_END("egg", "filled", "darkseagreen2");
     break;
   case TYPE_VAR:
-    fprintf(dmp, "\"%p\";\n\"%p\" [label = \"", node, node);
+    fprintf(tr, "\"%p\";\n\"%p\" [label = \"", node, node);
 
-    node->name.print_in_file(dmp);
+    node->name.print_in_file(tr);
     PUT_END("egg", "filled", "darkolivegreen2");
     break;
   case TYPE_FUNC:
     CHECK_L;
 
-    fprintf(dmp, "\"%p\"", node);
+    fprintf(tr, "\"%p\"", node);
 
-    fprintf(dmp, "\n\"%p\" [label = \"", node);
-    node->name.print_in_file(dmp);
+    PRINT_BR;
+   
     PUT_END("box", "filled", "bisque");
     break;
   case TYPE_SEP:
     CHECK_L_R;
 
-    fprintf(dmp, "\n\"%p\" [label = \"", node);
-    node->name.print_in_file(dmp);
-    fprintf(dmp, "\"];\n");
+    PRINT_BR;
+    fprintf(tr, "\"];\n");
     break;
   case TYPE_USR_FNC:
     CHECK_L_R;
     
-    fprintf(dmp, "\"%p\"", node);
+    fprintf(tr, "\"%p\"", node);
 
-    fprintf(dmp, "\n\"%p\" [label = \"$", node);
-    node->name.print_in_file(dmp);
+    fprintf(tr, "\n\"%p\" [label = \"$", node);
+    node->name.print_in_file(tr);
     PUT_END("box", "filled", "bisque");
     break;
   case TYPE_POL_OP:
     CHECK_L_R;
 
-    fprintf(dmp, "\"%p\"", node);
+    fprintf(tr, "\"%p\"", node);
 
-    fprintf(dmp, "\n\"%p\" [label = \"", node);
-    node->name.print_in_file(dmp);
+    PRINT_BR;
     PUT_END(_get_op_shp(node->name), "solid", "black");
     break;
   case TYPE_CMP:
     CHECK_L_R;
 
-    fprintf(dmp, "\n\"%p\" [label = \"", node);
-    node->name.print_in_file(dmp);
+    PRINT_BR;
     PUT_END("parallelogram", "filled", "grey56");
     break;
   default:
@@ -152,6 +153,8 @@ void ad6::tree::rec_dump( FILE *dmp, node *node ) const
 #undef CHECK_R
 
 #undef CHECK_L_R
+
+#undef PRINT_BR
 } /* End of 'rec_dump' function */ 
 
 
@@ -161,40 +164,40 @@ void ad6::tree::rec_dump( FILE *dmp, node *node ) const
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::tree::_print_tree( FILE *f, node *node ) const
+bool ad6::tree::_print_tree( node *node ) const
 {
-  TREE_ASSERT(f != nullptr, "File not opened\n");
+  TREE_ASSERT(tr != nullptr, "File not opened\n");
   TREE_ASSERT(node != nullptr, "node was nullptr");
 
 #define IsLeaf(node)  ((node)->right == nullptr && (node)->left == nullptr)
 
-  fprintf(f, "{");
+  fprintf(tr, "{");
   switch (node->type)
   {
   case TYPE_NUMBER:
-    fprintf(f, "%lg", node->value);
+    fprintf(tr, "%lg", node->value);
     break;
   case TYPE_FUNC:
-    node->name.print_in_file(f);
+    node->name.print_in_file(tr);
     break;
   case TYPE_OPERATOR:
-    fputc(node->num, f);
+    fputc(node->num, tr);
     break;
   case TYPE_SEP:
-    node->name.print_in_file(f);
+    node->name.print_in_file(tr);
     break;
   case TYPE_VAR:
-    node->name.print_in_file(f);
+    node->name.print_in_file(tr);
     break;
   case TYPE_USR_FNC:
-    fputc('$', f);
-    node->name.print_in_file(f);
+    fputc('$', tr);
+    node->name.print_in_file(tr);
     break;
   case TYPE_POL_OP:
-    node->name.print_in_file(f);
+    node->name.print_in_file(tr);
     break;
   case TYPE_CMP:
-    node->name.print_in_file(f);
+    node->name.print_in_file(tr);
     break;
   default:
     printf("Unrecognized type: %d\n", node->type);
@@ -203,16 +206,16 @@ bool ad6::tree::_print_tree( FILE *f, node *node ) const
   if (!IsLeaf(node))
   {
     if (node->left != nullptr)
-      _print_tree(f, node->left);
+      _print_tree(node->left);
     else
-      fputc('@', f);
+      fputc('@', tr);
     if (node->right != nullptr)
-      _print_tree(f, node->right);
+      _print_tree(node->right);
     else
-      fputc('@', f);
+      fputc('@', tr);
   }
 
-  fprintf(f, "}");
+  fprintf(tr, "}");
 
 
 #undef IsLeaf
@@ -253,6 +256,7 @@ const char * ad6::tree::_get_op_shp( const string &name ) const
   return nullptr;
 } /* End of '_get_op_shp' function */
 
+// class destructor
 ad6::tree::~tree( void )
 {
   if (root != nullptr)
@@ -260,3 +264,196 @@ ad6::tree::~tree( void )
   if (buf != nullptr)
     delete[] buf;
 }
+
+/**
+ * \brief Read tree from file function
+ * \param [in] filename Name of a file to read from.
+ */
+void ad6::tree::read_tree( const char filename[] )
+{
+  TREE_ASSERT(filename != nullptr, "Incorrect file name");
+
+  buf = FillBuf(filename, &buf_size);
+
+  TREE_ASSERT(buf != nullptr, "Error with opening file")  root = new node;
+  
+  buf_ptr = buf;
+
+  _build_tree(&root);
+} /* End of 'read_tree' function */
+
+/**
+ * \brief Build tree from file function
+ * \param [in] root Pointer to tree root;
+ */
+void ad6::tree::_build_tree( node **nd )
+{
+#define SWTCH(nde)                                    \
+  switch (*buf_ptr)                                  \
+  {                                                  \
+  case '@':                                          \
+    (*nd)->##nde = nullptr;                          \
+    buf_ptr++;                                       \
+    break;                                           \
+  case '{':                                          \
+    _build_tree(&((*nd)->##nde));                    \
+    break;                                           \
+  case '}':                                          \
+    buf_ptr++;                                       \
+    return;                                          \
+  }
+
+  TREE_ASSERT(nd != nullptr, "node was nullptr");
+  
+  size_t tok_size = 0;
+
+  sscanf(buf_ptr, "{%*[^@{}]%n", &tok_size);
+  tok_size--;
+  buf_ptr++;
+  TREE_ASSERT(tok_size != 0, "Incorrect tree file format");
+
+  if (isdigit(*buf_ptr) || isdigit(buf_ptr[1]))
+  {
+    double value = 0;
+    sscanf(buf_ptr, "%lg", &value);
+    *nd = new node(value);
+    buf_ptr += tok_size + 1;
+    return;
+  }
+  else
+    *nd = _check_buf_ptr(tok_size);
+
+  buf_ptr += tok_size;
+
+  SWTCH(left);
+  SWTCH(right);
+  buf_ptr++;
+
+#undef SWTCH
+} /* End of '_build_tree' function */
+
+/**
+ * \brief Check token in buf_ptr and create a node function.
+ * \param [in] tok_size  token name size
+ * \return reference to new node.
+ */
+ad6::node * ad6::tree::_check_buf_ptr( size_t tok_size )
+{
+  node *res = new node;
+  string name(buf_ptr, tok_size);
+  if (tok_size == 1)
+  {
+    node_type tpe = _check_one_smb(*buf_ptr);
+    
+    int num = 0;
+    if (tpe == TYPE_VAR)
+    {
+      num = variables.find(name);
+
+      if (num == -1)
+      {
+        variables.add(name);
+        num = variables.size() - 1;
+      }
+      res->set_node(TYPE_VAR, string(buf_ptr, tok_size), num);
+      return res;
+    }
+    if (tpe == TYPE_OPERATOR)
+    {
+      res->set_node(TYPE_OPERATOR, "", 0, *buf_ptr);
+      return res;
+    }
+
+    res->set_node(tpe, name, 0);
+    return res;
+  }
+  if (*buf_ptr == '$')
+  {
+    res->set_node(TYPE_USR_FNC, string(buf_ptr + 1, tok_size - 1), 0);
+    return res;
+  }
+  node_type tpe = _check_ops(buf_ptr, tok_size);
+
+  int num = 0;
+
+  if (tpe == TYPE_VAR)
+  {
+    num = variables.find(name);
+
+    if (num == -1)
+    {
+      variables.add(name);
+      num = variables.size() - 1;
+    }
+    res->set_node(TYPE_VAR, name, num);
+    return res;
+  }
+   
+  res->set_node(tpe, name, 0);
+  return res;
+} /* End of '_check_buf_ptr' function */
+
+/**
+ * \brief Recognize type of a branch function.
+ * \param [in] str  pointer to string with a branch.
+ * \param [in] size size of string.
+ * \return type of a branch.
+ */
+ad6::node_type ad6::tree::_check_ops( const char *str, size_t size )
+{
+#define STRCMP(str, type)                   \
+  if (ad6::StrChrCmp(#str, opr) == 0)       \
+     return ad6::##type;
+
+  size_t ops_size = sizeof(ad6::pol_op) / sizeof(ad6::oper);
+  ad6::string opr(str, size);
+
+  for (size_t i = 0; i < ops_size; i++)
+    if (ad6::StrChrCmp(ad6::pol_op[i].get_name(), opr) == 0)
+      return ad6::TYPE_POL_OP;
+
+  STRCMP(>=, TYPE_CMP);
+  STRCMP(<=, TYPE_CMP);
+  STRCMP(!=, TYPE_CMP);
+  STRCMP(==, TYPE_CMP);
+
+  STRCMP(op, TYPE_SEP);
+
+#define DEF_FNC(name, num, code, code2)               \
+  else if (ad6::StrChrCmp(#name, opr) == 0)           \
+    return ad6::TYPE_FUNC;
+
+  if (0);
+
+#include "..\func.h"
+
+
+#undef DEF_FNC
+
+#undef STRCMP
+  return TYPE_VAR;
+} /* End of '_check_ops' function */
+
+/**
+ * \brief Check one symbol type function.
+ * \param smb  Symbol to check.
+ * \return type of a symbol.
+ */
+ad6::node_type ad6::tree::_check_one_smb( char smb )
+{
+  size_t size = sizeof(smb_op) / sizeof(oper);
+
+  for (size_t i = 0; i < size; i++)
+    if (smb == smb_op[i].get_num())
+      return TYPE_OPERATOR;
+  if (smb == '=')
+    return TYPE_OPERATOR;
+
+  if (smb == ';' || smb == ',')
+    return TYPE_SEP;
+  if (smb == '>' || smb == '<')
+    return TYPE_CMP;
+  TREE_ASSERT(isalpha(smb), "Unrecognized symbol");
+ 
+  return TYPE_VAR;
+} /* End of '_check_one_smb' function */
