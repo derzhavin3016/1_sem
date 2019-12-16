@@ -11,9 +11,12 @@ int main( void )
     fback fb;
     //fr.par_tree("Programs\\square.txt", "sq.txt");
     //fr.dump_root("sqrt");
-    fb.read_tree("sq.txt");
-    //fb.dump_root("sqqq");
-    fb._tree_to_txt("squarert.txt");
+    fb.tree_to_code("serega.txt", "ser.txt");
+    fb.dump_root("ser");
+    //fb.tree_to_code("fac.txt", "fer.txt");
+    //fb.dump_root("fer");
+    //fr.par_tree("drt.txt", "d.txt");
+    //fr.dump_root("ff0");
   }
   catch ( Error &err)
   {
