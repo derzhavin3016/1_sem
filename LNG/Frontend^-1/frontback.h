@@ -14,31 +14,25 @@ namespace ad6
 {
   class fback : public tree
   {
-  private:
-    stock<string> variables;
-    const char *buf_ptr = "";
   public:
     // class constructor
     fback( void );
 
-    void dump_root( const char filename[] )
-    {
-      dump(filename, root);
-    }
-
-    void read_tree( const char filename[] );
+    void _tree_to_txt( const char filename[] );
 
     // class destructor
     ~fback( void );
-    private:
+  private:
 
-    void _build_tree( node **nd );
+    void _print_pol_op( node *nd, int ind_size );
 
-    node * _check_buf_ptr( size_t tok_size );
+    void _print_sep( node *nd, int ind_size );
 
-    node_type _check_one_smb( char smb );
+    void _print_spaces( int spc_amount = 1 );
 
-    node_type _check_ops( const char *str, size_t size );
+    bool _check_add_var( string &name );
+
+    void _rec_print( node *nd, int ind_size );
   };
 }
 
