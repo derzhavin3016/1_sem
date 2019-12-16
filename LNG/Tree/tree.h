@@ -85,7 +85,7 @@ namespace ad6
       dump(filename, root);
     }
 
-    void read_tree( const char filename[] );
+    void _read_tree( const char filename[] );
   };
 }
 

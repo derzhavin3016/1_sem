@@ -269,7 +269,7 @@ ad6::tree::~tree( void )
  * \brief Read tree from file function
  * \param [in] filename Name of a file to read from.
  */
-void ad6::tree::read_tree( const char filename[] )
+void ad6::tree::_read_tree( const char filename[] )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
