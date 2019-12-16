@@ -70,3 +70,5 @@ DEF_OP('^', POW,
 #undef REC_R
 
 #undef REC_L
+
+#undef _

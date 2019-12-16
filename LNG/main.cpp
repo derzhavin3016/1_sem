@@ -9,11 +9,11 @@ int main( void )
   {
     frontend fr;
     fback fb;
-    fr.read_tree("Programs\\fact.txt");
-    fr.dump_root("fact");
-    fr.save_tree("fac.txt");
-    fb.read_tree("fac.txt");
-    fb.dump_root("ff");
+    //fr.par_tree("Programs\\square.txt", "sq.txt");
+    //fr.dump_root("sqrt");
+    fb.read_tree("sq.txt");
+    //fb.dump_root("sqqq");
+    fb._tree_to_txt("squarert.txt");
   }
   catch ( Error &err)
   {
