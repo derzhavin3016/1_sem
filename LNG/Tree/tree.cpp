@@ -105,7 +105,7 @@ void ad6::tree::rec_dump( node *node ) const
     PUT_END("egg", "filled", "darkolivegreen2");
     break;
   case TYPE_FUNC:
-    CHECK_L;
+    CHECK_R;
 
     fprintf(tr, "\"%p\"", node);
 
