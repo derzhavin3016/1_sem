@@ -75,6 +75,7 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
       PRINT_L(0);
       fprintf(tr, " = ");
       PRINT_R(0);
+      fprintf(tr, ";\n");
     }
     else
     {
@@ -111,6 +112,7 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
       SPC_DEF;
       fprintf(tr, "}\n");
     }
+    variables.clear();
     break;
   case TYPE_VAR:
     nd->name.print_in_file(tr);
@@ -257,7 +259,18 @@ void ad6::fback::_print_sep( node *nd, int ind_size )
   {
     if (nd->left != nullptr)
     {
-      _rec_print(nd->left, 0);
+      if (nd->left->num == '=')
+      {
+        int num = globals.find(nd->left->left->name);
+        if (num == -1)
+        {
+          globals.add(nd->left->left->name);
+          fprintf(tr, "var ");
+          _rec_print(nd->left, 0);
+        }
+      }
+      else
+        _rec_print(nd->left, 0);
     }
     if (nd->right != nullptr)
     {
@@ -269,7 +282,7 @@ void ad6::fback::_print_sep( node *nd, int ind_size )
     if (nd->left != nullptr)
     {
       _rec_print(nd->left, ind_size);
-      if (nd->left->type != TYPE_POL_OP)
+      if (nd->left->type == TYPE_FUNC)
         PRINT(";\n");
     }
     if (nd->right != nullptr)
@@ -303,6 +316,13 @@ void ad6::fback::_print_spaces( int spc_amount /*= 1*/ )
 bool ad6::fback::_check_add_var( string &name )
 {
   int num = variables.find(name);
+  int num2 = globals.find(name);
+
+  if (num == -1 && num2 != -1)
+  {
+    variables.add(name);
+    return true;
+  }
 
   if (num == -1)
   {

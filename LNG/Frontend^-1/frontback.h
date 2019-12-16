@@ -14,6 +14,8 @@ namespace ad6
 {
   class fback : public tree
   {
+  private:
+    stock<string> globals;
   public:
     // class constructor
     fback( void );
