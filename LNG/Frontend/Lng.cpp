@@ -91,13 +91,24 @@ double ad6::frontend::_getNum( size_t *pos )
 } /* End of '_getNum' function */
 
 /**
+ * \brief Parse code to AST function.
+ * \param [in] file_in        name of a file to read code from.
+ * \param [in] file_out       name of a file to save tree.
+ */
+void ad6::frontend::par_tree( const char file_in[], const char file_out[] )
+{
+  _read_par_tree(file_in);
+  _save_tree(file_out);
+} /* End of 'par_tree' function */
+
+/**
  * \brief Read tree from file function.
  * \param [in] pointer to file structure
  * \param [in]  filename  Name of a file to read from.
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::frontend::read_tree( const char filename[] )
+bool ad6::frontend::_read_par_tree( const char filename[] )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
@@ -115,7 +126,7 @@ bool ad6::frontend::read_tree( const char filename[] )
   root = par.getG(toks);
 
   return true; 
-} /* End of 'read_tree' function */
+} /* End of '_read_par_tree' function */
 
 
 /**
@@ -124,23 +135,23 @@ bool ad6::frontend::read_tree( const char filename[] )
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::frontend::save_tree( const char filename[] ) const
+bool ad6::frontend::_save_tree( const char filename[] )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
-  FILE *tree = fopen(filename, "w");
+  tr = fopen(filename, "w");
 
-  if (tree == nullptr)
+  if (tr == nullptr)
   {
     printf("Oh, some errors with openning file \"%s\"", filename);
     return false;
   }
 
-  _print_tree(tree, root);
+  _print_tree(root);
 
-  fclose(tree);
+  fclose(tr);
   return true;
-} /* End of 'save_tree' function */
+} /* End of '_save_tree' function */
 
 
 /**

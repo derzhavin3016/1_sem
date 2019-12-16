@@ -33,27 +33,20 @@ namespace ad6
                        toks(nullptr),
                        toks_size(0)
     {
-    } 
-
-    bool dump_root( const char filename[] )
-    {
-      return dump(filename, root);
     }
 
-    bool read_tree( const char filename[] );
-
-    bool save_tree( const char filename[] ) const;
+    void par_tree( const char file_in[], const char file_out[] );
 
     // Destructor
     ~frontend( void )
     {
     }
-    node *get_root( void )
-    {
-      return root;
-    }
 
   private:
+
+    bool _read_par_tree( const char filename[] );
+
+    bool _save_tree( const char filename[] );
 
     size_t _getWord( size_t *pos );
 
