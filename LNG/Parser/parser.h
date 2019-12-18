@@ -21,7 +21,7 @@ namespace ad6
     parser( void ) : variables(),
                      functions(),
                      ptr(nullptr),
-                     act_fnc(-1)
+                     act_fnc(GLOBAL_VAR)
     {
     }
 
@@ -30,21 +30,21 @@ namespace ad6
     {
     }
 
-    size_t var_size( void )
+    unsigned var_size( void )
     {
       return variables.size();
     }
 
-    int get_args_num( size_t num ) const
+    int get_args_num( unsigned num ) const
     {
       return functions[num].get_args();
     }
 
     node * getG( const token *tok );
 
-    int find_var( const char str[] );
+    int find_var( const  char str[] );
 
-    string & get_var( size_t num ) const;
+    string & get_var( unsigned num ) const;
 
   private:
     node * _getE( void );
@@ -83,11 +83,13 @@ namespace ad6
 
     node * _getArgs( void );
 
-    size_t _var_add( const string &st );
+    unsigned _var_add( const string &st );
 
     bool _check_ptr_type( tok_type check );
 
     node * _getPut( void );
+
+    node * _getGet( void );
   };
 
   // Process error structure

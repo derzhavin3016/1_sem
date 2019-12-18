@@ -8,14 +8,28 @@ namespace ad6
 {
   const int GLOBAL_VAR = -1;
 
+  class dic_var;
+
+  class var;
   // function container
   class fnc
   {
     string name;
     int args;
+    stock<dic_var> table;
+
   public:
 
+    int var_nums( void )
+    {
+      return table.size() - args;
+    }
+
+    friend void FillFncTables( stock<fnc> &funcs, stock<var> &vars );
+
     fnc( void );
+
+    fnc( string &name );
 
     fnc( const string &s, int arg );
 
@@ -40,10 +54,23 @@ namespace ad6
   {
     string name;
     int fnc_num;
-
+    bool IsInit;
+    int offset;
   public:
 
+    friend void FillFncTables( stock<fnc> &funcs, stock<var> &vars );
+
     var( void );
+
+    void set_offset( int of )
+    {
+      offset = of;
+    }
+
+    int get_offset( void )
+    {
+      return offset;
+    }
 
     var( const string &s, int num );
 
@@ -57,12 +84,43 @@ namespace ad6
 
     string & get_name( void );
 
+    bool Is_Init( void ) const;
+
+    void Init( void );
+
     int get_fnc_num( void );
 
     void set_var( const string &s, int num );
 
     void set_var( string &s, int num );
   };
+
+
+  class dic_var
+  {
+  private:
+    int offset;
+    string name;
+
+  public:
+
+    int get_offset( void )
+    {
+      return offset;
+    }
+
+    dic_var( void );
+
+    dic_var( const string &s, int of );
+
+    dic_var( string &s, int of );
+
+    dic_var & operator=( const dic_var& f );
+
+    bool operator==( const dic_var& f );
+  };
+
+  void FillFncTables( stock<fnc> &funcs, stock<var> &vars );
 }
 
 

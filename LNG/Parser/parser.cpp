@@ -172,6 +172,9 @@ ad6::node * ad6::parser::_getOp( void )
   if (StrChrCmp("put", ptr->get_string()) == 0)
     return new node(_getPut(), nullptr);
 
+  if (StrChrCmp("get", ptr->get_string()) == 0)
+    return new node(_getGet(), nullptr);
+
   node *ass = new node(_getAss(), nullptr);
   return ass;
 } /* End of '_getOp' function */
@@ -185,7 +188,7 @@ ad6::node * ad6::parser::_getPut( void )
   SYNTAX_ASSERT(CHECK_SMB('('), "No left brace for put");
   ptr++;
 
-  node *put = new node(TYPE_FUNC, "put", 3, 0, nullptr, _getE());
+  node *put = new node(TYPE_FUNC, "put", 3, 0, _getE());
 
   SYNTAX_ASSERT(CHECK_SMB(')'), "No right brace for put");
   ptr++;
@@ -195,6 +198,24 @@ ad6::node * ad6::parser::_getPut( void )
   return put;
 } /* End of 'Put' function */
 
+/**
+ * \brief Get 'Get' rule function.
+ */
+ad6::node * ad6::parser::_getGet( void )
+{
+  ptr++;
+  SYNTAX_ASSERT(CHECK_SMB('('), "No left brace for get");
+  ptr++;
+
+  node *get = new node(TYPE_FUNC, "get", 3, 0, _getE());
+
+  SYNTAX_ASSERT(CHECK_SMB(')'), "No right brace for get");
+  ptr++;
+  SYNTAX_ASSERT(CHECK_SMB(';'), "No ';' find for get");
+  ptr++;
+
+  return get;
+} /* End of 'Put' function */
 
 /**
  * \brief Get arguments rule function
@@ -239,7 +260,7 @@ ad6::node * ad6::parser::_getArgs( void )
 /**
  * \brief Add new variable function
  */
-size_t ad6::parser::_var_add( const string &st )
+unsigned ad6::parser::_var_add( const string &st )
 {
   var _new(st, act_fnc);
   int num = variables.find(_new);
@@ -393,7 +414,7 @@ ad6::node * ad6::parser::_getId( void )
       return Id;                                                                    \
     }                                                                               \
 
-  #define DEF_FNC(name, num, diff, calc)                                            \
+  #define DEF_FNC(name, num, diff, calc, code)                                            \
   else if (StrChrCmp(#name, str) == 0)                                              \
   {                                                                                 \
     SYNTAX_ASSERT(CHECK_SMB('('), "function '"#name"' without braces");             \
@@ -418,7 +439,7 @@ ad6::node * ad6::parser::_getId( void )
       num = variables.find(var(str, GLOBAL_VAR));
     if (num != -1)
     {
-      node *fin = new node(TYPE_VAR, str, (size_t)num);
+      node *fin = new node(TYPE_VAR, str, (unsigned)num);
       CHECK_ID;
       return fin;
     }
@@ -430,7 +451,7 @@ ad6::node * ad6::parser::_getId( void )
       cnt = (int)args->value;
     SYNTAX_ASSERT((num = functions.find(fnc(str, cnt)) != -1), "Incorrect function call")
 
-    node *fin = new node(TYPE_USR_FNC, str, (size_t)num, args);
+    node *fin = new node(TYPE_USR_FNC, str, (unsigned)num, args);
     CHECK_ID;
     return fin;
   }
@@ -467,7 +488,7 @@ ad6::node * ad6::parser::_getArgsE( void )
   return args;
 }
 
-ad6::string & ad6::parser::get_var( size_t num ) const
+ad6::string & ad6::parser::get_var( unsigned num ) const
 {
   return variables[num].get_name();  
 }
@@ -479,9 +500,9 @@ ad6::string & ad6::parser::get_var( size_t num ) const
  * \return number of variable if variable was find.
  * \return -1 otherwise.
  */
-int ad6::parser::find_var( const char str[] )
+int ad6::parser::find_var( const  char str[] )
 {
-  for (size_t i = 0 ; i < variables.size(); i++)
+  for (unsigned i = 0 ; i < variables.size(); i++)
     if (StrChrCmp(str, variables[i].get_name()) == 0)
       return i;
 
