@@ -157,22 +157,23 @@ ad6::node * ad6::parser::_getOp( void )
   if (!_check_ptr_type(TOK_STR))
     return nullptr;
 
-  if (StrChrCmp("if", ptr->get_string()) == 0)
+ 
+  if (StrChrCmp(LNG_IF, ptr->get_string()) == 0)
     return new node(_getIf(), nullptr);
 
-  if (StrChrCmp("while", ptr->get_string()) == 0)
+  if (StrChrCmp(LNG_WHILE, ptr->get_string()) == 0)
     return new node(_getWhile(), nullptr);
 
-  if (StrChrCmp("return", ptr->get_string()) == 0)
+  if (StrChrCmp(LNG_RETURN, ptr->get_string()) == 0)
     return new node(_getRet(), nullptr);
 
-  if (StrChrCmp("var", ptr->get_string()) == 0)
+  if (StrChrCmp(LNG_VAR, ptr->get_string()) == 0)
     return new node(_getDec(), nullptr);
 
-  if (StrChrCmp("put", ptr->get_string()) == 0)
+  if (StrChrCmp(LNG_PUT, ptr->get_string()) == 0)
     return new node(_getPut(), nullptr);
 
-  if (StrChrCmp("get", ptr->get_string()) == 0)
+  if (StrChrCmp(LNG_GET, ptr->get_string()) == 0)
     return new node(_getGet(), nullptr);
 
   node *ass = new node(_getAss(), nullptr);
@@ -514,7 +515,7 @@ int ad6::parser::find_var( const  char str[] )
  */
 ad6::node * ad6::parser::_getDec( void )
 {
-  SYNTAX_ASSERT(CHECK_STR("var"), "Incorrect variable declaration");
+  SYNTAX_ASSERT(CHECK_STR(LNG_VAR), "Incorrect variable declaration");
   ptr++;
   SYNTAX_ASSERT(_check_ptr_type(TOK_STR), "Incorrect variable name");
 
@@ -546,7 +547,7 @@ ad6::node * ad6::parser::_getAss( void )
 */
 ad6::node * ad6::parser::_getIf( void )
 {
-  SYNTAX_ASSERT(CHECK_STR("if"), "Incorrect 'if'");
+  SYNTAX_ASSERT(CHECK_STR(LNG_IF), "Incorrect 'if'");
   ptr++;
   SYNTAX_ASSERT(CHECK_SMB('('), "No condition for if operator");
   ptr++;
@@ -558,7 +559,7 @@ ad6::node * ad6::parser::_getIf( void )
   ptr++;
 
   _if_else->left = _getOp();
-  if (CHECK_STR("else"))
+  if (CHECK_STR(LNG_ELSE))
   {
     ptr++;
     _if_else->right = _getOp();
@@ -571,7 +572,7 @@ ad6::node * ad6::parser::_getIf( void )
  */
 ad6::node * ad6::parser::_getWhile( void )
 {
-  SYNTAX_ASSERT(CHECK_STR("while"), "Incorrect 'while'");
+  SYNTAX_ASSERT(CHECK_STR(LNG_WHILE), "Incorrect 'while'");
   ptr++;
   SYNTAX_ASSERT(CHECK_SMB('('), "No condition for 'while' operator");
   ptr++;
@@ -590,7 +591,7 @@ ad6::node * ad6::parser::_getWhile( void )
  */
 ad6::node * ad6::parser::_getRet( void )
 {
-  SYNTAX_ASSERT(CHECK_STR("return"), "");
+  SYNTAX_ASSERT(CHECK_STR(LNG_RETURN), "");
   ptr++;
   node* ret = new node(TYPE_POL_OP, "ret", 3, 0, nullptr, nullptr);
   if (!CHECK_SMB(';'))

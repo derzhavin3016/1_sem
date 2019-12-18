@@ -3,6 +3,8 @@
 
 #include "var_fnc.h"
 #include "..\Tokens\Tok.h"
+#include "..\lang.h"
+
 
 namespace ad6
 {   
