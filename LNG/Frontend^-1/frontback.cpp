@@ -17,8 +17,8 @@ void ad6::fback::_tree_to_txt( const char filename[] )
 
   FB_ASSERT(tr != nullptr, "Error with opening file");
 
-  variables.clear();
-
+  act_fnc = GLOBAL_VAR;
+  vars.clear();
   _rec_print(root, 0);
 
   fclose(tr);
@@ -62,6 +62,8 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
     fprintf(tr, "(");
     if (nd->right != nullptr)
       PRINT_R(0);
+    if (nd->left != nullptr)
+      PRINT_L(0);
     fprintf(tr, ")");
     break;
   case TYPE_NUMBER:
@@ -78,11 +80,7 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
       fprintf(tr, ";\n");
     }
     else
-    {
-      PRINT_L(0);
-      fprintf(tr, " %c ", nd->num);
-      PRINT_R(0);
-    }
+      _print_arif_op(nd);
     break;
   case TYPE_POL_OP:
     _print_pol_op(nd, ind_size);
@@ -91,9 +89,11 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
     _print_sep(nd, ind_size);
     break;
   case TYPE_USR_FNC:
-    variables.clear();
     if (nd->right != nullptr)
+    {
+      act_fnc = cnt_fnc++;
       PRINTF("$");
+    }
     nd->name.print_in_file(tr);
 
 
@@ -112,7 +112,6 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
       SPC_DEF;
       fprintf(tr, "}\n");
     }
-    variables.clear();
     break;
   case TYPE_VAR:
     nd->name.print_in_file(tr);
@@ -226,6 +225,47 @@ void ad6::fback::_print_pol_op( node *nd, int ind_size )
 #undef PRINT
 } /* End of '_print_pol_op' function */
 
+void ad6::fback::_print_arif_op( node *nd )
+{
+
+#define CHECK_LEAF(nde)                                                                            \
+  if (nd->##nde->type == TYPE_OPERATOR && (nd->##nde->num == '+' || nd->##nde->num == '-'))        \
+    {                                                                                              \
+      fprintf(tr, "(");                                                                            \
+      _rec_print(nd->##nde, 0);                                                                    \
+      fprintf(tr, ")");                                                                            \
+    }                                                                                              \
+    else                                                                                           \
+      _rec_print(nd->##nde, 0);
+
+  if (nd->num == '^')
+  {
+    if (nd->left->type == TYPE_OPERATOR && nd->left->num != '^')
+    {
+      fprintf(tr, "(");
+      _rec_print(nd->left, 0);
+      fprintf(tr, ")");
+    }
+    else
+      _rec_print(nd->left, 0);
+    fprintf(tr, " ^ (");
+    _rec_print(nd->right, 0);
+    fprintf(tr, ")");
+    return;
+  }
+  if (nd->num == '/' || nd->num == '*')
+  {
+    CHECK_LEAF(left);
+    fprintf(tr, " %c ", nd->num);
+    CHECK_LEAF(right);
+    return;
+  }
+  _rec_print(nd->left, 0);
+  fprintf(tr, " %c ", nd->num);
+  _rec_print(nd->right, 0);
+}
+
+
 /**
  * \brief Print separations operators in opened file function.
  * \param [in] nd                      pointer to tree's node.
@@ -260,17 +300,9 @@ void ad6::fback::_print_sep( node *nd, int ind_size )
     if (nd->left != nullptr)
     {
       if (nd->left->num == '=')
-      {
-        int num = globals.find(nd->left->left->name);
-        if (num == -1)
-        {
-          globals.add(nd->left->left->name);
-          fprintf(tr, "var ");
-          _rec_print(nd->left, 0);
-        }
-      }
-      else
-        _rec_print(nd->left, 0);
+        act_fnc = GLOBAL_VAR;
+
+      _rec_print(nd->left, 0);
     }
     if (nd->right != nullptr)
     {
@@ -315,18 +347,12 @@ void ad6::fback::_print_spaces( int spc_amount /*= 1*/ )
  */
 bool ad6::fback::_check_add_var( string &name )
 {
-  int num = variables.find(name);
-  int num2 = globals.find(name);
-
-  if (num == -1 && num2 != -1)
-  {
-    variables.add(name);
-    return true;
-  }
+  var _new(name, act_fnc);
+  int num = vars.find(_new);
 
   if (num == -1)
   {
-    variables.add(name);
+    vars.add(_new);
     return false;
   }
   return true;

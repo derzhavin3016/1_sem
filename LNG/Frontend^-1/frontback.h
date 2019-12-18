@@ -14,8 +14,6 @@ namespace ad6
 {
   class fback : public tree
   {
-  private:
-    stock<string> globals;
   public:
     // class constructor
     fback( void );
@@ -27,6 +25,8 @@ namespace ad6
   private:
 
     void _tree_to_txt( const char filename[] );
+
+    void _print_arif_op( node *nd );
 
     void _print_pol_op( node *nd, int ind_size );
 

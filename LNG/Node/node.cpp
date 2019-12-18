@@ -42,7 +42,7 @@ ad6::node::node( double value ) : type(TYPE_NUMBER),
 }
 
 
-ad6::node::node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* left, node* right ) : type(tpe),
+ad6::node::node( node_type tpe, const  char *var_name, unsigned name_size, unsigned var_num, node* left, node* right ) : type(tpe),
                                                                                                                     name(var_name, name_size),
                                                                                                                     num((char)var_num),
                                                                                                                     left(left),
@@ -60,7 +60,7 @@ ad6::node::node( node *left, node *right ) : type(TYPE_SEP),
 {
 }
 
-ad6::node::node( node_type tpe, string &str, size_t var_num, node* left, node* right ) : type(tpe),
+ad6::node::node( node_type tpe, string &str, unsigned var_num, node* left, node* right ) : type(tpe),
                                                                                          name(str),
                                                                                          num((char)var_num),
                                                                                          left(left),
@@ -68,7 +68,7 @@ ad6::node::node( node_type tpe, string &str, size_t var_num, node* left, node* r
 {
 }
 
-ad6::node::node( node_type tpe, const string &str, size_t var_num, node* left, node* right ) : type(tpe),
+ad6::node::node( node_type tpe, const string &str, unsigned var_num, node* left, node* right ) : type(tpe),
                                                                                                name(str),
                                                                                                num((char)var_num),
                                                                                                left(left),
@@ -201,7 +201,7 @@ void ad6::node::set_node( bool Is, node *l, node *r )
 }
 
 // variable or function constructor
-void ad6::node::set_node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* l /*= nullptr*/, node* r /*= nullptr*/ )
+void ad6::node::set_node( node_type tpe, const  char *var_name, unsigned name_size, unsigned var_num, node* l /*= nullptr*/, node* r /*= nullptr*/ )
 {
   name = string(var_name, name_size);
   num = (char)var_num;
@@ -219,7 +219,7 @@ void ad6::node::set_node( double val )
   left = nullptr;
 }
 
-void ad6::node::set_node( node_type tpe, string &str, size_t var_num, node* l /* = nullptr*/, node* r /*= nullptr*/ )
+void ad6::node::set_node( node_type tpe, string &str, unsigned var_num, node* l /* = nullptr*/, node* r /*= nullptr*/ )
 {
   name = str;
   num = (char)var_num;
@@ -228,7 +228,7 @@ void ad6::node::set_node( node_type tpe, string &str, size_t var_num, node* l /*
   left = l;
 }
 
-void ad6::node::set_node( node_type tpe, const string &str, size_t var_num, node* l /*= nullptr*/, node* r /*= nullptr*/ )
+void ad6::node::set_node( node_type tpe, const string &str, unsigned var_num, node* l /*= nullptr*/, node* r /*= nullptr*/ )
 {
   name = str;
   num = (char)var_num;

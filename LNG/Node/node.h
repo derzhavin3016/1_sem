@@ -44,14 +44,14 @@ namespace ad6
     node( bool IsOp, node *l, node *r );
 
     // variable or function constructor
-    node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* left = nullptr, node* right = nullptr );
+    node( node_type tpe, const  char *var_name, unsigned name_size, unsigned var_num, node* left = nullptr, node* right = nullptr );
 
     // number constructor
     node( double value );
 
-    node( node_type tpe, string &str, size_t var_num, node* left = nullptr, node* right = nullptr );
+    node( node_type tpe, string &str, unsigned var_num, node* left = nullptr, node* right = nullptr );
 
-    node( node_type tpe, const string &str, size_t var_num, node* left = nullptr, node* right = nullptr );
+    node( node_type tpe, const string &str, unsigned var_num, node* left = nullptr, node* right = nullptr );
 
     // Copy constructor
     void set_node( node& nd );
@@ -66,14 +66,14 @@ namespace ad6
     void set_node( bool Is, node *l, node *r );
 
     // variable or function constructor
-    void set_node( node_type tpe, const char *var_name, size_t name_size, size_t var_num, node* l = nullptr, node* r = nullptr );
+    void set_node( node_type tpe, const char *var_name, unsigned name_size, unsigned var_num, node* l = nullptr, node* r = nullptr );
 
     // number constructor
     void set_node( double val );
 
-    void set_node( node_type tpe, string &str, size_t var_num, node* l = nullptr, node* r = nullptr );
+    void set_node( node_type tpe, string &str, unsigned var_num, node* l = nullptr, node* r = nullptr );
 
-    void set_node( node_type tpe, const string &str, size_t var_num, node* l = nullptr, node* r = nullptr );
+    void set_node( node_type tpe, const string &str, unsigned var_num, node* l = nullptr, node* r = nullptr );
 
     ~node( void );
   };
