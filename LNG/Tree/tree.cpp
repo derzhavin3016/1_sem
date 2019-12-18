@@ -3,7 +3,9 @@
 ad6::tree::tree( void ) : root(nullptr),
                           buf(nullptr),
                           buf_size(0),
-                          tr(nullptr)
+                          tr(nullptr),
+                          act_fnc(GLOBAL_VAR),
+                          cnt_fnc(0)
 {
 
 }
@@ -106,6 +108,7 @@ void ad6::tree::rec_dump( node *node ) const
     break;
   case TYPE_FUNC:
     CHECK_R;
+    CHECK_L;
 
     fprintf(tr, "\"%p\"", node);
 
@@ -229,9 +232,9 @@ bool ad6::tree::_print_tree( node *node ) const
  */ 
 const char * ad6::tree::_get_op_col( char num ) const
 {
-  size_t size = sizeof(smb_op) / sizeof(oper);
+  unsigned size = sizeof(smb_op) / sizeof(oper);
 
-  for (size_t i = 0; i < size; i++)
+  for (unsigned i = 0; i < size; i++)
     if (smb_op[i].get_num() == num)
       return smb_op[i].get_color();
 
@@ -246,10 +249,10 @@ const char * ad6::tree::_get_op_col( char num ) const
  */ 
 const char * ad6::tree::_get_op_shp( const string &name ) const
 {
-  size_t size = sizeof(pol_op) / sizeof(oper);
+  unsigned size = sizeof(pol_op) / sizeof(oper);
 
-  for (size_t i = 0; i < size; i++)
-    if (StrChrCmp(pol_op[i].get_name(), name) == 0)
+  for (unsigned i = 0; i < size; i++)
+    if (StrChrCmp(( char *)pol_op[i].get_name(), name) == 0)
       return pol_op[i].get_shape();
 
   TREE_ASSERT(0, "Incorrect string operator");
@@ -275,7 +278,9 @@ void ad6::tree::_read_tree( const char filename[] )
 
   buf = FillBuf(filename, &buf_size);
 
-  TREE_ASSERT(buf != nullptr, "Error with opening file")  root = new node;
+  TREE_ASSERT(buf != nullptr, "Error with opening file");
+    
+  //  root = new node;
   
   buf_ptr = buf;
 
@@ -288,7 +293,7 @@ void ad6::tree::_read_tree( const char filename[] )
  */
 void ad6::tree::_build_tree( node **nd )
 {
-#define SWTCH(nde)                                    \
+#define SWTCH(nde, adds)                             \
   switch (*buf_ptr)                                  \
   {                                                  \
   case '@':                                          \
@@ -296,6 +301,7 @@ void ad6::tree::_build_tree( node **nd )
     buf_ptr++;                                       \
     break;                                           \
   case '{':                                          \
+     adds;                                           \
     _build_tree(&((*nd)->##nde));                    \
     break;                                           \
   case '}':                                          \
@@ -303,16 +309,16 @@ void ad6::tree::_build_tree( node **nd )
     return;                                          \
   }
 
-  TREE_ASSERT(nd != nullptr, "node was nullptr");
+  //TREE_ASSERT(nd != nullptr, "node was nullptr");
   
-  size_t tok_size = 0;
+  unsigned tok_size = 0;
 
   sscanf(buf_ptr, "{%*[^@{}]%n", &tok_size);
   tok_size--;
   buf_ptr++;
   TREE_ASSERT(tok_size != 0, "Incorrect tree file format");
 
-  if (isdigit(*buf_ptr) || isdigit(buf_ptr[1]))
+  if (isdigit((unsigned char)*buf_ptr) || isdigit((unsigned char)buf_ptr[1]))
   {
     double value = 0;
     sscanf(buf_ptr, "%lg", &value);
@@ -323,21 +329,55 @@ void ad6::tree::_build_tree( node **nd )
   else
     *nd = _check_buf_ptr(tok_size);
 
+
+
   buf_ptr += tok_size;
 
-  SWTCH(left);
-  SWTCH(right);
+  SWTCH(left, 
+    {
+      if ((*nd)->type == TYPE_SEP && (*nd)->name[0] == ';')
+      {
+        if (buf_ptr[1] == '=')
+          act_fnc = GLOBAL_VAR;
+      }
+      else if ((*nd)->type == TYPE_USR_FNC)
+      {
+        if (funcs.find(fnc((*nd)->name)) == -1)
+          act_fnc = funcs.size();
+      }
+    });
+  SWTCH(right,
+    {
+      if ((*nd)->type == TYPE_USR_FNC )
+      {
+        act_fnc = funcs.size();
+        (*nd)->num = act_fnc;
+        funcs.add(fnc((*nd)->name, _cnt_args(*nd)));
+      }
+    });
   buf_ptr++;
 
 #undef SWTCH
 } /* End of '_build_tree' function */
+
+
+int ad6::tree::_cnt_args( node *nd )
+{
+  int cnt = 0;
+  if (nd->left != nullptr)
+  {
+    cnt++;
+    cnt += _cnt_args(nd->left);
+  }
+  return cnt;
+}
 
 /**
  * \brief Check token in buf_ptr and create a node function.
  * \param [in] tok_size  token name size
  * \return reference to new node.
  */
-ad6::node * ad6::tree::_check_buf_ptr( size_t tok_size )
+ad6::node * ad6::tree::_check_buf_ptr( unsigned tok_size )
 {
   node *res = new node;
   string name(buf_ptr, tok_size);
@@ -348,12 +388,13 @@ ad6::node * ad6::tree::_check_buf_ptr( size_t tok_size )
     int num = 0;
     if (tpe == TYPE_VAR)
     {
-      num = variables.find(name);
+      var _new(name, act_fnc);
+      num = vars.find(_new);
 
       if (num == -1)
       {
-        variables.add(name);
-        num = variables.size() - 1;
+        vars.add(_new);
+        num = vars.size() - 1;
       }
       res->set_node(TYPE_VAR, string(buf_ptr, tok_size), num);
       return res;
@@ -378,12 +419,13 @@ ad6::node * ad6::tree::_check_buf_ptr( size_t tok_size )
 
   if (tpe == TYPE_VAR)
   {
-    num = variables.find(name);
+    var _new(name, act_fnc);
+    num = vars.find(_new);
 
     if (num == -1)
     {
-      variables.add(name);
-      num = variables.size() - 1;
+      vars.add(_new);
+      num = vars.size() - 1;
     }
     res->set_node(TYPE_VAR, name, num);
     return res;
@@ -399,16 +441,16 @@ ad6::node * ad6::tree::_check_buf_ptr( size_t tok_size )
  * \param [in] size size of string.
  * \return type of a branch.
  */
-ad6::node_type ad6::tree::_check_ops( const char *str, size_t size )
+ad6::node_type ad6::tree::_check_ops( const  char *str, unsigned size )
 {
 #define STRCMP(str, type)                   \
   if (ad6::StrChrCmp(#str, opr) == 0)       \
      return ad6::##type;
 
-  size_t ops_size = sizeof(ad6::pol_op) / sizeof(ad6::oper);
+  unsigned ops_size = sizeof(ad6::pol_op) / sizeof(ad6::oper);
   ad6::string opr(str, size);
 
-  for (size_t i = 0; i < ops_size; i++)
+  for (unsigned i = 0; i < ops_size; i++)
     if (ad6::StrChrCmp(ad6::pol_op[i].get_name(), opr) == 0)
       return ad6::TYPE_POL_OP;
 
@@ -419,7 +461,7 @@ ad6::node_type ad6::tree::_check_ops( const char *str, size_t size )
 
   STRCMP(op, TYPE_SEP);
 
-#define DEF_FNC(name, num, code, code2)               \
+#define DEF_FNC(name, num, code, code2, code3)               \
   else if (ad6::StrChrCmp(#name, opr) == 0)           \
     return ad6::TYPE_FUNC;
 
@@ -441,9 +483,9 @@ ad6::node_type ad6::tree::_check_ops( const char *str, size_t size )
  */
 ad6::node_type ad6::tree::_check_one_smb( char smb )
 {
-  size_t size = sizeof(smb_op) / sizeof(oper);
+  unsigned size = sizeof(smb_op) / sizeof(oper);
 
-  for (size_t i = 0; i < size; i++)
+  for (unsigned i = 0; i < size; i++)
     if (smb == smb_op[i].get_num())
       return TYPE_OPERATOR;
   if (smb == '=')
@@ -453,7 +495,7 @@ ad6::node_type ad6::tree::_check_one_smb( char smb )
     return TYPE_SEP;
   if (smb == '>' || smb == '<')
     return TYPE_CMP;
-  TREE_ASSERT(isalpha(smb), "Unrecognized symbol");
+  //TREE_ASSERT(isalpha((unsigned char)smb), "Unrecognized symbol");
  
   return TYPE_VAR;
 } /* End of '_check_one_smb' function */

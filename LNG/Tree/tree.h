@@ -5,6 +5,7 @@
 #include "..\..\DEFS.h"
 #include "..\Node\node.h"
 #include "..\dic.h"
+#include "..\Parser\var_fnc.h"
 
 #define TREE_LOCATION  __LINE__, __FILE__, __FUNCSIG__
 
@@ -32,9 +33,9 @@ namespace ad6
    {"ret", "septagon"}
   };
 
-  const size_t ANSWER_MAX = 1024;
+  const unsigned ANSWER_MAX = 1024;
  
-
+ 
 #define DEF_OP(num, name, calc, diff)  OPER_##name = num,
 
   enum opers
@@ -49,13 +50,14 @@ namespace ad6
   {
   protected:
     node *root;
-    char *buf;
-    size_t buf_size;
+     char *buf;
+    unsigned buf_size;
     FILE *tr;
-    stock<string> variables;
-    const char *buf_ptr = "";
-
-
+    stock<var> vars;
+    stock<fnc> funcs;
+    const  char *buf_ptr = ( char *)"";
+    int act_fnc;
+    int cnt_fnc;
     // default constructor
     tree( void );
 
@@ -71,13 +73,15 @@ namespace ad6
 
     void _build_tree( node **nd );
 
-    node * _check_buf_ptr( size_t tok_size );
+    node * _check_buf_ptr( unsigned tok_size );
 
     node_type _check_one_smb( char smb );
 
-    node_type _check_ops( const char *str, size_t size );
+    node_type _check_ops( const  char *str, unsigned size );
 
     void _read_tree( const char filename[] );
+
+    int _cnt_args( node *nd );
 
     // class destructor
     ~tree( void );
