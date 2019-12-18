@@ -13,6 +13,9 @@ DEF_FNC(sin, 1,
   },
   {
     return sin(REC_R);
+  },
+  {
+    _fprint("sin\n");
   })
 
 DEF_FNC(cos, 2, 
@@ -21,6 +24,9 @@ DEF_FNC(cos, 2,
   },
   {
     return cos(REC_R);
+  },
+  {
+    _fprint("cos\n");
   })
 
 DEF_FNC(tg, 3, 
@@ -32,6 +38,8 @@ DEF_FNC(tg, 3,
 
     TREE_ASSERT(!Compare(co), "tangens dont' defined");
     return tan(REC_R);
+  },
+  {
   })
 
 DEF_FNC(ctg, 4, 
@@ -44,6 +52,8 @@ DEF_FNC(ctg, 4,
 
     TREE_ASSERT(!Compare(si), "cotangens dont' defined")
     return cos(res) / si;
+  },
+  {
   })
 
 DEF_FNC(ln, 5, 
@@ -55,6 +65,8 @@ DEF_FNC(ln, 5,
     TREE_ASSERT(res > 0, "Log argument don't positive");
 
     return log(REC_R);
+  },
+  {
   })
 
 DEF_FNC(sqrt, 6, 
@@ -66,6 +78,8 @@ DEF_FNC(sqrt, 6,
     TREE_ASSERT(res >= 0, "Sqrt argument negative");
 
     return sqrt(REC_R);
+  },
+  {
   })
 
 DEF_FNC(sh, 7, 
@@ -74,7 +88,9 @@ DEF_FNC(sh, 7,
   },
   {
     return sinh(REC_R);
-  })
+  },
+  {
+    })
 
 DEF_FNC(ch, 8, 
   {
@@ -82,6 +98,8 @@ DEF_FNC(ch, 8,
   },
   {
     return cosh(REC_R);
+  },
+  {
   })
 
 DEF_FNC(th, 9, 
@@ -90,6 +108,8 @@ DEF_FNC(th, 9,
   },
   {
     return tanh(REC_R);
+  },
+  {
   })
 
 DEF_FNC(cth, 10, 
@@ -101,6 +121,8 @@ DEF_FNC(cth, 10,
 
     TREE_ASSERT(!Compare(res), "Hyperbolic cotangens dont' defined")
     return 1 / tanh(res);
+  },
+  {
   })
 
 DEF_FNC(exp, 11, 
@@ -109,8 +131,28 @@ DEF_FNC(exp, 11,
   },
   {
     return exp(REC_R);
+  },
+  {
   })
 
-DEF_FNC(put, 12, {}, {})
+DEF_FNC(put, 12, {}, {}, 
+  {
+    _rec_print_asm(nd->left);
+    _fprint("out\n");
+  })
 
-DEF_FNC(get, 13, {}, {})
+DEF_FNC(get, 13, {}, {}, 
+  {
+    _fprint("in\n");
+    node *vr = nd->left;
+    if (vars[vr->num].get_fnc_num() != GLOBAL_VAR)
+    {
+      int num = vr->num;
+      POP_BX(vars[num].get_offset(), nd);
+    }
+    else
+    {
+      _fprint("push %d\n", vars[nd->left->num].get_offset());
+      _fprint("pop dx\n push[dx]\n");
+    }
+  })
