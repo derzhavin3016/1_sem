@@ -15,9 +15,15 @@ namespace ad6
 {
   class backend : public tree
   {
+  private:
+    int num_if;
+    int num_while;
+    int var_cnt;
   public:
 
     backend( void );
+
+
 
     void tree_to_asm( const char file_in[], const char file_out[] );
 
@@ -25,11 +31,23 @@ namespace ad6
 
   private:
 
+    void _push_globals( void );
+
     void _rec_print_asm( node *nd );
 
     void _fprint( const char format[], ... );
 
+    void _asm_op( node *nd );
+    
+    void _asm_pol_op( node *nd );
+
+    int _change_fnc( string &name );
+
     void _to_asm( const char filename[] );
+
+    void _asm_cmp( node *nd );
+
+    void _asm_fnc( node *nd );
   };
 }
 
