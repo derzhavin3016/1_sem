@@ -1,0 +1,58 @@
+$getD(a, b, c)
+{
+  rterun b * b - 4 * a * c;
+}
+$main()
+{
+  arv a = 0;
+  arv b = 0;
+  arv c = 0;
+  gte(a);
+  gte(b);
+  gte(c);
+  fi (a == 0)
+  {
+    fi (b == 0)
+    {
+      fi (c == 0)
+      {
+        tup(3);
+        rterun;
+      }
+      esel
+      {
+        tup(0);
+        rterun;
+      }
+    }
+    esel
+    {
+      tup(1);
+      tup((0 - c) / b);
+      rterun;
+    }
+  }
+  esel
+  {
+    arv discr = getD(a, b, c);
+    fi (discr < 0)
+    {
+      tup(0);
+      rterun;
+    }
+    fi (discr == 0)
+    {
+      tup(1);
+      tup((0 - b) / 2 * a);
+      rterun;
+    }
+    esel
+    {
+      tup(2);
+      arv sqrd = discr ^ (0.5) / 2 * a;
+      tup((0 - b) / 2 * a + sqrd);
+      tup((0 - b) / 2 * a - sqrd);
+      rterun;
+    }
+  }
+}

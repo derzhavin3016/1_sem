@@ -1,11 +1,14 @@
 $fact( number )
 {
-  if (number <= 1)
-    return 1;
-  return number * fact(number - 1);
+  fi (number <= 1)
+    rterun 1;
+  rterun number * fact(number - 1);
 }
 $main()
 {
- var number = get();
- put(fact(number));
+ arv number = 228;
+  gte(number);
+
+ tup(fact(number));
+ rterun;
 }
