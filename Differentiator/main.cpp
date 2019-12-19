@@ -1,4 +1,8 @@
+
+#pragma warning (disable: 4267)
 #include "Diff.h"
+
+
 
 using namespace ad6;
 
@@ -6,20 +10,18 @@ int main( void )
 {
   try 
   {
-  tree tr;
-  tr.process_loop();
-  //tr.read_tree("t.txt");
-  //printf("%lg\n", tr.tree_calc());
-  //tr.dump_root("tata");
-  /*tr.tree_diff("x");
-  tr.dump_diff("diffx");
-  node **df = tr.get_diff();
-  tr._simplifier(df);
-  tr.dump_diff("diffx_smp");
-  tr.tex_dump("go", tr.get_root());*/
- /* tr.dump_diff("tij");
-  tr.dump_diff("tji");*/
-  int dummy = 0;
+    char *buf = nullptr, *buf2 = nullptr;
+    tree tr;
+    tr.process_loop();
+    /*buf = strdup(InputAnswer("Input filename to start:"));
+    buf2 = InputAnswer("Input file name to write answer:\n");
+
+    double answ = tr.laba_kill(buf);
+
+    printf("The answer is: %lg\n", answ);
+    free(buf);
+    
+    tr.write_answ(buf2, answ);*/
   }
   catch ( Error &err)
   {

@@ -6,6 +6,7 @@
 #define SIN *(new node(TYPE_FUNC, "sin", 3, 1, nullptr, &cR ))
 #define CH  *(new node(TYPE_FUNC, "ch", 2, 8, nullptr, &cR ))
 #define SH  *(new node(TYPE_FUNC, "sh", 2, 7, nullptr, &cR ))
+#define SQRT  *(new node(TYPE_FUNC, "sqrt", 4, 6, nullptr, &cR ))
 
 #define ONE *(new node(1))
 
@@ -32,7 +33,7 @@ DEF_FNC(tg, 3,
     return (ONE / (COS * COS)) * dR;
   },
   {
-    double co = cos(REC_R)
+    double co = cos(REC_R);
 
     TREE_ASSERT(!Compare(co), "tangens dont' defined");
     return tan(REC_R);
@@ -63,7 +64,7 @@ DEF_FNC(ln, 5,
 
 DEF_FNC(sqrt, 6, 
   {
-    return (ONE / (*(new node(2)) * cR)) * dR;
+    return (ONE / (*(new node(2)) * SQRT)) * dR;
   },
   {
     double res = REC_R;

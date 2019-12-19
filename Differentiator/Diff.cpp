@@ -16,7 +16,7 @@
 "\\pagestyle{empty}                                               \n"\
 "\\begin{document}                                                \n"
 
-#define TEX_END "\\end{document}"
+#define TEX_END "\n\\end{document}"
 
 #define GREETING  "Hello. I'm an artificial intelligence.\n"                              \
                   "My dad is Andrey Derzhavin, and he has his own group in vk\n"          \
@@ -26,9 +26,24 @@
                   "*** 0. Exit (bye bye)\n"                                               \
                   "*** 1. Diff \n"                                                        \
                   "*** 2. Dump tree with dot\n"                                           \
-                  "*** 3. Dump tree with tex\n"                          
+                  "*** 3. Dump tree with tex\n"                                           \
+                  "*** 4. Fun dump tree with tex\n"                          
+
 
 #define PARTING  "Have a nice night, stranger!\n"
+
+
+#define TEX_GREETING "Hello, let's get the derrivative of this simpliest function:\\\\"
+
+#define TEX_PARTING "It was so easy, isn't it?))"
+
+const char *ad6::phrases[] =
+  {
+    "It's obviously, that",
+    "As we all know from Petrovich, pg. 115",
+    "After simple transformations",
+    "Let's note, that"
+  };
 
 /**
  * \brief Get user's answer from stdout function.
@@ -305,23 +320,39 @@ bool ad6::tree::tree_diff( const char var[] )
 {
   TREE_ASSERT(root != nullptr, "Root was nullptr");
 
+  size_t var_num = 0;
+
+  if ((var_num = par.find_var(var)) == -1)
+    return false;
+
+  tree_diff(var_num);
+  
+  return true;
+} /* End of 'tree_diff' function */
+
+bool ad6::tree::tree_diff( size_t var_num )
+{
+  TREE_ASSERT(root != nullptr, "Root was nullptr");
+
   if (!is_diff_init)
   {
     _diff_init();
     is_diff_init = true;
   }
 
-  size_t var_num = 0;
-
-  if ((var_num = par.find_var(var)) == -1)
-    return false;
-
   diff[var_num] = &rec_diff(*root, var_num);
-
-  _simplifier(&diff[var_num]);
   
   return true;
 } /* End of 'tree_diff' function */
+
+/**
+ * \brief Simplify differentiated tree function.
+ */
+void ad6::tree::_diff_simpl( void )
+{
+  for (size_t i = 0; i < par.var_size(); i++)
+    _simplifier(&diff[i]);
+} /* End of '_diff_simpl' function */
 
 /**
  * \brief Recursive differentiator of tree. 
@@ -406,6 +437,10 @@ double ad6::tree::rec_calc( node *nd ) const
     case num:                    \
       calc;
 
+#define DEF_FNC(name, num, diff, calc)  \
+    case num:                           \
+      calc;
+
   switch (nd->type)
   {
   case TYPE_NUMBER:
@@ -419,13 +454,25 @@ double ad6::tree::rec_calc( node *nd ) const
       printf("Incorrect operator num : %d\n", nd->num);
     }
     break;
+  case TYPE_FUNC:
+    switch (nd->num)
+    {
+     
+    #include "func.h"
+
+    default:
+      printf("Incorrect function num : %d\n", nd->num);
+    }
+    break;
   default:
     printf("Unrecognized type %d\n", nd->type);
     return 0;
   }
+#undef DEF_OP
+
+#undef DEF_FNC
 
   return 0;
-#undef DEF_OP
 } /* End of 'rec_calc' function */
 
 /**
@@ -555,6 +602,82 @@ bool ad6::tree::_is_calc( node *nd ) const
   return is_calc_left && is_calc_right;
 } /* End of '_is_calc' function */
 
+/**
+ * \brief Dump in .tex file function (funny version)
+ * \param [in]  filename              Name of a file to dump.
+ */
+void ad6::tree::tex_fun_dump( const char filename[] )
+{
+  TREE_ASSERT(filename != nullptr, "Incorrect filename");
+
+  char buf[ANSWER_MAX] = {};
+  sprintf(buf, "%s.tex", filename);
+
+  FILE *tex = fopen(buf, "wb");
+  
+  TREE_ASSERT(tex != nullptr, "Cannot open file for tex ");
+
+  fprintf(tex, TEX_DMP);
+
+  fprintf(tex, TEX_GREETING);
+
+
+  fprintf(tex, "$$\n f \\left(");
+    for (size_t i = 0; i < par.var_size(); i++)
+    {
+      par.get_var(i).print_in_file(tex);
+      if (i != par.var_size() - 1)
+        fprintf(tex, ", ");
+    }
+  fprintf(tex, " \\right) = ");
+
+  _tex_rec(tex, root);
+  fprintf(tex, " $$\n\\\\");
+
+  size_t phr_size = sizeof(phrases) / sizeof(phrases[0]);
+
+#define PRINT_DER(var)                                       \
+  fprintf(tex, "$$\nf'_{");                                      \
+  par.get_var(var).print_in_file(tex);                       \
+  fprintf(tex, "} \\left( ");                                \
+  for (size_t i = 0; i < par.var_size(); i++)                \
+    {                                                        \
+      par.get_var(i).print_in_file(tex);                     \
+      if (i != par.var_size() - 1)                           \
+        fprintf(tex, ", ");                                  \
+    }                                                        \
+  fprintf(tex, " \\right) = ");
+
+#define PRINT  fprintf(tex, "\\\\\n%s\\\\\n", phrases[rand() % phr_size]); \
+               PRINT_DER(i);                                               \
+               _tex_rec(tex, diff[i]);                                     \
+               fprintf(tex, "\n$$");
+
+  for (size_t i = 0; i < par.var_size(); i++)
+  {
+    symp_counter = 0;
+    int prev_cnt = 1;
+    fprintf(tex, "\n%s\\\\\n", phrases[rand() % phr_size]);
+    PRINT_DER(i);
+    _tex_rec(tex, diff[i]);
+    fprintf(tex, "\n$$");
+    diff[i] = _rec_symp(diff[i]);
+    PRINT;
+    while (prev_cnt != symp_counter)
+    {
+      prev_cnt = symp_counter;
+      diff[i] = _rec_symp(diff[i]);
+      PRINT;
+    }
+  }
+  fprintf(tex, TEX_PARTING);
+  fprintf(tex, TEX_END);
+
+#undef PRINT
+
+#undef PRINT_DER
+  fclose(tex);
+} /* End of 'tex_fun_dump' function */
 
 /**
  * \brief Dump tree in .tex file function.
@@ -575,10 +698,10 @@ void ad6::tree::tex_dump( const char filename[], node* root )
 
   fprintf(tex, TEX_DMP);
 
-  fprintf(tex, "$\n \\left(");
+  fprintf(tex, "$\n ");
 
   _tex_rec(tex, root);
-  fprintf(tex, " \\right) $\n");
+  fprintf(tex, " $\n");
   fprintf(tex, TEX_END);
 
   fclose(tex);
@@ -586,10 +709,10 @@ void ad6::tree::tex_dump( const char filename[], node* root )
 
   sprintf(buf, "pdflatex %s.tex", filename);
 
-  system(buf);
+//  system(buf);
 
   sprintf(buf, "%s.pdf", filename);
-  system(buf);
+  //system(buf);
 } /* End of 'tex_dump' function */
 
 /**
@@ -606,30 +729,7 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
   switch (nd->type)
   {
   case TYPE_OPERATOR:
-    if (nd->num == '/')
-    {
-      fprintf(f, " \\dfrac{ ");
-      _tex_rec(f, nd->left);
-      fprintf(f, "}{");
-      _tex_rec(f, nd->right);
-      fprintf(f, "} ");
-      break;
-    }
-      
-    if (nd != root && nd->num != '^')
-      fprintf(f, " \\left( ");
-
-    _tex_rec(f, nd->left);
-    
-    if (nd->num == '*')
-      fprintf(f, " \\cdot ");
-    else
-      fprintf(f, " %c ", nd->num);
-
-    _tex_rec(f, nd->right);
-   
-    if (nd != root && nd->num != '^')
-      fprintf(f, " \\right) ");
+    _op_tex_rec(f, nd);
     break;
   case TYPE_NUMBER:
     fprintf(f, "%lg", nd->value);
@@ -644,10 +744,15 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
     {
       fprintf(f, "\\");
       nd->name.print_in_file(f);
-      fprintf(f, " \\left( ");
+      if (nd->num == 6)
+        fprintf(f, "{");
+      else
+        fprintf(f, " \\left( ");
     }
-    _tex_rec(f, nd->right);
-    if (nd->num != 11)
+    _tex_rec(f, nd->right); 
+    if (nd->num == 6)
+      fprintf(f, "}");
+    else if (nd->num != 11)
       fprintf(f, " \\right) ");
     else
       fprintf(f, "} ");
@@ -659,11 +764,89 @@ void ad6::tree::_tex_rec( FILE *f, node *nd )
 
 } /* End of '_tex_rec' function */
 
+
+/**
+ * \brief Print operators in .tex file function.
+ * \param [in]        f          pointer to file structure
+ * \param [in, out]   nd         tree's node.
+ */
+void ad6::tree::_op_tex_rec( FILE *f, node *nd )
+{
+  TREE_ASSERT(f != nullptr, "File wasn't open");
+  TREE_ASSERT(nd != nullptr, "Node was nullptr");
+
+#define CHECK(nde, str)                                                 \
+  if (nd->##nde->type == TYPE_NUMBER && nd->##nde->value < 0)        \
+      fprintf(f, str);
+
+  #define CHECK_LEAF(nde, lef, rig)                                                                            \
+  if (nd->##nde->type == TYPE_OPERATOR && (nd->##nde->num == '+' || nd->##nde->num == '-'))        \
+    {                                                                                              \
+      fprintf(f, " %s ", lef);                                                                            \
+      _tex_rec(f, nd->##nde);                                                                    \
+      fprintf(f, " %s ", rig);                                                                            \
+    }                                                                                              \
+    else                                                                                           \
+      _tex_rec(f, nd->##nde);
+
+  if (nd->num == '^')
+  {
+    if (nd->left->type == TYPE_OPERATOR && nd->left->num != '^')
+    {
+      fprintf(f, " \\left( ");
+      _tex_rec(f, nd->left);
+      fprintf(f, " \\right) ");
+    }
+    else
+      _tex_rec(f, nd->left);
+    fprintf(f, " ^{");
+    _tex_rec(f, nd->right);
+    fprintf(f, "}");
+    return;
+  }
+  if (nd->num == '/')
+  {
+    fprintf(f, " \\dfrac{ ");
+    _tex_rec(f, nd->left);
+    fprintf(f, " }{ ");
+    _tex_rec(f, nd->right);
+    fprintf(f, " }");
+    return;
+  }
+  if (nd->num == '*')
+  {
+    CHECK(left, " \\left( ");
+    CHECK_LEAF(left, " \\left( ", " \\right) ");
+    CHECK(left, " \\right) ");
+
+    fprintf(f, " \\cdot ");
+
+    CHECK(right, " \\left( ");
+    CHECK_LEAF(right, "\\left( ",  " \\right)");
+    CHECK(right, " \\right) ");
+    return;
+  }
+  if (nd->left->type == TYPE_NUMBER && nd->left->value == 0 && nd->num == '-' 
+      && (nd->right->type != TYPE_NUMBER || nd->right->value != 0))
+  {
+    fprintf(f, " \\left( -");
+    _tex_rec(f, nd->right);
+    fprintf(f, " \\right) ");
+    return;
+  }
+
+
+  _tex_rec(f, nd->left);
+  fprintf(f, " %c ", nd->num);
+  _tex_rec(f, nd->right);
+} /* End of '_op_tex_rex' function */
+
 void ad6::tree::process_loop( void )
 {
   printf(GREETING);
-  char *buf = nullptr;
+  char *buff = nullptr;
   char *ans = nullptr;
+  bool IsRead = false;
   while (1)
   {
     int num = 0;
@@ -676,24 +859,28 @@ void ad6::tree::process_loop( void )
       printf(PARTING);
       return;
     case 1:
-      buf = InputAnswer("Input filename to read function from: ");
-      if (read_tree(buf))
+      if (IsRead)
+        break;
+      IsRead = true;
+      buff = InputAnswer("Input filename to read function from: ");
+      if (read_tree(buff))
         printf("build success\n");
       while (1)
       {
-        buf = InputAnswer("Input a variable to differentiate or 0 to quit: ");
-        if (buf[0] == '0')
+        buff = InputAnswer("Input a variable to differentiate or 0 to quit: ");
+        if (buff[0] == '0')
           break;
-        if (!tree_diff(buf))
+        if (!tree_diff(buff))
           printf("Incorrect variable, try again\n");
       }
       break;
       case 2:
-        buf = strdup(InputAnswer("Input filename to dump tree with .dot: "));
+        buff = strdup(InputAnswer("Input filename to dump tree with .dot: "));
         printf("1 - root, 2 - differetiated tree ");
         scanf("%d", &num);
         if (num == 1)
-          dump(buf, root);
+          dump
+          (buff, root);
         else if (num == 2)
         {
           if (diff != nullptr)
@@ -703,17 +890,20 @@ void ad6::tree::process_loop( void )
             if (num == -1)
               printf("\nNo variables such this\n");
             else
+            {
+              _diff_simpl();
               dump(buf, diff[num]);
+            }
           }
         }
-        free(buf);
+        free(buff);
         break;
       case 3:
-        buf = strdup(InputAnswer("Input filename to dump tree with tex: "));
+        buff = strdup(InputAnswer("Input filename to dump tree with tex: "));
         printf("1 - root, 2 - differetiated tree ");
         scanf("%d", &num);
         if (num == 1)
-          tex_dump(buf, root);
+          tex_dump(buff, root);
         else if (num == 2)
         {
           if (diff != nullptr)
@@ -723,10 +913,23 @@ void ad6::tree::process_loop( void )
             if (num == -1)
               printf("No variables such this\n");
             else
-              tex_dump(buf, diff[num]);
+            {
+              _diff_simpl();
+              tex_dump(buff, diff[num]);
+            }
           }
         }
-        free(buf);
+        free(buff);
+        break;
+
+      case 4:
+        buff = InputAnswer("Input filename to dump tree with tex: ");
+        printf("\n processing ....\n");
+        tex_fun_dump(buff);
+        printf("Dump succes, enjoy it\n");
+        break;
+      default:
+        printf("Unrecognized switch %d\n Please, try again.\n", num);
         break;
     }
   }
@@ -756,7 +959,92 @@ bool ad6::tree::_find_var_tree( node *start, size_t var_num ) const
   return is_var_left && is_var_right;
 } /* End of '_find_var_tree' function */
 
+/**
+ * \brief Kill laba function
+ */
+double ad6::tree::laba_kill( const char filename[] )
+{
+  TREE_ASSERT(filename != nullptr, "Incorrect filename");
 
+  read_tree(filename);
+
+  double answ = 0;
+  
+
+  _vars_init();
+  _get_acc();
+
+  for (size_t i = 0; i < par.var_size(); i++)
+  {
+    tree_diff(i);
+    _simplifier(&diff[i]);
+    _tree_vars_init(diff[i]);
+    double res = rec_calc(diff[i]);
+    answ += res * res * accuracies[i];
+  }
+
+  return sqrt(answ);
+}
+
+void ad6::tree::_tree_vars_init( node *start )
+{
+  TREE_ASSERT(start != nullptr, "Node was nullptr");
+
+  if (start->left != nullptr)
+    _tree_vars_init(start->left);
+
+  if (start->right != nullptr)
+    _tree_vars_init(start->right);
+
+  if (start->type != TYPE_VAR)
+    return;
+
+  start->type = TYPE_NUMBER;
+  start->value = par[start->num].value;
+}
+
+void ad6::tree::_vars_init( void )
+{
+  for (size_t i = 0; i < par.var_size(); i++)
+  {
+    double val = 0;
+    std::cout << "Input '" << par.get_var(i) << "' value:\n";
+    while (1)
+    {
+      scanf("%lg", &val);
+      if (val < 0)
+        printf("Accuracy always > 0, try again\n");
+      else
+        break;
+    }
+    par[i].value = val;
+  }
+}
+
+void ad6::tree::_get_acc( void )
+{
+  accuracies.resize(par.var_size());
+
+  for (size_t i = 0; i < accuracies.size(); i++)
+  {
+    double ac = 0;
+    std::cout << "Input accuracy for '" << par.get_var(i) << "' variable:\n";
+    scanf("%lg", &ac);
+    accuracies[i] = ac;
+  }
+}
+
+void ad6::tree::write_answ( const char filename[], double answ )
+{
+  TREE_ASSERT(filename != nullptr, "Incorrect filename");
+
+  FILE *f = fopen(filename, "wb");
+
+  TREE_ASSERT(f != nullptr, "Error with opening file");
+  
+  fprintf(f, "Accuracy = %lg\n", answ);
+  fclose(f);
+}
 #undef TEX_DMP
 
 #undef TEX_END

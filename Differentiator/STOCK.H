@@ -12,7 +12,7 @@
  namespace ad6
  {
    template <typename data>
-   int stk_def_cmp( data a, data b )
+   int stk_def_cmp( data &a, const data &b )
    {
      return !(a == b);
    }
@@ -37,7 +37,7 @@
      }
 
      // Distructor
-     ~stock( void )     {       if (array != nullptr)         delete[] array;       array = nullptr;     }
+     ~stock( void )     {       if (array != nullptr)         delete[] array;       array = nullptr;       real_size = 0;     }
 
 
      // Copy constructor by constant link
@@ -45,7 +45,7 @@
 
 
      // Assignment operator
-     stock<data> & operator=( const stock<data> & CopyData )     {       if (array != nullptr)         delete[] array;       array = new data[CopyData.max_size];       real_size = CopyData.real_size;       max_size = CopyData.max_size;       for (size_t i = 0; i < real_size; i++)         array[i] = CopyData.array[i];       return *this;     }
+     stock<data> & operator=( const stock<data> & CopyData )     {       if (array != nullptr)         delete[] array;           array = new data[CopyData.max_size];       real_size = CopyData.real_size;       max_size = CopyData.max_size;       for (size_t i = 0; i < real_size; i++)         array[i] = CopyData.array[i];       return *this;     }
 
 
      /**
@@ -63,7 +63,8 @@
            max_size *= 2;
         resize(max_size);
        }
-
+       if (array == nullptr)
+         resize(max_size);
        array[real_size++] = NewData;
        return *this;
      }
@@ -107,9 +108,9 @@
      }
 
 
-     data operator[]( const int Index ) const
+     data & operator[]( const int Index ) const
      {
-       assert(Index >= 0 && Index <= real_size);
+       assert(Index >= 0 && Index <= (int)real_size);
        return array[Index];
      }     template <class T2>       void walk( const T2 &Walker )       {         for (int i = 0; i < real_size; i++)           Walker(array[i]);        }
 
@@ -119,7 +120,7 @@
        * \return number of element in array if it was find
        * \return -1 otherwise
        */
-      int find( const data &Data, int (*comp)(data a, data b) = nullptr )
+      int find( const data &Data, int (*comp)( data &a, const data &b ) = nullptr )
       {
         if (comp == nullptr)
           comp = stk_def_cmp;

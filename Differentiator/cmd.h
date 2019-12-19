@@ -45,8 +45,8 @@ DEF_OP('^', POW,
   {
      double l = REC_L;
      double r = REC_R;
-     TREE_ASSERT(!Compare(l) && !Compare(r), "0^0 undefined");
-     TREE_ASSERT(l < 0, "negative base");
+     TREE_ASSERT(!(Compare(l)) || !(Compare(r)), "0^0 undefined");
+     TREE_ASSERT(l >= 0 || r > 0, "negative base");
 
      return pow(l, r);
   },
@@ -70,3 +70,5 @@ DEF_OP('^', POW,
 #undef REC_R
 
 #undef REC_L
+
+#undef _

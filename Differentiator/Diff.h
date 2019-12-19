@@ -32,6 +32,7 @@ namespace ad6
 
 #undef DEF_OP
  
+  extern const char *phrases[];
 
   const size_t MAX_BUFF = 100;
   class tree
@@ -44,6 +45,7 @@ namespace ad6
     size_t buf_size;
     parser par;
     bool is_diff_init;
+    stock<double> accuracies;
   public:
     // Default constructor
     tree( void ) : root(),
@@ -83,9 +85,15 @@ namespace ad6
         delete[] diff;
       }
       if (root != nullptr)
+      {
         delete root;
+        root = nullptr;
+      }
       if (buf != nullptr)
+      {
         delete[] buf;
+        buf = nullptr;
+      }
     }
     node *get_root( void )
     {
@@ -97,14 +105,31 @@ namespace ad6
        return diff;
     }
 
+    double laba_kill( const char filename[] ); 
 
     void tex_dump( const char filename[], node* root );
 
+    void tex_fun_dump( const char filename[] );
+
+    void write_answ( const char filename[], double answ );
+
   private:
+
+    void _get_acc( void );
+
+    void _vars_init( void );
+
+    void _tree_vars_init( node *start );
+
+    bool tree_diff( size_t var_num );
+
+    void _diff_simpl( void );
 
     bool _calc_tree( node *nd );
 
     void _diff_init( void );
+
+    void _op_tex_rec( FILE *f, node *nd );
 
     bool _simplifier( node **nd );
 

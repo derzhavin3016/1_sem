@@ -60,7 +60,7 @@ DEF_SMP('+',
 
 DEF_SMP('-',
   {
-    KILL_ZERO(LN, RN);
+    KILL_ZERO(RN, LN);
   })
 
 DEF_SMP('*',
@@ -81,6 +81,8 @@ DEF_SMP('*',
 DEF_SMP('/',
   {
     KILL_ZERO(LN, RN);
+
+    KILL_ONE(RN, LN);
   })
 
 #define _ ,
@@ -130,4 +132,4 @@ DEF_SMP('^',
 
 #undef KILL_ZERO
 
-#undef KILL_ONE
+#undef KILL_ONE 
