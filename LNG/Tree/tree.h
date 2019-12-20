@@ -22,7 +22,7 @@ namespace ad6
    {'-', "orchid2"},
    {'*', "pink"},
    {'/', "peachpuff"},
-   {'^', "ivory"},
+   {'^', "ivory"}
   };
 
   const oper pol_op[] = 
@@ -30,7 +30,8 @@ namespace ad6
    {"while", "pentagon"},
    {"if", "hexagon"},
    {"if-else", "hexagon"},
-   {"ret", "septagon"}
+   {"ret", "septagon"},
+   {"deriv", "diamond"}
   };
 
   const unsigned ANSWER_MAX = 1024;
@@ -46,11 +47,11 @@ namespace ad6
 #undef DEF_OP
  
 
-  class tree
+  class base_translator
   {
   protected:
     node *root;
-     char *buf;
+    char *buf;
     unsigned buf_size;
     FILE *tr;
     stock<var> vars;
@@ -58,8 +59,9 @@ namespace ad6
     const  char *buf_ptr = ( char *)"";
     int act_fnc;
     int cnt_fnc;
+
     // default constructor
-    tree( void );
+    base_translator( void );
 
     bool dump( const char filename[], node *nd );
 
@@ -81,15 +83,19 @@ namespace ad6
 
     void _read_tree( const char filename[] );
 
+    bool _save_tree( const char filename[] );
+
     int _cnt_args( node *nd );
 
     // class destructor
-    ~tree( void );
+    ~base_translator( void );
   public:
     void dump_root( const char filename[] )
     {
       dump(filename, root);
     }
+
+    virtual void translate( const char file_in[], const char file_out[] ) = 0;
   };
 }
 

@@ -414,6 +414,8 @@ ad6::node * ad6::parser::_getId( void )
       Id->right = fin;                                                              \
       return Id;                                                                    \
     }                                                                               \
+  
+  node *nd2 = nullptr;
 
   #define DEF_FNC(name, num, diff, calc, code)                                            \
   else if (StrChrCmp(#name, str) == 0)                                              \
@@ -423,15 +425,17 @@ ad6::node * ad6::parser::_getId( void )
     node *nd = _getE();                                                             \
     SYNTAX_ASSERT(CHECK_SMB(')'), "function '"#name"' without braces");             \
     ptr++;                                                                          \
-    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);   \
+    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nd2, nd);   \
     CHECK_ID;                                                                       \
     return fin;                                                                     \
   }
-
+  
   if (0);
 
   #include "..\func.h"
 
+  else if (StrChrCmp(LNG_DERIV, str) == 0)
+    return _getDeriv();
   else
   {
     
@@ -458,6 +462,28 @@ ad6::node * ad6::parser::_getId( void )
   }
 #undef CHECK_ID
 } /* End of 'getId' function */
+
+/**
+ * \brief Get derivative rule function
+ * \return pointer to created node.
+ */
+ad6::node * ad6::parser::_getDeriv( void )
+{
+  SYNTAX_ASSERT(CHECK_SMB('('), "Deriv was call without left brace");
+  ptr++;
+  node *var = _getId();
+  SYNTAX_ASSERT(var->type == TYPE_VAR && CHECK_SMB(','), "Incorrect arguments for deriv");
+  ptr++;
+
+  node *args = _getE();
+
+  node *der = new node(TYPE_POL_OP, "deriv", 5, 0, var, args);
+  SYNTAX_ASSERT(CHECK_SMB(')'), "Deriv was call without right brace");
+  ptr++;
+
+  return der;
+} /* End of '_getDeriv' fucntion */
+
 
 ad6::node * ad6::parser::_getArgsE( void )
 {

@@ -91,6 +91,8 @@ namespace ad6
 
     node * _getPut( void );
 
+    node * _getDeriv( void );
+
     node * _getGet( void );
   };
 

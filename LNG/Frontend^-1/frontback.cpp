@@ -1,7 +1,7 @@
 #include "frontback.h"
 
 // class constructor
-ad6::fback::fback( void ) : tree()
+ad6::fback::fback( void )
 {
 }
 
@@ -58,7 +58,12 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
     PRINT_R(0);
     break;
   case TYPE_FUNC:
-    nd->name.print_in_file(tr);
+    if (StrChrCmp("put", nd->name) == 0)
+      fprintf(tr, "%s", LNG_PUT);
+    else if (StrChrCmp("get", nd->name) == 0)
+      fprintf(tr, "%s", LNG_GET);
+    else
+      nd->name.print_in_file(tr);
     fprintf(tr, "(");
     if (nd->right != nullptr)
       PRINT_R(0);
@@ -73,7 +78,7 @@ void ad6::fback::_rec_print( node *nd, int ind_size )
     if (nd->num == '=')
     {
       if (!_check_add_var(nd->left->name))
-        fprintf(tr, "var ");
+        fprintf(tr, "%s ", LNG_VAR);
       PRINT_L(0);
       fprintf(tr, " = ");
       PRINT_R(0);
@@ -156,7 +161,7 @@ void ad6::fback::_print_pol_op( node *nd, int ind_size )
 
   if (CMP_OP("if"))
   {
-    PRINT("if");
+    PRINT(LNG_IF);
     if (nd->left != nullptr) 
     {
       _print_spaces();
@@ -174,7 +179,8 @@ void ad6::fback::_print_pol_op( node *nd, int ind_size )
       if (nd->right->right != nullptr)
       {
         SPC_DEF;
-        PRINT("else\n");
+        PRINT(LNG_ELSE);
+        PRINT("\n");
         SPC_DEF;
         PRINT("{\n");
         _rec_print(nd->right->right, ind_size + 2);
@@ -185,7 +191,7 @@ void ad6::fback::_print_pol_op( node *nd, int ind_size )
   }
   else if (CMP_OP("ret"))
   {
-    PRINT("return");
+    PRINT(LNG_RETURN);
     if (nd->left != nullptr) 
     {
       _print_spaces();
@@ -195,7 +201,7 @@ void ad6::fback::_print_pol_op( node *nd, int ind_size )
   }
   else if (CMP_OP("while"))
   {
-    PRINT("while");
+    PRINT(LNG_WHILE);
     if (nd->left != nullptr) 
     {
       _print_spaces();
@@ -211,6 +217,19 @@ void ad6::fback::_print_pol_op( node *nd, int ind_size )
       SPC_DEF;
       PRINT("}\n");
     }
+  }
+  else if (CMP_OP("deriv"))
+  {
+    PRINT(LNG_DERIV);
+    if (nd->left != nullptr) 
+    {
+      _print_spaces();
+      nd->left->name.print_in_file(tr);
+      PRINT(", ");
+    }
+    if (nd->right != nullptr)
+      _rec_print(nd->right, 0);
+    PRINT(";\n");
   }
   else
   {
@@ -363,7 +382,17 @@ bool ad6::fback::_check_add_var( string &name )
  * \param [in]  file_in       file name to read from.
  * \param [in]  file_out      file name to write code.
  */
-void ad6::fback::tree_to_code( const char file_in[], const char file_out[] )
+void ad6::fback::translate( const char file_in[], const char file_out[] )
+{
+  _tree_to_code(file_in, file_out);
+} /* End of 'translate' function */
+
+/**
+ * \brief Translate tree to code function.
+ * \param [in]  file_in       file name to read from.
+ * \param [in]  file_out      file name to write code.
+ */
+void ad6::fback::_tree_to_code( const char file_in[], const char file_out[] )
 {
   _read_tree(file_in);
   _tree_to_txt(file_out);

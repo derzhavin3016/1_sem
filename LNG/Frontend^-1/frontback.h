@@ -2,6 +2,7 @@
 #define __FRONTBACK_H_
 
 #include "..\Tree\tree.h"
+#include "..\lang.h"
 
 #define FB_LOCATION  __LINE__, __FILE__, __FUNCSIG__
 
@@ -12,17 +13,19 @@
 
 namespace ad6
 {
-  class fback : public tree
+  class fback : public base_translator
   {
   public:
     // class constructor
     fback( void );
 
-    void tree_to_code( const char file_in[], const char file_out[] );
+    virtual void translate( const char file_in[], const char file_out[] ) override;
 
     // class destructor
     ~fback( void );
   private:
+
+    void _tree_to_code( const char file_in[], const char file_out[] );
 
     void _tree_to_txt( const char filename[] );
 

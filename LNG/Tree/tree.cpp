@@ -1,6 +1,6 @@
 #include "tree.h"
 
-ad6::tree::tree( void ) : root(nullptr),
+ad6::base_translator::base_translator( void ) : root(nullptr),
                           buf(nullptr),
                           buf_size(0),
                           tr(nullptr),
@@ -15,7 +15,7 @@ ad6::tree::tree( void ) : root(nullptr),
  * \brief tree dump function.
  * \param filename Name of a file to dump.
  */
-bool ad6::tree::dump( const char filename[], node *nd )
+bool ad6::base_translator::dump( const char filename[], node *nd )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
@@ -49,7 +49,7 @@ bool ad6::tree::dump( const char filename[], node *nd )
  * \brief Recursion dump tree function.
  * \param node  Pointer to node.
  */
-void ad6::tree::rec_dump( node *node ) const
+void ad6::base_translator::rec_dump( node *node ) const
 {
   TREE_ASSERT(tr != nullptr, "File not opened");
   TREE_ASSERT(node != nullptr, "node was nullptr");
@@ -167,7 +167,7 @@ void ad6::tree::rec_dump( node *node ) const
  * \return true if all is OK.
  * \return false otherwise.
  */
-bool ad6::tree::_print_tree( node *node ) const
+bool ad6::base_translator::_print_tree( node *node ) const
 {
   TREE_ASSERT(tr != nullptr, "File not opened\n");
   TREE_ASSERT(node != nullptr, "node was nullptr");
@@ -230,7 +230,7 @@ bool ad6::tree::_print_tree( node *node ) const
  * \param [in] num  operator num.
  * \return pointer to color string.
  */ 
-const char * ad6::tree::_get_op_col( char num ) const
+const char * ad6::base_translator::_get_op_col( char num ) const
 {
   unsigned size = sizeof(smb_op) / sizeof(oper);
 
@@ -247,7 +247,7 @@ const char * ad6::tree::_get_op_col( char num ) const
  * \param [in] name  reference to operator name.
  * \return pointer to shape string.
  */ 
-const char * ad6::tree::_get_op_shp( const string &name ) const
+const char * ad6::base_translator::_get_op_shp( const string &name ) const
 {
   unsigned size = sizeof(pol_op) / sizeof(oper);
 
@@ -260,7 +260,7 @@ const char * ad6::tree::_get_op_shp( const string &name ) const
 } /* End of '_get_op_shp' function */
 
 // class destructor
-ad6::tree::~tree( void )
+ad6::base_translator::~base_translator( void )
 {
   if (root != nullptr)
     delete root;
@@ -272,7 +272,7 @@ ad6::tree::~tree( void )
  * \brief Read tree from file function
  * \param [in] filename Name of a file to read from.
  */
-void ad6::tree::_read_tree( const char filename[] )
+void ad6::base_translator::_read_tree( const char filename[] )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
@@ -291,7 +291,7 @@ void ad6::tree::_read_tree( const char filename[] )
  * \brief Build tree from file function
  * \param [in] root Pointer to tree root;
  */
-void ad6::tree::_build_tree( node **nd )
+void ad6::base_translator::_build_tree( node **nd )
 {
 #define SWTCH(nde, adds)                             \
   switch (*buf_ptr)                                  \
@@ -361,7 +361,7 @@ void ad6::tree::_build_tree( node **nd )
 } /* End of '_build_tree' function */
 
 
-int ad6::tree::_cnt_args( node *nd )
+int ad6::base_translator::_cnt_args( node *nd )
 {
   int cnt = 0;
   if (nd->left != nullptr)
@@ -377,7 +377,7 @@ int ad6::tree::_cnt_args( node *nd )
  * \param [in] tok_size  token name size
  * \return reference to new node.
  */
-ad6::node * ad6::tree::_check_buf_ptr( unsigned tok_size )
+ad6::node * ad6::base_translator::_check_buf_ptr( unsigned tok_size )
 {
   node *res = new node;
   string name(buf_ptr, tok_size);
@@ -441,7 +441,7 @@ ad6::node * ad6::tree::_check_buf_ptr( unsigned tok_size )
  * \param [in] size size of string.
  * \return type of a branch.
  */
-ad6::node_type ad6::tree::_check_ops( const  char *str, unsigned size )
+ad6::node_type ad6::base_translator::_check_ops( const  char *str, unsigned size )
 {
 #define STRCMP(str, type)                   \
   if (ad6::StrChrCmp(#str, opr) == 0)       \
@@ -481,7 +481,7 @@ ad6::node_type ad6::tree::_check_ops( const  char *str, unsigned size )
  * \param smb  Symbol to check.
  * \return type of a symbol.
  */
-ad6::node_type ad6::tree::_check_one_smb( char smb )
+ad6::node_type ad6::base_translator::_check_one_smb( char smb )
 {
   unsigned size = sizeof(smb_op) / sizeof(oper);
 
@@ -499,3 +499,27 @@ ad6::node_type ad6::tree::_check_one_smb( char smb )
  
   return TYPE_VAR;
 } /* End of '_check_one_smb' function */
+
+/**
+ * \brief Save tree to file function.
+ * \param [in]  filename  Name of a file to save.
+ * \return true if all is OK.
+ * \return false otherwise.
+ */
+bool ad6::base_translator::_save_tree( const char filename[] )
+{
+  TREE_ASSERT(filename != nullptr, "Incorrect file name");
+
+  tr = fopen(filename, "w");
+
+  if (tr == nullptr)
+  {
+    printf("Oh, some errors with openning file \"%s\"", filename);
+    return false;
+  }
+
+  _print_tree(root);
+
+  fclose(tr);
+  return true;
+} /* End of '_save_tree' function */
