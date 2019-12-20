@@ -1,32 +1,24 @@
-#include "..\Assembler\asm.h"
-#include "..\Disassembler\disasm.h"
-#include "..\Proc\processor.h"
-#define NDEBUG
-
-using namespace ad6;
+#include "process.h"
 
 int main( void )
 {
-  Asm as;
-  Disasm dis;
-  Proc cp;
-  
-#define IN_F "lng\\square_asm.txt"
-#define OUT_F "lng\\square.adasm"
-#define DIS_F "lng\\square.txt"
-  
-  
-  if (!as.Assembly(IN_F, OUT_F))
-    return false;
-  if (!dis.Disassembly(OUT_F, DIS_F))
-    return false;
-    try
-    {
-      cp.Execute(OUT_F);
-    }
-    catch (...)
-    {
-      printf("Stack error\n");
-    }
+  try
+  {
+    ProcessLoop();
+  }
+  catch ( Error &err )
+  {
+    std::cerr << "ERROR!!!\n" << err.descr << "\nIn file: " << err.file
+              << " in function "<< err.func << " line (" << err.line << ")\n";
+  }
+  catch ( int err )
+  {
+    std::cerr << "\nError with stack ";
+  }
+  catch (...)
+  {
+    std::cerr << "Strange error";
+  }
+
   return 0;
 }
