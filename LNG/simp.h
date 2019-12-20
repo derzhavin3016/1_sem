@@ -131,3 +131,5 @@ DEF_SMP('^',
 #undef KILL_ZERO
 
 #undef KILL_ONE 
+
+#undef _

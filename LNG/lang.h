@@ -14,3 +14,5 @@
 #define LNG_MAIN "mani"
 
 #define LNG_VAR "arv"
+
+#define LNG_DERIV "rived"

@@ -1,22 +1,10 @@
-#include "Frontend\Lng.h"
-#include "Frontend^-1/frontback.h"
+#include "process.h"
 
-using namespace ad6;
-
-int main( void )
+int main( int argc, char *argv[] )
 {
   try
   {
-    frontend fr;
-    fback fb;
-    //fr.par_tree("Programs\\square.txt", "sq.txt");
-    //fr.dump_root("sqrt");
-    fb.tree_to_code("serega.txt", "ser.txt");
-    fb.dump_root("ser");
-    //fb.tree_to_code("fac.txt", "fer.txt");
-    //fb.dump_root("fer");
-    //fr.par_tree("drt.txt", "d.txt");
-    //fr.dump_root("ff0");
+    MainProcLoop();
   }
   catch ( Error &err)
   {
