@@ -32,13 +32,13 @@ DEF_CMD(PUSH, 1, 2,
     code_ptr += DATA_SIZE;
   },
   {
-    int num_push = 0;
+    double num_push = 0;
     char reg_push = 0 _ reg_check = 0;
      
 
-    if (sscanf(prog[PC].str + pos, " %d", &num_push) == 1)
+    if (sscanf(prog[PC].str + pos, " %lg", &num_push) == 1)
     {
-      *((int *)bptr) = num_push * ACCURACY;
+      *((int *)bptr) = (int)num_push * ACCURACY;
       bptr = (char *)((int *)bptr + 1);
       buf_out_size += DATA_SIZE;
     }
@@ -226,7 +226,7 @@ DEF_CMD(COS, 10, 1, {}, {},
 #define JMP_ASM  if (sscanf(prog[PC].str + pos _ " %s" _ promt) == 1)    \
                     {                                                       \
                       int line_mark = FindMark(promt);                      \
-                      if (line_mark == 0 && IsAsm)                          \
+                      if (line_mark == -2 && IsAsm)                          \
                       {                                                     \
                         printf("Mark was not find : %s\n", promt);          \
                         return false;                                       \
@@ -253,7 +253,7 @@ DEF_CMD(COS, 10, 1, {}, {},
                                           }                                                \
                                           GET_FST_SEC_VALUES;                              \
                                            if (cond)                                        \
-                                            code_ptr = (char *)(*((int *)code_ptr) + code);\
+                                            code_ptr = (char *)(code + *((int *)code_ptr));          \
                                           else                                             \
                                             code_ptr += DATA_SIZE;                         \
                                         })
@@ -272,7 +272,7 @@ DEF_CMD(JMP, 20, 2,
     printf("Seems like infinity jumps\n");
     return false;
   }
-  code_ptr = code + *((int *)code_ptr);
+  code_ptr = (char *)(code + *((int *)code_ptr));
 })
 
 DEF_JMP(JA, 21, first > second)
@@ -316,13 +316,19 @@ DEF_CMD(RET, 41, 1, {}, {},
 
     DEF_CMD(IN, 42, 1, {}, {},
   {
-    int value = 0;
+    double value = 0;
 
-    scanf("%d", &value);
-    STK_PUSH(value * ACCURACY);
+    scanf("%lg", &value);
+    STK_PUSH((int)(value * ACCURACY));
   })
 
-DEF_CMD(END, 0, 1, {}, {},
+DEF_CMD(POW, 43, 1, {}, {},
+  {
+    GET_FST_SEC_VALUES;
+    STK_PUSH(pow((double)first * 1.0 / ACCURACY, (double)second * 1.0 / ACCURACY) * ACCURACY);
+  })
+
+DEF_CMD(END, -1, 1, {}, {},
   {
     return true;
   })
