@@ -35,7 +35,17 @@ ad6::backend::backend( void ) : num_if(0),
  * \param [in]  file_in           name of a file to read from.
  * \param [in]  file_out          name of a file to write.
  */
-void ad6::backend::tree_to_asm( const char file_in[], const char file_out[] )
+void ad6::backend::translate( const char file_in[], const char file_out[] )
+{
+  _tree_to_asm(file_in, file_out);
+} /* End of 'translate' function */
+
+/**
+ * \brief Translate tree to asm code function.
+ * \param [in]  file_in           name of a file to read from.
+ * \param [in]  file_out          name of a file to write.
+ */
+void ad6::backend::_tree_to_asm( const char file_in[], const char file_out[] )
 {
   _read_tree(file_in);
   FillFncTables(funcs, vars);
@@ -62,7 +72,7 @@ void ad6::backend::_to_asm( const char filename[] )
           "end\n\n");
   string _main("main", 4);
 
-  act_fnc = _change_fnc(_main);
+  act_fnc = GLOBAL_VAR;//_change_fnc(_main);
 
   _rec_print_asm(root);
 
@@ -88,7 +98,7 @@ void ad6::backend::_push_globals( void )
     {
       IsDecl = true;
       _rec_print_asm((*nd)->left->right);
-      POP_BX(vars[(*nd)->left->num].get_offset(), (*nd));
+      POP_BX(vars[(*nd)->left->left->num].get_offset(), (*nd));
     }
     nd = &((*nd)->right);
   }
@@ -264,8 +274,11 @@ void ad6::backend::_asm_op( node *nd )
     }
     else
     {
-      _fprint("push %d\n", vars[nd->left->num].get_offset());
-      _fprint("pop dx\n push[dx]\n");
+      if (act_fnc != GLOBAL_VAR)
+      {
+        _fprint("push %d\n", vars[nd->left->num].get_offset());
+        _fprint("pop dx\n push [dx]\n");
+      }
     }
     return;
   }

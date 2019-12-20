@@ -13,7 +13,7 @@
 
 namespace ad6
 {
-  class backend : public tree
+  class backend : public base_translator
   {
   private:
     int num_if;
@@ -23,13 +23,13 @@ namespace ad6
 
     backend( void );
 
-
-
-    void tree_to_asm( const char file_in[], const char file_out[] );
+    virtual void translate( const char file_in[], const char file_out[] ) override;
 
     ~backend( void );
 
   private:
+
+    void _tree_to_asm( const char file_in[], const char file_out[] );
 
     void _push_globals( void );
 
