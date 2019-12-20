@@ -28,10 +28,10 @@ char * ad6::InputAnswer( const char printfstr[], ... )
 void ad6::frontend::_pre_par( void )
 {
   toks = new token[buf_size + 1];
-  size_t str_counter = 0, pos_counter = 0;
+  unsigned str_counter = 0, pos_counter = 0;
   int pos = 0;
 
-  for (size_t i = 0; i < buf_size; i++)
+  for (unsigned i = 0; i < buf_size; i++)
   {
     if (isspace(buf[i]))
     {
@@ -51,7 +51,7 @@ void ad6::frontend::_pre_par( void )
 
     if (isalpha(buf[i]))
     {
-      size_t end_word = _getWord(&i);
+      unsigned end_word = _getWord(&i);
 
       toks[toks_size++] = token(TOK_STR, 0, str_counter + 1, pos_counter + 1, buf + i, end_word);
       i += end_word - 1;
@@ -64,24 +64,24 @@ void ad6::frontend::_pre_par( void )
 
 /*
 */
-size_t ad6::frontend::_getWord( size_t *pos )
+unsigned ad6::frontend::_getWord( unsigned *pos )
 {
-  size_t new_pos = 0;
+  unsigned new_pos = 0;
   
   do
   {
     new_pos++;
-  } while (isalpha(buf[*pos + new_pos]));
+  } while (isalpha((unsigned char)buf[*pos + new_pos]));
 
   return new_pos;
 } /* End of '_getWord' function */
 
 /* 
 */
-double ad6::frontend::_getNum( size_t *pos )
+double ad6::frontend::_getNum( unsigned *pos )
 {
   double num = 0;
-  size_t add_pos = 0;
+  unsigned add_pos = 0;
   
   if (sscanf(buf + *pos, "%lg%n", &num, &add_pos) != 1)
     return NAN;
@@ -91,11 +91,21 @@ double ad6::frontend::_getNum( size_t *pos )
 } /* End of '_getNum' function */
 
 /**
+ * \brief Translate to AST function.
+ * \param [in] file_in        name of a file to read code from.
+ * \param [in] file_out       name of a file to save tree.
+ */
+void ad6::frontend::translate( const char file_in[], const char file_out[] )
+{
+  _par_tree(file_in, file_out);
+} /* End of 'translate' function */ 
+
+/**
  * \brief Parse code to AST function.
  * \param [in] file_in        name of a file to read code from.
  * \param [in] file_out       name of a file to save tree.
  */
-void ad6::frontend::par_tree( const char file_in[], const char file_out[] )
+void ad6::frontend::_par_tree( const char file_in[], const char file_out[] )
 {
   _read_par_tree(file_in);
   _save_tree(file_out);
@@ -115,7 +125,7 @@ bool ad6::frontend::_read_par_tree( const char filename[] )
   buf = FillBuf(filename, &buf_size);
 
   char IsOk = 0;
-  size_t pos = 0;
+  unsigned pos = 0;
   TREE_ASSERT(buf != nullptr, "Error with opening file")
 
   if (root != nullptr)
@@ -127,31 +137,6 @@ bool ad6::frontend::_read_par_tree( const char filename[] )
 
   return true; 
 } /* End of '_read_par_tree' function */
-
-
-/**
- * \brief Save tree to file function.
- * \param [in]  filename  Name of a file to save.
- * \return true if all is OK.
- * \return false otherwise.
- */
-bool ad6::frontend::_save_tree( const char filename[] )
-{
-  TREE_ASSERT(filename != nullptr, "Incorrect file name");
-
-  tr = fopen(filename, "w");
-
-  if (tr == nullptr)
-  {
-    printf("Oh, some errors with openning file \"%s\"", filename);
-    return false;
-  }
-
-  _print_tree(root);
-
-  fclose(tr);
-  return true;
-} /* End of '_save_tree' function */
 
 
 /**
@@ -178,7 +163,7 @@ int ad6::frontend::find_op( char sym )
  * \param [in] start Pointer to tree's node.
  * \param [in] var_num Number of variable in variables array.
 */
-bool ad6::frontend::_find_var_tree( node *start, size_t var_num ) const
+bool ad6::frontend::_find_var_tree( node *start, unsigned var_num ) const
 {
   if (start->type == TYPE_VAR && start->num == var_num)
     return false;

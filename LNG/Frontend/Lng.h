@@ -19,42 +19,44 @@
 namespace ad6
 {
   char * InputAnswer( const char printfstr[], ... );
-  const size_t MAX_BUFF = 100;
-  class frontend : public tree
+  const unsigned MAX_BUFF = 100;
+  class frontend : public base_translator
   {
   private:
-    size_t toks_size;
+    unsigned toks_size;
     parser par;
     token* toks;
 
   public:
     // Default constructor
-    frontend( void ) : tree(),
+    frontend( void ) : base_translator(),
                        toks(nullptr),
                        toks_size(0)
     {
     }
 
-    void par_tree( const char file_in[], const char file_out[] );
+    virtual void translate( const char file_in[], const char file_out[] ) override;
 
     // Destructor
     ~frontend( void )
     {
+      if (toks != nullptr)
+        delete[] toks;
     }
 
   private:
 
+    void _par_tree( const char file_in[], const char file_out[] );
+
     bool _read_par_tree( const char filename[] );
 
-    bool _save_tree( const char filename[] );
+    unsigned _getWord( unsigned *pos );
 
-    size_t _getWord( size_t *pos );
-
-    double _getNum( size_t *pos );
+    double _getNum( unsigned *pos );
 
     void _pre_par( void );
 
-    bool _find_var_tree( node *start, size_t var_num ) const;
+    bool _find_var_tree( node *start, unsigned var_num ) const;
 
     int find_op( char sym );
   };
