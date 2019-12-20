@@ -210,15 +210,15 @@ bool  ad6::tree::dump( const char filename[], node *nd ) const
 {
   TREE_ASSERT(filename != nullptr, "Incorrect file name");
 
-  char buf[ANSWER_MAX] = {};
+  char buffer[ANSWER_MAX] = {};
 
-  sprintf(buf, "%s.dot", filename);
+  sprintf(buffer, "%s.dot", filename);
 
-  FILE *dmp = fopen(buf, "w");
+  FILE *dmp = fopen(buffer, "wb");
 
   if (dmp == nullptr)
   {
-    printf("Oh, some errors with openning file %s\n", buf);
+    printf("Oh, some errors with openning file %s\n", buffer);
     return false;
   }
 
@@ -231,9 +231,9 @@ bool  ad6::tree::dump( const char filename[], node *nd ) const
 
   fclose(dmp);
  
-  sprintf(buf, "dot -Tpng %s.dot -o%s.png", filename, filename);
+  sprintf(buffer, "dot -Tpng %s.dot -o%s.png", filename, filename);
 
-  system(buf);
+  system(buffer);
   return true;
 } /* End of 'dump' funciton */
 
@@ -624,8 +624,10 @@ void ad6::tree::tex_fun_dump( const char filename[] )
   size_t phr_size = sizeof(phrases) / sizeof(phrases[0]);
   char buf[ANSWER_MAX] = {};
   sprintf(buf, "%s.tex", filename);
+
   srand(clock());
-  if (rand() % 10 == 2.0)
+
+  if (rand() % 2)
   {
     printf("Today is a bad day for differentiate, I won't do this\n");
     return;
@@ -676,12 +678,6 @@ void ad6::tree::tex_fun_dump( const char filename[] )
   {
     symp_counter = 0;
     int prev_cnt = 1;
-    fprintf(tex, "\n%s\\\\\n", phrases[rand() % phr_size]);
-    PRINT_DER(i);
-    _tex_rec(tex, diff[i]);
-    fprintf(tex, "\n$$");
-    diff[i] = _rec_symp(diff[i]);
-    PRINT;
     while (prev_cnt != symp_counter)
     {
       prev_cnt = symp_counter;
@@ -709,10 +705,10 @@ void ad6::tree::tex_dump( const char filename[], node* root )
   TREE_ASSERT(filename != nullptr, "Incorrect filename");
   TREE_ASSERT(root != nullptr, "Incorrect tree root");
 
-  char buf[ANSWER_MAX] = {};
-  sprintf(buf, "%s.tex", filename);
+  char buffer[ANSWER_MAX] = {};
+  sprintf(buffer, "%s.tex", filename);
 
-  FILE *tex = fopen(buf, "wb");
+  FILE *tex = fopen(buffer, "wb");
   
   TREE_ASSERT(tex != nullptr, "Cannot open file for tex ");
 
@@ -727,12 +723,12 @@ void ad6::tree::tex_dump( const char filename[], node* root )
   fclose(tex);
 
 
-  sprintf(buf, "pdflatex %s.tex", filename);
+  sprintf(buffer, "pdflatex %s.tex", filename);
 
-//  system(buf);
+//  system(buffer);
 
-  sprintf(buf, "%s.pdf", filename);
-  //system(buf);
+  sprintf(buffer, "%s.pdf", filename);
+  //system(buffer);
 } /* End of 'tex_dump' function */
 
 /**
@@ -899,8 +895,7 @@ void ad6::tree::process_loop( void )
         printf("1 - root, 2 - differetiated tree ");
         scanf("%d", &num);
         if (num == 1)
-          dump
-          (buff, root);
+          dump(buff, root);
         else if (num == 2)
         {
           if (diff != nullptr)
@@ -911,8 +906,8 @@ void ad6::tree::process_loop( void )
               printf("\nNo variables such this\n");
             else
             {
-              _diff_simpl();
-              dump(buf, diff[num]);
+              _simplifier(&diff[num]);
+              dump(buff, diff[num]);
             }
           }
         }
@@ -934,7 +929,7 @@ void ad6::tree::process_loop( void )
               printf("No variables such this\n");
             else
             {
-              _diff_simpl();
+              _simplifier(&diff[num]);
               tex_dump(buff, diff[num]);
             }
           }

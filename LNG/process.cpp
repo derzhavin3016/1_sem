@@ -59,7 +59,7 @@ void MainProcLoop( void )
       }
       printf("DUMP\n");
       buff = InputAnswer("Input file name to dump to: ");
-      prg[last]->dump_root(buf1);
+      prg[last - 1]->dump_root(buf1);
       break;
     default:
       printf("Incorrect number of command, try again\n");

@@ -104,4 +104,5 @@ ad6::Disasm::~Disasm( void )
     free(buf_out);
   if (code != nullptr)
     free(code);
+  code = buf_out = nullptr;
 } /* End of '~Disasm' function */

@@ -6,16 +6,44 @@
 
 namespace ad6
 {
+  struct var
+  {
+    string name;
+    double value;
+
+    var( void );
+
+    var( string &st );
+
+    var( const var &v );
+
+    var( string &st, double val );
+
+    var & operator=( const var &v );
+
+    bool operator==( const var &v );
+  };
+
   class parser
   {
   private: 
       const char *ptr = "";
-      stock<string> variables;
+      stock<var> variables;
   public:
 
     // default constructor
     parser( void ) : variables()
     {
+    }
+
+    const var & operator[]( size_t Index ) const
+    {
+      return variables[Index];
+    }
+
+    var & operator[]( size_t Index )
+    {
+      return variables[Index];
     }
 
     // destructor
@@ -31,6 +59,11 @@ namespace ad6
     node * getG( const char *str );
 
     int find_var( const char str[] );
+
+    string & get_var( size_t num )
+    {
+      return variables[num].name;
+    }
 
   private:
     node * _getE( void );

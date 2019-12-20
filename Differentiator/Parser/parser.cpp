@@ -8,6 +8,9 @@
     throw Error(err, PR_LOCATION);  \
   }
 
+
+
+
 /**
  * \brief get G rule function.
  */ 
@@ -16,7 +19,7 @@ ad6::node * ad6::parser::getG( const char *str )
   ptr = str;
 
   node *root = _getE();
-  SYNTAX_ASSERT(*ptr == '\r', "Incorrect ending of program");
+  //SYNTAX_ASSERT(*ptr == '\r', "Incorrect ending of program");
 
   return root;
 } /* End of 'getG' function */
@@ -180,10 +183,10 @@ ad6::node * ad6::parser::_getId( void )
   {
     int num = 0;
     
-    if ((num = variables.find(str)) == -1)
+    if ((num = variables.find(var(str))) == -1)
     {
       num = variables.size();
-      variables.add(str);
+      variables.add(var(str));
     }
     return new node(TYPE_VAR, old_ptr, (size_t)(ptr - old_ptr), (size_t)num);
   }
@@ -200,7 +203,7 @@ ad6::node * ad6::parser::_getId( void )
 int ad6::parser::find_var( const char str[] )
 {
   for (size_t i = 0 ; i < variables.size(); i++)
-    if (StrChrCmp(str, variables[i]) == 0)
+    if (StrChrCmp(str, variables[i].name) == 0)
       return i;
 
   return -1;
@@ -241,6 +244,39 @@ ad6::node * ad6::parser::_getFunc( void )
  #undef DEF_FNC
   return nullptr;
 } /* End of 'getFunc' function */
+
+ad6::var::var( void )
+{
+}
+
+ad6::var::var( string &st ) : name(st),
+                    value(0)
+{
+}
+
+ad6::var::var( const var &v ) : name(v.name),
+                      value(v.value)
+{
+}
+
+ad6::var::var( string &st, double val ) : name(st),
+                                value(val)
+{
+}
+
+ad6::var & ad6::var::operator=( const var &v )
+{
+  name = v.name;
+  value = v.value;
+
+  return *this;
+}
+
+bool ad6::var::operator==( const var &v )
+{
+  return name == v.name;
+}
+
 
 #undef cVal
 
