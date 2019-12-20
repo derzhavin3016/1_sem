@@ -2,7 +2,8 @@
 #pragma warning (disable: 4267)
 #include "Diff.h"
 
-
+#define GREETING "Nice to meet you, stranger\n"                                        \
+                 "Input filename to start:\n"
 
 using namespace ad6;
 
@@ -13,7 +14,8 @@ int main( void )
     char *buf = nullptr, *buf2 = nullptr;
     tree tr;
     tr.process_loop();
-    /*buf = strdup(InputAnswer("Input filename to start:"));
+#if 0
+    buf = strdup(InputAnswer(GREETING));
     buf2 = InputAnswer("Input file name to write answer:\n");
 
     double answ = tr.laba_kill(buf);
@@ -21,7 +23,8 @@ int main( void )
     printf("The answer is: %lg\n", answ);
     free(buf);
     
-    tr.write_answ(buf2, answ);*/
+    tr.write_answ(buf2, answ);
+#endif
   }
   catch ( Error &err)
   {

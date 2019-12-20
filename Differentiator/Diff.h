@@ -5,6 +5,7 @@
 #include "..\DEFS.h"
 #include "Parser/parser.h"
 #include <stdarg.h>
+#include <time.h>
 
 #define TREE_LOCATION  __LINE__, __FILE__, __FUNCSIG__
 

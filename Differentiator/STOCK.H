@@ -80,6 +80,7 @@
           delete[] array;
         }
         array = new_bulk;
+        max_size = size;
      }
 
      size_t size( void )
@@ -103,14 +104,14 @@
 
      data & operator[]( const int Index )
      {
-       assert(Index >= 0 && Index <= (int)real_size);
+       assert(Index >= 0 && Index <= (int)max_size);
        return array[Index];
      }
 
 
      data & operator[]( const int Index ) const
      {
-       assert(Index >= 0 && Index <= (int)real_size);
+       assert(Index >= 0 && Index <= (int)max_size);
        return array[Index];
      }     template <class T2>       void walk( const T2 &Walker )       {         for (int i = 0; i < real_size; i++)           Walker(array[i]);        }
 

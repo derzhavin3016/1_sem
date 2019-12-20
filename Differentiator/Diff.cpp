@@ -1,7 +1,7 @@
 #include "Diff.h"
 
 #define TEX_DMP \
-"\\documentclass[12pt,a4paper,fleqn]{article} \n"                    \
+"\\documentclass[6pt,a4paper,fleqn]{article} \n"                    \
 "\\usepackage[utf8]{inputenc}                                     \n"\
 "\\usepackage{amssymb, amsmath, multicol}                         \n"\
 "\\usepackage[russian]{babel}                                     \n"\
@@ -42,7 +42,18 @@ const char *ad6::phrases[] =
     "It's obviously, that",
     "As we all know from Petrovich, pg. 115",
     "After simple transformations",
-    "Let's note, that"
+    "Let's notice, that",
+    "As in previous example",
+    "As everybody knows",
+    "After some magic, we get",
+    "Let's pet Poltorashka and calculate that",
+    "Neglecting of infinity small values, we get",
+    "Isn't so hard to notice, that",
+    "My sister calculated, that. (She is in 1st form)",
+    "If you can't understand this, you are dumb",
+    "As we all know from mathanalisys course",
+    "From the Farid Haidari's theorem follows, that",
+    "As every self-sufficient human knows since first grade:"
   };
 
 /**
@@ -610,8 +621,15 @@ void ad6::tree::tex_fun_dump( const char filename[] )
 {
   TREE_ASSERT(filename != nullptr, "Incorrect filename");
 
+  size_t phr_size = sizeof(phrases) / sizeof(phrases[0]);
   char buf[ANSWER_MAX] = {};
   sprintf(buf, "%s.tex", filename);
+  srand(clock());
+  if (rand() % 10 == 2.0)
+  {
+    printf("Today is a bad day for differentiate, I won't do this\n");
+    return;
+  }
 
   FILE *tex = fopen(buf, "wb");
   
@@ -634,8 +652,6 @@ void ad6::tree::tex_fun_dump( const char filename[] )
   _tex_rec(tex, root);
   fprintf(tex, " $$\n\\\\");
 
-  size_t phr_size = sizeof(phrases) / sizeof(phrases[0]);
-
 #define PRINT_DER(var)                                       \
   fprintf(tex, "$$\nf'_{");                                      \
   par.get_var(var).print_in_file(tex);                       \
@@ -648,10 +664,13 @@ void ad6::tree::tex_fun_dump( const char filename[] )
     }                                                        \
   fprintf(tex, " \\right) = ");
 
-#define PRINT  fprintf(tex, "\\\\\n%s\\\\\n", phrases[rand() % phr_size]); \
-               PRINT_DER(i);                                               \
-               _tex_rec(tex, diff[i]);                                     \
-               fprintf(tex, "\n$$");
+#define PRINT  {                                                             \
+                 srand(clock());                                             \
+                 fprintf(tex, "\\\\\n%s\\\\\n", phrases[rand() % phr_size]); \
+                 PRINT_DER(i);                                               \
+                 _tex_rec(tex, diff[i]);                                     \
+                 fprintf(tex, "\n$$\\\\");                                   \
+               }
 
   for (size_t i = 0; i < par.var_size(); i++)
   {
@@ -667,7 +686,8 @@ void ad6::tree::tex_fun_dump( const char filename[] )
     {
       prev_cnt = symp_counter;
       diff[i] = _rec_symp(diff[i]);
-      PRINT;
+      if (prev_cnt != symp_counter)
+        PRINT
     }
   }
   fprintf(tex, TEX_PARTING);
@@ -1013,7 +1033,7 @@ void ad6::tree::_vars_init( void )
     {
       scanf("%lg", &val);
       if (val < 0)
-        printf("Accuracy always > 0, try again\n");
+        printf("Accuracy always > 0, try again))\n");
       else
         break;
     }
@@ -1025,7 +1045,7 @@ void ad6::tree::_get_acc( void )
 {
   accuracies.resize(par.var_size());
 
-  for (size_t i = 0; i < accuracies.size(); i++)
+  for (size_t i = 0; i < par.var_size(); i++)
   {
     double ac = 0;
     std::cout << "Input accuracy for '" << par.get_var(i) << "' variable:\n";
