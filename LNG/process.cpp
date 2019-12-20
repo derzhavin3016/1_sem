@@ -1,5 +1,8 @@
 #include "process.h"
 
+/**
+ * \brief Process loop function.
+ */
 void MainProcLoop( void )
 {
 #define TRS prg[val - 1]->translate(buff, buf1); \
@@ -63,4 +66,5 @@ void MainProcLoop( void )
       break;
     }
   }
-}
+  #undef TPS
+} /* End of 'MainProcLoop' function */
