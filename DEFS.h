@@ -11,6 +11,7 @@
 #include "Strs/strs.h"
 #include <assert.h>
 
+#if 1
 /* Debug memory allocation support */ 
 #ifndef NDEBUG 
 # define _CRTDBG_MAP_ALLOC
@@ -36,26 +37,44 @@ public:
 #   define new new(_NORMAL_BLOCK, __FILE__, __LINE__) 
 # endif /* _CRTDBG_MAP_ALLOC */ 
 #endif /* _DEBUG */
-
+#endif
 
 namespace ad6
 {
-  // Process error structure
-  struct Error
+  /**
+   * Compare two numbers function
+   * \param [in] a   first number.
+   * \param [in] b   second number.
+   * \return 1 if numbers are equal, 0 otherwise.
+   * \note Accuracy defined by EPSILON constant.
+   */
+  __inline int Compare( double a, double b = 0, double epsilon = 1e-12 )
   {
-    const char* descr;
-    int line;
-    const char* file;
-    const char* func;
-    //Error* reason;
+  	return (fabs(a - b) < epsilon);
+  } /* End of 'Compare' function */
 
-    Error( const char* des, int l, const char* filename, const char* function ) : descr(des),
-                                                                                  line(l),
-                                                                                  file(filename),
-                                                                                  func(function)
+    // Process error structure
+    struct Error : public std::runtime_error
     {
-    }
-  };
+      const char* descr;
+      int line;
+      const char* file;
+      const char* func;
+      //Error* reason;
+
+      Error( const char* des, int l, const char* filename, const char* function ) : descr(des),
+                                                                                    line(l),
+                                                                                    file(filename),
+                                                                                    func(function),
+                                                                                    std::runtime_error(des)
+      {
+      }
+
+      virtual const std::string what() 
+      { 
+        return descr; 
+      }
+    };
 
   /**
    * \brief Swap two values function by pointers (template).
