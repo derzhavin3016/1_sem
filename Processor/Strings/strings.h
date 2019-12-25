@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+//#include "..\..\DEFS.h"
 
 #define IfEndStr(A) (A != '\0' && A != '\n')
 
@@ -21,6 +22,8 @@ struct String
 };
 
 char * LoadAndCreateStrings( const char filename[], size_t *str_count, int *error_code );
+
+int StrCompareIf( const char s1[], const char s2[], char end_sym );
 
 int StrCount( const char buf[], size_t buf_size, char end_value );
 
@@ -43,13 +46,12 @@ bool PutBufToFile( const char file_name[], const char buf[], size_t buf_size );
 char* FillBuf( const char file_in[], size_t *code_size );
 
 int StrCompareBegin( char s1[], char s2[] );
-
 enum
 {
-  LACS_LENGTH_ERROR = 0,
-  LACS_FSEEK_ERROR,        //1
-  LACS_BUF_MEMORY_ERROR,   //2
-  LACS_FOPEN_ERROR         //3
+  LACS_LENGTH_ERROR = -1,
+  LACS_FSEEK_ERROR = -2,
+  LACS_BUF_MEMORY_ERROR = -3,
+  LACS_FOPEN_ERROR = -4,
 };
 
 

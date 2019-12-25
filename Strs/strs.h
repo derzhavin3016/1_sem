@@ -10,36 +10,49 @@
 
 namespace ad6
 {
-  const size_t DEF_SIZE = 100;
+  const unsigned DEF_SIZE = 100;
 
   class string
   {
   private:
-    const char *str;
-    size_t len;
+    const  char *str;
+    unsigned len;
   public:
     friend int StrCmp( string *str1, string* str2 );
     friend int StriCmp( string *str1, string* str2 );
 
-    friend int StrChrCmp( const char s[], string &st );
+    friend int StrChrCmp( const  char s[], const string &st );
+
+    friend int StrChrCmp( const  char s[], string &st );
 
     friend std::ostream & operator<<( std::ostream &out, string &str );
 
     string( void );
 
-    string( const char *s, size_t size );
+    string( const  char *s, unsigned size );
     
-    void print_in_file( FILE *f );
+    string( const string &st ) : str(st.str),
+                                 len(st.len)
+    {
+    }
 
-    const char *str_ptr( void );
+    void print_in_file( FILE *f ) const;
+
+    void print_in_str( char *st ) const;
+
+    const  char *str_ptr( void ) const;
 
     string &operator=( const string &s );
 
+    friend int StrCmp( string *str1, const string* str2 );
+
     bool operator==( string &s );
 
-    size_t size( void );
+    bool operator==( const string &s );
 
-    char operator[]( size_t index ) const;
+    unsigned size( void );
+
+     char operator[]( unsigned index ) const;
 
     
 
@@ -48,13 +61,13 @@ namespace ad6
 
   std::ostream & operator<<( std::ostream &out, string &str );
 
-  void StrCpy( char *Dest, const char* Source );
+  void StrCpy(  char *Dest, const  char* Source );
 
   int StrCmp( string *str1, string* str2 );
 
   int StriCmp( string *str1, string* str2 );
 
-  int StrChrCmp( const char s[], string &st );
+  int StrChrCmp( const  char s[], string &st );
 }
 
 

@@ -43,7 +43,8 @@ char * LoadAndCreateStrings( const char filename[], size_t *str_count, int *erro
   }
   len = (int)fread(buf, sizeof(buf[0]), len, f);
 
-  *str_count = len;
+  if (str_count != nullptr)
+    *str_count = len;
   fclose(f);
   return buf;
 } /* End of 'LoadAndCreateStrings' function */
@@ -196,6 +197,29 @@ int StrCount( const char buf[], size_t buf_size, char end_value )
   return str_count;
 } /* End of 'StrCount' function */
 
+int StrCompareIf( const char s1[], const char s2[], char end_sym )
+{
+  assert(s1 != NULL);
+  assert(s2 != NULL);
+
+
+  const unsigned char *str1 = (unsigned char *)s1, 
+                      *str2 = (unsigned char *)s2;
+
+  #define END_SYM(s)  ((s) != (unsigned char)end_sym)
+
+#define BREAK_COND ((*str1 != 0) && (*str2 != 0) && END_SYM(*str1) && END_SYM(*str2))
+  
+  while (*str1 == *str2 && BREAK_COND)
+    str1++, str2++;
+  if (!BREAK_COND)
+    str1--, str2--;
+
+  return *str1 - *str2;
+  #undef BREAK_COND
+
+#undef END_SYM
+}
 
 /**
  * Compare two strings in alphabet order function from the beginings.
@@ -213,7 +237,7 @@ int StrCompareBegin( const char s1[], const char s2[], char end_sym /*= 0*/ )
 
   const unsigned char *str1 = (unsigned char *)s1, 
                       *str2 = (unsigned char *)s2;
-#define END_SYM(s)  (s) != end_sym
+#define END_SYM(s)  (s) != (unsigned char)end_sym
 
 #define BREAK_COND !IfEndStr(*str2) || !IfEndStr(*str1) || !END_SYM(*str1) || !END_SYM(*str2)
 
