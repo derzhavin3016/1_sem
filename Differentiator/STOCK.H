@@ -128,7 +128,7 @@
 
         for (size_t i = 0; i < real_size; i++)
           if (comp(array[i], Data) == 0)
-            return i;
+            return (int)i;
 
         return -1;
       } /* End of 'find' function */
