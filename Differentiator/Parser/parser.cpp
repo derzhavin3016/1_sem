@@ -2,6 +2,12 @@
 
 #define PR_LOCATION __LINE__, __FILE__, __FUNCSIG__
 
+#define STR(i)  ptr->get_str()[i]
+
+#define CHECK_SMB(symb)  (_check_ptr_type(TOK_SMB) && STR(0) == symb)
+
+#define CHECK_STR(str)  (_check_ptr_type(TOK_STR) && StrChrCmp(str, ptr->get_string()) == 0)
+
 #define SYNTAX_ASSERT(cond, err)    \
   if (!(cond))                      \
   {                                 \
@@ -14,12 +20,12 @@
 /**
  * \brief get G rule function.
  */ 
-ad6::node * ad6::parser::getG( const char *str )
+ad6::node * ad6::parser::getG( const token *str )
 {
   ptr = str;
 
   node *root = _getE();
-  //SYNTAX_ASSERT(*ptr == '\r', "Incorrect ending of program");
+  SYNTAX_ASSERT(_check_ptr_type(TOK_NUL), "Incorrect ending of program");
 
   return root;
 } /* End of 'getG' function */
@@ -31,9 +37,9 @@ ad6::node * ad6::parser::_getE( void )
 {
   node *val = _getT();
 
-  while (*ptr == '+' || *ptr == '-')
+  while (CHECK_SMB('+') || CHECK_SMB('-'))
   {
-    char op = *ptr;
+    char op = STR(0);
     ptr++;
 
     node *val2 = _getT();
@@ -54,9 +60,9 @@ ad6::node * ad6::parser::_getT( void )
 {
   node *val = _getPow();
 
-  while (*ptr == '*' || *ptr == '/')
+  while (CHECK_SMB('*') || CHECK_SMB('/'))
   {
-    char op = *ptr;
+    char op = STR(0);
 
     ptr++;
     node *val2 = _getPow();
@@ -65,12 +71,22 @@ ad6::node * ad6::parser::_getT( void )
       val = &(*val * *val2);
     else
       val = &(*val / *val2);
-
-    int dummy = 0;
   }
 
   return val;
 } /* End of 'getT' function */
+
+
+/**
+ * \brief Check type of ptr variable.
+ * \param [in]  check    Type of a token to check.
+ * \return true if types are equal
+ * \return false otherwise.
+ */
+bool ad6::parser::_check_ptr_type( tok_type check )
+{
+  return ptr->get_type() == check;
+} /* End of '_check_ptr_type' function */
 
 /**
  * \brief Get power rule function.
@@ -79,7 +95,7 @@ ad6::node * ad6::parser::_getPow( void )
 {
   node *val = _getP();
 
-  while (*ptr == '^')
+  while (CHECK_SMB('^'))
   {
     ptr++;
     node *val2 = _getP();
@@ -96,15 +112,15 @@ ad6::node * ad6::parser::_getPow( void )
 ad6::node * ad6::parser::_getP( void )
 {
   node *nd = nullptr;
-  if (*ptr == '(')
+  if (CHECK_SMB('('))
   {
     ptr++;
     nd = _getE();
-    SYNTAX_ASSERT(*ptr == ')', "Pair brace wasn't find");
+    SYNTAX_ASSERT(CHECK_SMB(')'), "Pair brace wasn't find");
     ptr++;
     return nd;
   }
-  if (isdigit(*(ptr)) || *ptr == '-' )
+  if (_check_ptr_type(TOK_NUM) || (ptr + 1)->get_type() == TOK_NUM)
     return _getN();
   return _getId();
 } /* End of 'getP' function */
@@ -123,30 +139,16 @@ ad6::node * ad6::parser::_getN( void )
 {
   double val = 0;
   bool IsNeg = false;
-  if (*ptr == '-')
+  if (CHECK_SMB('-'))
   {
     IsNeg = true;
     ptr++;
   }
-  do
-  {
-    val = val * 10 + *ptr - '0';
-    ptr++;
-  } while (*ptr >= '0' && *ptr <= '9');
-  if (*ptr == '.')
-  {
-    ptr++;
-    int deg_cnt = -1;
-    do
-    {
-      val += (*ptr - '0') * dec_neg_pow(deg_cnt--);
-      ptr++;
-    } while (*ptr >= '0' && *ptr <= '9');
-  }
+  val = ptr->get_value();
 
   if (IsNeg)
     val = -val;
-
+  ptr++;
   return new node(val);
 } /* End of 'getN' function */
 
@@ -156,39 +158,54 @@ ad6::node * ad6::parser::_getN( void )
 ad6::node * ad6::parser::_getId( void )
 {
   int pos = 0;
-  const char *old_ptr = ptr;
-  do
+  node *Id = nullptr;
+  if (CHECK_SMB('-'))
   {
     ptr++;
-  } while (isalpha(*ptr));
-
-  string str(old_ptr, (size_t)(ptr - old_ptr)); 
-
-  #define DEF_FNC(name, num, diff, calc)                                          \
-  else if (StrChrCmp(#name, str) == 0)                                          \
-  {                                                                             \
-    SYNTAX_ASSERT(*ptr == '(', "function '"#name"' without braces");            \
-    ptr++;                                                                      \
-    node *nd = _getE();                                                         \
-    SYNTAX_ASSERT(*ptr == ')', "function '"#name"' without braces");            \
-    ptr++;                                                                      \
-    return new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);    \
+    Id = new node('*', new node(-1.0), nullptr);
   }
 
+  string str(ptr->get_string()); 
+  ptr++;
+#define CHECK_ID\
+    if (Id != nullptr)                                                              \
+    {                                                                               \
+      Id->right = fin;                                                              \
+      return Id;                                                                    \
+    }                                                                               \
+  
+  node *nd2 = nullptr;
+
+  #define DEF_FNC(name, num, diff, calc)                                            \
+  else if (StrChrCmp(#name, str) == 0)                                              \
+  {                                                                                 \
+    SYNTAX_ASSERT(CHECK_SMB('('), "function '"#name"' without braces");             \
+    ptr++;                                                                          \
+    node *nd = _getE();                                                             \
+    SYNTAX_ASSERT(CHECK_SMB(')'), "function '"#name"' without braces");             \
+    ptr++;                                                                          \
+    node *fin = new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nd2, nd);   \
+    CHECK_ID;                                                                       \
+    return fin;                                                                     \
+  }
+  
   if (0);
 
   #include "..\func.h"
 
   else
   {
-    int num = 0;
     
-    if ((num = variables.find(var(str))) == -1)
+    int num = variables.find(var(str));
+    if (num == -1)
     {
       num = variables.size();
       variables.add(var(str));
     }
-    return new node(TYPE_VAR, old_ptr, (size_t)(ptr - old_ptr), (size_t)num);
+
+    node *fin = new node(TYPE_VAR, str.str_ptr(), str.size(), (size_t)num);
+    CHECK_ID;
+    return fin;
   }
 } /* End of 'getId' function  */
     
@@ -203,47 +220,11 @@ ad6::node * ad6::parser::_getId( void )
 int ad6::parser::find_var( const char str[] )
 {
   for (size_t i = 0 ; i < variables.size(); i++)
-    if (StrChrCmp(str, variables[i].name) == 0)
-      return i;
+    if (StrChrCmp(str, variables[(int)i].name) == 0)
+      return (int)i;
 
   return -1;
 } /* End of 'find_var' function */
-
-/**
- * \brief Get fucntion function
- */
-ad6::node * ad6::parser::_getFunc( void )
-{
-  int pos = 0;
-  const char *old_ptr = ptr;
-  do
-  {
-    ptr++;
-  } while (isalpha(*ptr));
-
-  string str(old_ptr, (size_t)(ptr - old_ptr));
-
-#define DEF_FNC(name, num, diff, calc)                                          \
-  else if (StrChrCmp(#name, str) == 0)                                          \
-  {                                                                             \
-    SYNTAX_ASSERT(*ptr == '(', "function '"#name"' without braces");            \
-    ptr++;                                                                      \
-    node *nd = _getE();                                                         \
-    SYNTAX_ASSERT(*ptr == ')', "function '"#name"' without braces");            \
-    ptr++;                                                                      \
-    return new node(TYPE_FUNC, str.str_ptr(), str.size(), num, nullptr, nd);    \
-  }
-
-  if (0);
-
-  #include "..\func.h"
-
-  else
-    ptr = old_ptr;
-
- #undef DEF_FNC
-  return nullptr;
-} /* End of 'getFunc' function */
 
 ad6::var::var( void )
 {

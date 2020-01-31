@@ -2,7 +2,7 @@
 #define __PARSER_H_
 
 #include "..\..\DEFS.h"
-#include "..\Node\node.h"
+#include "..\Tokens\Tok.h"
 
 namespace ad6
 {
@@ -27,7 +27,7 @@ namespace ad6
   class parser
   {
   private: 
-      const char *ptr = "";
+      const token *ptr;
       stock<var> variables;
   public:
 
@@ -38,12 +38,12 @@ namespace ad6
 
     const var & operator[]( size_t Index ) const
     {
-      return variables[Index];
+      return variables[(int)Index];
     }
 
     var & operator[]( size_t Index )
     {
-      return variables[Index];
+      return variables[(int)Index];
     }
 
     // destructor
@@ -56,13 +56,13 @@ namespace ad6
       return variables.size();
     }
 
-    node * getG( const char *str );
+    node * getG( const token *str );
 
     int find_var( const char str[] );
 
     string & get_var( size_t num )
     {
-      return variables[num].name;
+      return variables[(int)num].name;
     }
 
   private:
@@ -79,6 +79,8 @@ namespace ad6
     node * _getFunc( void );
 
     node * _getPow( void );
+
+    bool _check_ptr_type( tok_type check );
   };
 }
 
