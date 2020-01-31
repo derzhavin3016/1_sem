@@ -56,6 +56,121 @@ const char *ad6::phrases[] =
     "As every self-sufficient human knows since first grade:"
   };
 
+// Default constructor
+ad6::tree::tree( void ) : root(),
+                   diff(nullptr),
+                   buf(nullptr),
+                   buf_size(0),
+                   symp_counter(0),
+                   is_diff_init(false),
+                   toks(nullptr),
+                   toks_size(0)
+{
+}
+
+// Default destructor
+ad6::tree::~tree( void )
+{
+  if (diff != nullptr)
+  {
+    for (size_t i = 0; i < par.var_size(); i++)
+    {
+      if (diff[i] != nullptr)
+        delete diff[i];
+    }
+    delete[] diff;
+  }
+  if (root != nullptr)
+  {
+    delete root;
+    root = nullptr;
+  }
+  if (buf != nullptr)
+  {
+    delete[] buf;
+    buf = nullptr;
+  }
+  if (toks != nullptr)
+  {
+    delete[] toks;
+    toks = nullptr;
+  }
+}
+
+/**
+ * \brief Pars text to tokens function.
+ */
+void ad6::tree::_pre_par( void )
+{
+  toks = new token[buf_size + 1];
+  unsigned str_counter = 0, pos_counter = 0;
+  int pos = 0;
+
+  for (unsigned i = 0; i < buf_size; i++)
+  {
+    if (isspace(buf[i]))
+    {
+      if (buf[i] == '\n')
+      {
+        pos_counter = 0;
+        str_counter++;
+      }
+      continue;
+    }
+
+    if (isdigit(buf[i]))
+    {
+      toks[toks_size++] = token(_getNum(&i), str_counter + 1, pos_counter + 1);
+      continue;
+    }
+
+    if (isalpha(buf[i]))
+    {
+      unsigned end_word = _getWord(&i);
+
+      toks[toks_size++] = token(TOK_STR, 0, str_counter + 1, pos_counter + 1, buf + i, end_word);
+      i += end_word - 1;
+      continue;
+    }
+    toks[toks_size++] = token(TOK_SMB, 0, str_counter + 1, pos_counter + 1, buf + i, 1);
+  }
+  toks[toks_size++] = token(TOK_NUL, 0, str_counter + 1, buf_size);
+} /* End of '_pre_par' function */
+
+/**
+ * \brief Get word token function.
+ * \param [in] pos     Pointer to position.
+ * \return new position.
+ */
+unsigned ad6::tree::_getWord( unsigned *pos )
+{
+  unsigned new_pos = 0;
+  
+  do
+  {
+    new_pos++;
+  } while (isalpha((unsigned char)buf[*pos + new_pos]));
+
+  return new_pos;
+} /* End of '_getWord' function */
+
+/**
+ * \brief Get number token function.
+ * \param [in] pos     Pointer to position.
+ * \return number value.
+ */
+double ad6::tree::_getNum( unsigned *pos )
+{
+  double num = 0;
+  unsigned add_pos = 0;
+  
+  if (sscanf(buf + *pos, "%lg%n", &num, &add_pos) != 1)
+    return NAN;
+
+  *pos = *pos + add_pos - 1;
+  return num;
+} /* End of '_getNum' function */
+
 /**
  * \brief Get user's answer from stdout function.
  * \brief This function put scanned string to static buffer, allocate memory for the answer and return pointer.
@@ -144,7 +259,9 @@ bool ad6::tree::read_tree( const char filename[] )
   if (root != nullptr)
     delete root;
 
-  root = par.getG(buf);
+  _pre_par();
+
+  root = par.getG(toks);
 
   return true;
 } /* End of 'read_tree' function */
@@ -995,7 +1112,7 @@ double ad6::tree::laba_kill( const char filename[] )
     _simplifier(&diff[i]);
     _tree_vars_init(diff[i]);
     double res = rec_calc(diff[i]);
-    answ += res * res * accuracies[i];
+    answ += res * res * accuracies[i] * accuracies[i];
   }
 
   return sqrt(answ);
@@ -1024,14 +1141,7 @@ void ad6::tree::_vars_init( void )
   {
     double val = 0;
     std::cout << "Input '" << par.get_var(i) << "' value:\n";
-    while (1)
-    {
-      scanf("%lg", &val);
-      if (val < 0)
-        printf("Accuracy always > 0, try again))\n");
-      else
-        break;
-    }
+    scanf("%lg", &val);
     par[i].value = val;
   }
 }
@@ -1044,7 +1154,14 @@ void ad6::tree::_get_acc( void )
   {
     double ac = 0;
     std::cout << "Input accuracy for '" << par.get_var(i) << "' variable:\n";
-    scanf("%lg", &ac);
+    while (1)
+    {
+      scanf("%lg", &ac);
+      if (ac < 0)
+        printf("Accuracy always > 0, try again))\n");
+      else
+        break;
+    }
     accuracies[i] = ac;
   }
 }

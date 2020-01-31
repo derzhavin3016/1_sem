@@ -41,22 +41,22 @@ namespace ad6
   private:
     node *root;
     node **diff;
+    bool is_diff_init;
+
     int symp_counter;
+
     char *buf;
     size_t buf_size;
+
     parser par;
-    bool is_diff_init;
+
+    unsigned toks_size;
+    token* toks;
+
     stock<double> accuracies;
   public:
     // Default constructor
-    tree( void ) : root(),
-                   diff(nullptr),
-                   buf(nullptr),
-                   buf_size(0),
-                   symp_counter(0),
-                   is_diff_init(false)
-    {
-    }
+    tree( void );
 
     bool save_tree( const char filename[] ) const;
 
@@ -74,28 +74,8 @@ namespace ad6
     bool tree_diff( const char var[] );
 
     // Destructor
-    ~tree( void )
-    {
-      if (diff != nullptr)
-      {
-        for (size_t i = 0; i < par.var_size(); i++)
-        {
-          if (diff[i] != nullptr)
-            delete diff[i];
-        }
-        delete[] diff;
-      }
-      if (root != nullptr)
-      {
-        delete root;
-        root = nullptr;
-      }
-      if (buf != nullptr)
-      {
-        delete[] buf;
-        buf = nullptr;
-      }
-    }
+    ~tree( void );
+
     node *get_root( void )
     {
       return root;
@@ -115,6 +95,12 @@ namespace ad6
     void write_answ( const char filename[], double answ );
 
   private:
+    
+    double _getNum( unsigned *pos );
+
+    unsigned _getWord( unsigned *pos );
+
+    void _pre_par( void );
 
     void _get_acc( void );
 
