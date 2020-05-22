@@ -36,6 +36,7 @@ bool ad6::Asm::AsmParser( const char file_in[] )
   Header->sign = SIGNATURE;
   Header->version = VER_NO;
   buf_out_size += sizeof(File_Header);
+  const char *mk = nullptr;
 
   for (size_t PC = 0; PC < prog_size; PC++)
   {
@@ -51,9 +52,8 @@ bool ad6::Asm::AsmParser( const char file_in[] )
       buf_out_size++;                               \
       syntax_asm                                    \
     } 
-    
-    const char *mk = nullptr;
-    if ((mk = (char *)memchr(prog[PC].str, ':', prog[PC].len)) != nullptr)
+   
+    else if ((mk = (char *)memchr(prog[PC].str, ':', prog[PC].len)) != nullptr)
     {
       if (!IsAsm)
       {
@@ -62,7 +62,7 @@ bool ad6::Asm::AsmParser( const char file_in[] )
           printf("Same mark in line %d: '%s'\n", PC + 1, promt);
         }*/
         marks[marks_size].mrk = prog[PC].str;
-        marks[marks_size++].line = buf_out_size;
+        marks[marks_size++].line = static_cast<int>(buf_out_size);
       }
     }
 
@@ -70,7 +70,7 @@ bool ad6::Asm::AsmParser( const char file_in[] )
 
     else
     {
-      printf("Unrecognized command in line %d: '%s'\n", PC + 1, promt);
+      printf("Unrecognized command in line %zd: '%s'\n", PC + 1, promt);
       return false;
     }
   }
@@ -103,11 +103,11 @@ bool ad6::Asm::Assembly( const char file_in[], const char file_out[] )
     free(prog);
     prog_size = 0;
   }
-  if (code != nullptr)
-  {
-    free(code);
-    code_size = 0;
-  }
+  //if (code != nullptr)
+  //{
+  //  free(code);
+  //  code_size = 0;
+  //}
   if (!AsmParser(file_in))
     return false;
 
@@ -162,7 +162,7 @@ int ad6::Asm::FindMark( const char str[] )
     if (!StrCompareBegin(str, marks[i].mrk, ':'))
       return marks[i].line;
 
-  return 0;
+  return -2;
 } /* End of 'FindMark' function */
 
 

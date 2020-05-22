@@ -19,7 +19,7 @@ const int ACCURACY = 1000;
 
 #define CHECK_FILL_BUF COND_CHECK((code = FillBuf(file_in, &code_size)) != nullptr)
 
-
+  
 
 
 const int MAX_NAME = 100;

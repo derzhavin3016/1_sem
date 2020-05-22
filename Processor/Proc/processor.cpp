@@ -3,7 +3,7 @@
 /**
  * \brief Processor class default constructor.
  */
-ad6::Proc::Proc( void ) : code(nullptr), code_size(0)
+ad6::Proc::Proc( void ) : code(nullptr), code_size(0), RAM{0}
 {
   for (size_t i = 0; i < REGS_SIZE; i++)
     regs[i] = 0;

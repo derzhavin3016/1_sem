@@ -8,6 +8,7 @@ namespace ad6
   const size_t REGS_SIZE = 4;
   const int MAX_JUMPS = 100;
   const int FUNC_REC = 100;
+  const size_t RAM_SIZE = 1000;
 }
 
 class ad6::Proc
@@ -16,6 +17,7 @@ private:
   char *code;
   size_t code_size;
   int regs[REGS_SIZE];
+  int RAM[RAM_SIZE];
 public:
 
   // Default constructor

@@ -58,7 +58,7 @@ DEF_CMD(PUSH, 1, 2,
     }
     else
     {
-      printf("Error. No argument for push command in line %d" _ PC + 1);
+      printf("Error. No argument for push command in line %zd" _ PC + 1);
       return false;
     }
   },
@@ -102,7 +102,7 @@ DEF_CMD(PUSH_RAM, 12, 2,
   },
   {
     size_t num = regs[*code_ptr - 1];
-    num = Clamp(num, (size_t)0, RAM_SIZE - 1);
+    num = ad6::Clamp(num _ (size_t)0 _ RAM_SIZE - 1);
     
     STK_PUSH(RAM[num]);
     code_ptr++;
@@ -136,7 +136,7 @@ DEF_CMD(POP, 3, 2,
     }
     else
     {
-      printf("Error. No arguments for pop command in line %d" _ PC + 1);
+      printf("Error. No arguments for pop command in line %zd" _ PC + 1);
       return false;
     }
   },
