@@ -1,5 +1,9 @@
 # MIPT_HOMEWORK
 
+![GitHub repo size](https://img.shields.io/github/repo-size/derzhavin3016/MIPT_Homework?style=plastic)
+![GitHub last commit](https://img.shields.io/github/last-commit/derzhavin3016/MIPT_Homework?color=red&style=plastic)
+![GitHub lines](https://img.shields.io/tokei/lines/github/derzhavin3016/MIPT_Homework?style=plastic)
+
 Этот репозиторий содежит задания из моего первого семестра обучения на ФРКТ. Далее следует краткий обзор некоторых задач.
 
 ## Язык
